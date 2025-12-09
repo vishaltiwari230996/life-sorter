@@ -133,27 +133,32 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3rem;
-  padding: 3rem 4rem;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-.panel {
-  border-radius: 28px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(245, 158, 11, 0.05);
+.hero-chat-section {
+  min-height: 90vh;
+  padding: 4rem 6rem;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+  position: relative;
   animation: fadeIn 0.8s ease-out;
-  border: 1px solid rgba(245, 158, 11, 0.1);
 }
 
-.chat-panel {
-  min-height: 600px;
-  max-height: 800px;
+.hero-chat-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50%;
+  height: 100%;
+  background: radial-gradient(circle at center right, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
+  pointer-events: none;
 }
 
-.products-panel {
-  min-height: 700px;
+.products-section-wrapper {
+  background: linear-gradient(135deg, #0f0f23 0%, #0a0a0a 100%);
+  animation: fadeIn 1s ease-out;
 }
 
 @keyframes fadeIn {
@@ -182,18 +187,9 @@
 }
 
 @media (max-width: 1024px) {
-  .main-content {
-    padding: 2rem;
-    gap: 2rem;
-  }
-
-  .chat-panel {
-    min-height: 500px;
-    max-height: 600px;
-  }
-
-  .products-panel {
-    min-height: 600px;
+  .hero-chat-section {
+    padding: 3rem 2rem;
+    min-height: 80vh;
   }
 }
 
@@ -214,8 +210,9 @@
     padding: 1rem 1.5rem;
   }
 
-  .main-content {
-    padding: 1.5rem;
+  .hero-chat-section {
+    padding: 2rem 1.5rem;
+    min-height: 70vh;
   }
 
   .app-footer {
@@ -234,13 +231,9 @@
 }
 
 @media (max-width: 480px) {
-  .main-content {
-    padding: 1rem;
-    gap: 1rem;
-  }
-
-  .panel {
-    border-radius: 16px;
+  .hero-chat-section {
+    padding: 1.5rem 1rem;
+    min-height: 60vh;
   }
 
   .app-footer p {

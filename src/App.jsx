@@ -38,12 +38,13 @@ function App() {
       )}
 
       <main className="main-content">
-        <div className="panel chat-panel" id="chat">
+        <section className="hero-chat-section" id="chat">
           <ChatBot />
-        </div>
-        <div className="panel products-panel" id="products">
+        </section>
+
+        <section className="products-section-wrapper" id="products">
           <ProductSection />
-        </div>
+        </section>
       </main>
 
       <footer className="app-footer">
