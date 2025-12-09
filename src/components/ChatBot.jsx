@@ -65,12 +65,12 @@ const ChatBot = () => {
     <div className="chatbot-container">
       <div className="chatbot-header">
         <div className="header-content">
-          <Bot className="header-icon" size={28} />
+          <Bot className="header-icon" size={48} />
           <div className="header-text">
-            <h2>Ikshan AI Assistant</h2>
+            <h2>AI-Powered Business Intelligence</h2>
             <p className="status-indicator">
               <span className="status-dot"></span>
-              Online
+              Chat with us • Available 24/7
             </p>
           </div>
         </div>
