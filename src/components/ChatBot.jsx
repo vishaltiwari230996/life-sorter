@@ -70,7 +70,7 @@ const ChatBot = () => {
       // Fallback message if API fails
       const errorMessage = {
         id: messages.length + 2,
-        text: "I apologize, but I'm having trouble connecting right now. Please try again in a moment, or feel free to explore our products: Shakti, Samarth, and Gati.",
+        text: "I apologize, but I'm having trouble connecting right now. Please try again in a moment, or feel free to explore our products: ecommerce optimizer, Samarth, and Gati.",
         sender: 'bot',
         timestamp: new Date()
       };
