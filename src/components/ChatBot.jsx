@@ -34,20 +34,51 @@ const ChatBot = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputValue;
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate bot response
-    setTimeout(() => {
+    try {
+      // Call the Vercel serverless function
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: currentInput
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response from server');
+      }
+
+      const data = await response.json();
+
       const botMessage = {
         id: messages.length + 2,
-        text: "Thank you for your message! Our team will get back to you shortly. In the meantime, feel free to explore our innovative products: Shakti, Samarth, and Gati.",
+        text: data.message,
         sender: 'bot',
         timestamp: new Date()
       };
+
       setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+
+      // Fallback message if API fails
+      const errorMessage = {
+        id: messages.length + 2,
+        text: "I apologize, but I'm having trouble connecting right now. Please try again in a moment, or feel free to explore our products: Shakti, Samarth, and Gati.",
+        sender: 'bot',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -63,19 +94,6 @@ const ChatBot = () => {
 
   return (
     <div className="chatbot-container">
-      <div className="chatbot-header">
-        <div className="header-content">
-          <Bot className="header-icon" size={48} />
-          <div className="header-text">
-            <h2>AI-Powered Business Intelligence</h2>
-            <p className="status-indicator">
-              <span className="status-dot"></span>
-              Chat with us • Available 24/7
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="messages-container">
         {messages.map((message) => (
           <div
