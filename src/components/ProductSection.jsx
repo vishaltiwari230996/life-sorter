@@ -12,7 +12,8 @@ const ProductSection = () => {
       color: '#fbbf24',
       gradient: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
       features: ['Smart Keyword Optimization', 'Competitor Analysis', 'Real-time Performance Tracking'],
-      available: true
+      available: true,
+      link: 'https://shakti-dev-tawny.vercel.app/optimize'
     },
     {
       id: 2,
@@ -77,6 +78,7 @@ const ProductSection = () => {
                   className={`product-cta ${!product.available ? 'disabled' : ''}`}
                   style={{ background: product.available ? product.gradient : 'rgba(255, 255, 255, 0.05)' }}
                   disabled={!product.available}
+                  onClick={() => product.available && product.link && window.open(product.link, '_blank')}
                 >
                   <span>{product.available ? 'Learn More' : 'Coming Soon'}</span>
                   {product.available && <ArrowRight size={16} />}
