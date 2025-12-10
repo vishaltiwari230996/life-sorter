@@ -5,33 +5,36 @@ const ProductSection = () => {
   const products = [
     {
       id: 1,
-      name: 'Shakti',
-      tagline: 'Best in Class AI SEO Optimizer',
+      name: 'ecommerce optimizer',
+      tagline: 'AI-Powered SEO for E-commerce',
       description: 'Maximize your e-commerce success with AI-powered SEO optimization for Amazon and Flipkart. Boost visibility, drive sales, and dominate the marketplace.',
       icon: ShoppingCart,
       color: '#fbbf24',
       gradient: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-      features: ['Smart Keyword Optimization', 'Competitor Analysis', 'Real-time Performance Tracking']
+      features: ['Smart Keyword Optimization', 'Competitor Analysis', 'Real-time Performance Tracking'],
+      available: true
     },
     {
       id: 2,
       name: 'Samarth',
-      tagline: 'AI-Assisted Legal Documentation',
-      description: 'Streamline your legal workflow with intelligent documentation tracking and management. Stay organized, compliant, and efficient with cutting-edge AI assistance.',
+      tagline: 'Coming Soon',
+      description: 'AI-assisted legal documentation tracking and management platform.',
       icon: Scale,
       color: '#8b5cf6',
       gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-      features: ['Document Auto-Classification', 'Compliance Monitoring', 'Intelligent Search & Retrieval']
+      features: ['Document Auto-Classification', 'Compliance Monitoring', 'Intelligent Search & Retrieval'],
+      available: false
     },
     {
       id: 3,
       name: 'Gati',
-      tagline: 'AI-Powered Central Hub for HR',
-      description: 'Transform your HR and management operations with a unified, intelligent platform. Empower your team, streamline processes, and make data-driven decisions.',
+      tagline: 'Coming Soon',
+      description: 'AI-powered central hub for HR and management operations.',
       icon: Users,
       color: '#10b981',
       gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-      features: ['Automated Workflows', 'Performance Analytics', 'Smart Resource Allocation']
+      features: ['Automated Workflows', 'Performance Analytics', 'Smart Resource Allocation'],
+      available: false
     }
   ];
 
@@ -73,9 +76,13 @@ const ProductSection = () => {
                   ))}
                 </div>
 
-                <button className="product-cta" style={{ background: product.gradient }}>
-                  <span>Learn More</span>
-                  <ArrowRight size={18} />
+                <button
+                  className={`product-cta ${!product.available ? 'disabled' : ''}`}
+                  style={{ background: product.available ? product.gradient : 'rgba(255, 255, 255, 0.1)' }}
+                  disabled={!product.available}
+                >
+                  <span>{product.available ? 'Learn More' : 'Coming Soon'}</span>
+                  {product.available && <ArrowRight size={18} />}
                 </button>
               </div>
 

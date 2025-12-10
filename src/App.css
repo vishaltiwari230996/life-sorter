@@ -9,12 +9,11 @@
 .app-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 1.5rem 3rem;
-  background: rgba(255, 215, 0, 0.03);
+  justify-content: center;
+  padding: 1rem 3rem;
+  background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
-  box-shadow: 0 4px 24px rgba(245, 158, 11, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   z-index: 100;
 }
 

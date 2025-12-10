@@ -94,19 +94,6 @@ const ChatBot = () => {
 
   return (
     <div className="chatbot-container">
-      <div className="chatbot-header">
-        <div className="header-content">
-          <Bot className="header-icon" size={48} />
-          <div className="header-text">
-            <h2>AI-Powered Business Intelligence</h2>
-            <p className="status-indicator">
-              <span className="status-dot"></span>
-              Chat with us • Available 24/7
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="messages-container">
         {messages.map((message) => (
           <div
