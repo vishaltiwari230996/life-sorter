@@ -9,12 +9,30 @@
 .app-header {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   padding: 1rem 3rem;
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
+.logo:hover {
+  transform: translateX(2px);
+}
+
+.logo-image {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(251, 191, 36, 0.3));
 }
 
 .logo-text {
