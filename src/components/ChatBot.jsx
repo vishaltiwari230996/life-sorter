@@ -59,19 +59,14 @@ const ChatBot = () => {
   };
 
   const handleSuggestionClick = (suggestion) => {
-    const userMessage = {
-      id: messages.length + 1,
-      text: suggestion,
-      sender: 'user',
-      timestamp: new Date()
-    };
+    // Just fill the input field, don't send automatically
+    setInputValue(suggestion);
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue('');
-    setIsTyping(true);
-
-    // Send to API
-    sendMessageToAPI(suggestion);
+    // Optional: focus on the input field after filling
+    const inputElement = document.querySelector('.message-input');
+    if (inputElement) {
+      inputElement.focus();
+    }
   };
 
   const sendMessageToAPI = async (messageText) => {
