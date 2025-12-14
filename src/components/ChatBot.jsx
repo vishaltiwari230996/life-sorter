@@ -45,16 +45,111 @@ const ChatBot = () => {
 
     const botResponse = buttonType === 'product'
       ? "Great! I'm here to help you understand our products. Which product are you curious about: **Shakti** (SEO optimizer), **Legal Doc Classifier**, **Sales & Support Bot**, or **AnyOCR**?"
-      : "Awesome! I'd love to hear your ideas. What's the biggest bottleneck in your current workflow?";
+      : "How can I help? Describe your business challenge and I'll help capture your idea.";
 
     const botMessage = {
       id: messages.length + 2,
       text: botResponse,
       sender: 'bot',
-      timestamp: new Date()
+      timestamp: new Date(),
+      showSuggestions: buttonType === 'contributor'
     };
 
     setMessages(prev => [...prev, userMessage, botMessage]);
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    const userMessage = {
+      id: messages.length + 1,
+      text: suggestion,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue('');
+    setIsTyping(true);
+
+    // Send to API
+    sendMessageToAPI(suggestion);
+  };
+
+  const sendMessageToAPI = async (messageText) => {
+    try {
+      console.log('Sending message to API...', { persona });
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: messageText,
+          persona: persona
+        })
+      });
+
+      console.log('API response status:', response.status);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('API error:', data);
+        const errorMessage = {
+          id: messages.length + 2,
+          text: data.message || data.error || 'Failed to get response from server. Please check the console for details.',
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        setIsTyping(false);
+        return;
+      }
+
+      const botMessage = {
+        id: messages.length + 2,
+        text: data.message,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+
+      // Save to sheet if contributor mode
+      if (persona === 'contributor') {
+        saveToSheet(messageText, data.message);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+
+      const errorMessage = {
+        id: messages.length + 2,
+        text: `Connection error: ${error.message}. Please check your internet connection and try again.`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const saveToSheet = async (userMessage, botResponse) => {
+    try {
+      await fetch('/api/save-idea', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userMessage,
+          botResponse,
+          timestamp: new Date().toISOString()
+        })
+      });
+    } catch (error) {
+      console.error('Error saving to sheet:', error);
+    }
   };
 
   const handleSend = async () => {
@@ -72,60 +167,7 @@ const ChatBot = () => {
     setInputValue('');
     setIsTyping(true);
 
-    try {
-      // Call the Vercel serverless function
-      console.log('Sending message to API...', { persona });
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: currentInput,
-          persona: persona
-        })
-      });
-
-      console.log('API response status:', response.status);
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error('API error:', data);
-        // Show specific error message from API
-        const errorMessage = {
-          id: messages.length + 2,
-          text: data.message || data.error || 'Failed to get response from server. Please check the console for details.',
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, errorMessage]);
-        return;
-      }
-
-      const botMessage = {
-        id: messages.length + 2,
-        text: data.message,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
-      console.error('Error sending message:', error);
-
-      // Fallback message if API fails
-      const errorMessage = {
-        id: messages.length + 2,
-        text: `Connection error: ${error.message}. Please check your internet connection and try again.`,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsTyping(false);
-    }
+    sendMessageToAPI(currentInput);
   };
 
   const handleKeyPress = (e) => {
@@ -175,6 +217,28 @@ const ChatBot = () => {
                     onClick={() => handleButtonClick('contributor')}
                   >
                     Contribute an Idea
+                  </button>
+                </div>
+              )}
+              {message.showSuggestions && persona === 'contributor' && (
+                <div className="suggestion-prompts">
+                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Automate customer support responses')}>
+                    🤖 Customer Support Automation
+                  </button>
+                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Track and manage sales leads')}>
+                    📊 Lead Management System
+                  </button>
+                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Analyze business data and metrics')}>
+                    📈 Business Analytics Tool
+                  </button>
+                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Streamline document processing')}>
+                    📄 Document Automation
+                  </button>
+                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Improve team collaboration')}>
+                    👥 Team Collaboration Platform
+                  </button>
+                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Optimize marketing campaigns')}>
+                    🎯 Marketing Optimization
                   </button>
                 </div>
               )}
