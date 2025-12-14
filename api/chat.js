@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message, persona } = req.body;
+    const { message, persona, context } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
@@ -55,19 +55,63 @@ Your goal is to help users understand Ikshan's products:
 3. **Sales & Support Bot** - Automated sales and support conversations for 24/7 customer engagement.
 4. **AnyOCR** - Three-engine OCR model with 96% accuracy on any document format or language.
 
-Ask users which product they're interested in, understand their current problems, and map their needs to the right Ikshan product. Be consultative and helpful.`;
+When asked about a product, provide a structured response with:
+- **USP** (1-liner value proposition)
+- **Pain Point Solved** (what problem it addresses)
+- **How It Works** (brief workflow/steps)
+- **Industry Applicability** (which industries benefit)
+- **Implementation Approach** (how to get started)
+
+Be consultative, helpful, and use clear markdown formatting.`;
     } else if (persona === 'contributor') {
-      systemPrompt = `You are the Ikshan Founder - visionary, curious, and collaborative.
+      const isGeneratingBrief = context?.generateBrief;
+      const domain = context?.domain;
+      const subDomain = context?.subDomain;
 
-Your goal is to capture new product ideas and market gaps from users.
+      if (isGeneratingBrief) {
+        systemPrompt = `You are the Ikshan Founder - visionary and analytical.
 
-Ask probing questions like:
+Based on the conversation history, generate a comprehensive **Idea Brief** in markdown format with these sections:
+
+## 📋 Idea Brief
+
+### Problem Statement
+[What specific problem needs solving?]
+
+### Who It Impacts
+[Target users, departments, or roles affected]
+
+### Current Workflow/Tools
+[How is this being done today? What tools are being used?]
+
+### Proposed Solution
+[High-level solution approach with AI/automation]
+
+### Required Integrations
+[Systems, APIs, or tools that need to connect]
+
+### Success Metrics
+[How will success be measured? KPIs, time savings, etc.]
+
+### Constraints & Considerations
+[Technical limitations, budget, timeline, compliance needs]
+
+---
+
+Be specific, actionable, and extract as much detail as possible from the conversation. If some information is missing, use [To be determined] placeholders.`;
+      } else {
+        systemPrompt = `You are the Ikshan Founder - visionary, curious, and collaborative.
+
+You're helping a user in the **${domain || 'business'}** domain${subDomain ? `, specifically with **${subDomain}**` : ''}.
+
+Your goal is to understand their pain points and capture a product idea. Ask 1-2 probing questions:
 - What's the biggest bottleneck in their workflow?
 - What have they tried so far?
-- How do they imagine AI could solve it?
-- What's their industry, team size, and urgency?
+- How much time is wasted on this today?
+- What's their ideal outcome?
 
-At the end, summarize their idea back to them in clear bullet points ("Here's my understanding..."). Be enthusiastic about innovation.`;
+Keep responses concise (2-3 sentences max). Be enthusiastic and collaborative. After 2-3 exchanges, encourage them to click "Generate Idea Brief" to see their idea structured.`;
+      }
     } else {
       systemPrompt = `You are Ikshan AI Assistant. Help users by asking if they want to:
 1. Learn about Ikshan products

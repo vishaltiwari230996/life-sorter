@@ -16,8 +16,43 @@ const ChatBot = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [persona, setPersona] = useState(null); // 'product' or 'contributor'
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedDomain, setSelectedDomain] = useState(null);
+  const [selectedSubDomain, setSelectedSubDomain] = useState(null);
+  const [ideaBrief, setIdeaBrief] = useState(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+
+  const products = [
+    { id: 1, name: 'Shakti', emoji: '🛒', tagline: 'SEO / Listing Optimization Engine' },
+    { id: 2, name: 'Legal Doc Classifier', emoji: '⚖️', tagline: 'AI Legal Documentation' },
+    { id: 3, name: 'Sales & Support Bot', emoji: '💬', tagline: 'Customer Engagement' },
+    { id: 4, name: 'AnyOCR', emoji: '📄', tagline: '96% Accuracy OCR' }
+  ];
+
+  const domains = [
+    { id: 'sales', name: 'Sales', emoji: '📈' },
+    { id: 'marketing', name: 'Marketing', emoji: '📢' },
+    { id: 'ops', name: 'Ops / CX', emoji: '⚙️' },
+    { id: 'hr', name: 'HR / Talent', emoji: '👥' },
+    { id: 'finance', name: 'Finance', emoji: '💰' },
+    { id: 'legal', name: 'Legal', emoji: '⚖️' },
+    { id: 'research', name: 'Research', emoji: '🔬' },
+    { id: 'ecommerce', name: 'E-commerce', emoji: '🛍️' },
+    { id: 'other', name: 'Other', emoji: '💡' }
+  ];
+
+  const subDomains = {
+    sales: ['Lead Gen', 'CRM Hygiene', 'Outreach', 'Forecasting', 'Pipeline Management'],
+    marketing: ['Content Creation', 'Campaign Management', 'Analytics', 'SEO', 'Social Media'],
+    ops: ['Process Automation', 'Quality Control', 'Inventory', 'Customer Support', 'Ticketing'],
+    hr: ['Recruitment', 'Onboarding', 'Performance', 'Training', 'Compliance'],
+    finance: ['Invoicing', 'Expense Tracking', 'Reporting', 'Forecasting', 'Compliance'],
+    legal: ['Contract Management', 'Compliance', 'Document Review', 'Research', 'Case Management'],
+    research: ['Data Collection', 'Analysis', 'Market Intel', 'Competitor Research', 'Surveys'],
+    ecommerce: ['Product Listing', 'Inventory', 'Pricing', 'Customer Analytics', 'Growth'],
+    other: ['Custom Solution', 'Integration', 'Automation', 'Data Processing', 'Other']
+  };
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -44,15 +79,76 @@ const ChatBot = () => {
     };
 
     const botResponse = buttonType === 'product'
-      ? "Great! I'm here to help you understand our products. Which product are you curious about: **Shakti** (SEO optimizer), **Legal Doc Classifier**, **Sales & Support Bot**, or **AnyOCR**?"
-      : "How can I help? Describe your business challenge and I'll help capture your idea.";
+      ? "Great! Click on any product to learn more:"
+      : "Let's capture your idea! First, select the business domain:";
 
     const botMessage = {
       id: messages.length + 2,
       text: botResponse,
       sender: 'bot',
       timestamp: new Date(),
-      showSuggestions: buttonType === 'contributor'
+      showProducts: buttonType === 'product',
+      showDomains: buttonType === 'contributor'
+    };
+
+    setMessages(prev => [...prev, userMessage, botMessage]);
+  };
+
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
+
+    const userMessage = {
+      id: messages.length + 1,
+      text: `Tell me about ${product.name}`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+
+    // Call API with product context
+    sendMessageToAPI(`Tell me about ${product.name} - provide USP, pain point solved, how it works, industry applicability, and implementation approach`, 'product');
+  };
+
+  const handleDomainClick = (domain) => {
+    setSelectedDomain(domain);
+
+    const userMessage = {
+      id: messages.length + 1,
+      text: `${domain.emoji} ${domain.name}`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    const botMessage = {
+      id: messages.length + 2,
+      text: `Great! Now select a specific area within ${domain.name}:`,
+      sender: 'bot',
+      timestamp: new Date(),
+      showSubDomains: true,
+      domainId: domain.id
+    };
+
+    setMessages(prev => [...prev, userMessage, botMessage]);
+  };
+
+  const handleSubDomainClick = (subDomain) => {
+    setSelectedSubDomain(subDomain);
+
+    const userMessage = {
+      id: messages.length + 1,
+      text: subDomain,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    const botMessage = {
+      id: messages.length + 2,
+      text: `Perfect! Let's dive into ${subDomain}. Choose a starting point or type your challenge:`,
+      sender: 'bot',
+      timestamp: new Date(),
+      showGuidedPrompts: true
     };
 
     setMessages(prev => [...prev, userMessage, botMessage]);
@@ -69,9 +165,89 @@ const ChatBot = () => {
     }
   };
 
-  const sendMessageToAPI = async (messageText) => {
+  const handleGenerateBrief = () => {
+    const userMessage = {
+      id: messages.length + 1,
+      text: 'Generate Idea Brief',
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+
+    // Request API to generate structured brief
+    sendMessageToAPI('Based on our conversation, generate a structured idea brief', true);
+  };
+
+  const handleRefineBrief = () => {
+    setInputValue('I\'d like to refine the idea brief. ');
+    const inputElement = document.querySelector('.message-input');
+    if (inputElement) {
+      inputElement.focus();
+    }
+  };
+
+  const handleSubmitBrief = async () => {
+    if (!ideaBrief) return;
+
+    const userMessage = {
+      id: messages.length + 1,
+      text: 'Submit Idea',
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    const botMessage = {
+      id: messages.length + 2,
+      text: '✅ **Thank you!** Your idea has been submitted successfully. We\'ll review it and get back to you soon.',
+      sender: 'bot',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage, botMessage]);
+
+    // Save final brief to sheets
+    await saveToSheet('FINAL IDEA SUBMISSION', ideaBrief);
+  };
+
+  const handleStartAnother = () => {
+    // Reset all state
+    setSelectedDomain(null);
+    setSelectedSubDomain(null);
+    setIdeaBrief(null);
+
+    const botMessage = {
+      id: messages.length + 1,
+      text: 'Great! Let\'s start fresh. Select a business domain for your new idea:',
+      sender: 'bot',
+      timestamp: new Date(),
+      showDomains: true
+    };
+
+    setMessages(prev => [...prev, botMessage]);
+  };
+
+  const handleSwitchToExplore = () => {
+    setPersona('product');
+    setSelectedDomain(null);
+    setSelectedSubDomain(null);
+    setIdeaBrief(null);
+
+    const botMessage = {
+      id: messages.length + 1,
+      text: 'Perfect! Let\'s explore our products. Click on any product to learn more:',
+      sender: 'bot',
+      timestamp: new Date(),
+      showProducts: true
+    };
+
+    setMessages(prev => [...prev, botMessage]);
+  };
+
+  const sendMessageToAPI = async (messageText, shouldGenerateBrief = false) => {
     try {
-      console.log('Sending message to API...', { persona });
+      console.log('Sending message to API...', { persona, shouldGenerateBrief });
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -79,7 +255,12 @@ const ChatBot = () => {
         },
         body: JSON.stringify({
           message: messageText,
-          persona: persona
+          persona: persona,
+          context: {
+            domain: selectedDomain?.name,
+            subDomain: selectedSubDomain,
+            generateBrief: shouldGenerateBrief
+          }
         })
       });
 
@@ -104,10 +285,16 @@ const ChatBot = () => {
         id: messages.length + 2,
         text: data.message,
         sender: 'bot',
-        timestamp: new Date()
+        timestamp: new Date(),
+        showBriefActions: shouldGenerateBrief
       };
 
       setMessages(prev => [...prev, botMessage]);
+
+      // Set idea brief if generated
+      if (shouldGenerateBrief && data.message) {
+        setIdeaBrief(data.message);
+      }
 
       // Save to sheet if contributor mode
       if (persona === 'contributor') {
@@ -215,25 +402,86 @@ const ChatBot = () => {
                   </button>
                 </div>
               )}
-              {message.showSuggestions && persona === 'contributor' && (
-                <div className="suggestion-prompts">
-                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Automate customer support responses')}>
-                    🤖 Customer Support Automation
+              {message.showProducts && persona === 'product' && (
+                <div className="product-chips">
+                  {products.map((product) => (
+                    <button
+                      key={product.id}
+                      className="product-chip"
+                      onClick={() => handleProductClick(product)}
+                    >
+                      <span className="product-emoji">{product.emoji}</span>
+                      <div className="product-info">
+                        <div className="product-name">{product.name}</div>
+                        <div className="product-tagline">{product.tagline}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {message.showDomains && persona === 'contributor' && (
+                <div className="domain-chips">
+                  {domains.map((domain) => (
+                    <button
+                      key={domain.id}
+                      className="domain-chip"
+                      onClick={() => handleDomainClick(domain)}
+                    >
+                      <span className="domain-emoji">{domain.emoji}</span>
+                      <span className="domain-name">{domain.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {message.showSubDomains && persona === 'contributor' && message.domainId && (
+                <div className="subdomain-chips">
+                  {subDomains[message.domainId]?.map((subDomain, index) => (
+                    <button
+                      key={index}
+                      className="subdomain-chip"
+                      onClick={() => handleSubDomainClick(subDomain)}
+                    >
+                      {subDomain}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {message.showGuidedPrompts && persona === 'contributor' && (
+                <div className="guided-prompts-section">
+                  <div className="guided-prompts">
+                    <button className="guided-prompt-chip" onClick={() => handleSuggestionClick(`I need to automate ${selectedSubDomain} workflows`)}>
+                      🤖 Automate workflows
+                    </button>
+                    <button className="guided-prompt-chip" onClick={() => handleSuggestionClick(`Help me track and analyze ${selectedSubDomain} metrics`)}>
+                      📊 Track metrics
+                    </button>
+                    <button className="guided-prompt-chip" onClick={() => handleSuggestionClick(`Reduce manual effort in ${selectedSubDomain}`)}>
+                      ⚡ Reduce manual work
+                    </button>
+                    <button className="guided-prompt-chip" onClick={() => handleSuggestionClick(`Integrate ${selectedSubDomain} with existing tools`)}>
+                      🔗 Integration needs
+                    </button>
+                  </div>
+                  <div className="generate-brief-container">
+                    <button className="generate-brief-button" onClick={handleGenerateBrief}>
+                      ✨ Generate Idea Brief
+                    </button>
+                  </div>
+                </div>
+              )}
+              {message.showBriefActions && persona === 'contributor' && (
+                <div className="brief-actions">
+                  <button className="brief-action-button primary" onClick={handleSubmitBrief}>
+                    ✅ Submit Idea
                   </button>
-                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Track and manage sales leads')}>
-                    📊 Lead Management System
+                  <button className="brief-action-button secondary" onClick={handleRefineBrief}>
+                    ✏️ Refine Brief
                   </button>
-                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Analyze business data and metrics')}>
-                    📈 Business Analytics Tool
+                  <button className="brief-action-button secondary" onClick={handleStartAnother}>
+                    🔄 Start Another
                   </button>
-                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Streamline document processing')}>
-                    📄 Document Automation
-                  </button>
-                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Improve team collaboration')}>
-                    👥 Team Collaboration Platform
-                  </button>
-                  <button className="suggestion-chip" onClick={() => handleSuggestionClick('Optimize marketing campaigns')}>
-                    🎯 Marketing Optimization
+                  <button className="brief-action-button secondary" onClick={handleSwitchToExplore}>
+                    🔍 Switch to Explore
                   </button>
                 </div>
               )}
