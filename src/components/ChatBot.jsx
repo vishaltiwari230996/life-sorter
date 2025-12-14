@@ -22,6 +22,7 @@ const ChatBot = () => {
   const [ideaBrief, setIdeaBrief] = useState(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const messageIdCounter = useRef(1);
 
   const products = [
     { id: 1, name: 'Shakti', emoji: '🛒', tagline: 'SEO / Listing Optimization Engine' },
@@ -54,6 +55,10 @@ const ChatBot = () => {
     other: ['Custom Solution', 'Integration', 'Automation', 'Data Processing', 'Other']
   };
 
+  const getNextMessageId = () => {
+    return messageIdCounter.current++;
+  };
+
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
@@ -64,6 +69,16 @@ const ChatBot = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Build conversation history for API
+  const getConversationHistory = () => {
+    return messages
+      .filter(msg => msg.sender && msg.text) // Only messages with actual content
+      .map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      }));
+  };
+
   const handleButtonClick = (buttonType) => {
     setPersona(buttonType);
 
@@ -72,7 +87,7 @@ const ChatBot = () => {
       : 'Contribute an Idea';
 
     const userMessage = {
-      id: messages.length + 1,
+      id: getNextMessageId(),
       text: buttonText,
       sender: 'user',
       timestamp: new Date()
@@ -83,7 +98,7 @@ const ChatBot = () => {
       : "Let's capture your idea! First, select the business domain:";
 
     const botMessage = {
-      id: messages.length + 2,
+      id: getNextMessageId(),
       text: botResponse,
       sender: 'bot',
       timestamp: new Date(),
@@ -98,7 +113,7 @@ const ChatBot = () => {
     setSelectedProduct(product);
 
     const userMessage = {
-      id: messages.length + 1,
+      id: getNextMessageId(),
       text: `Tell me about ${product.name}`,
       sender: 'user',
       timestamp: new Date()
@@ -107,22 +122,22 @@ const ChatBot = () => {
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
 
-    // Call API with product context
-    sendMessageToAPI(`Tell me about ${product.name} - provide USP, pain point solved, how it works, industry applicability, and implementation approach`, 'product');
+    // Call API with product context (shouldGenerateBrief = false)
+    sendMessageToAPI(`Tell me about ${product.name} - provide USP, pain point solved, how it works, industry applicability, and implementation approach`, false);
   };
 
   const handleDomainClick = (domain) => {
     setSelectedDomain(domain);
 
     const userMessage = {
-      id: messages.length + 1,
+      id: getNextMessageId(),
       text: `${domain.emoji} ${domain.name}`,
       sender: 'user',
       timestamp: new Date()
     };
 
     const botMessage = {
-      id: messages.length + 2,
+      id: getNextMessageId(),
       text: `Great! Now select a specific area within ${domain.name}:`,
       sender: 'bot',
       timestamp: new Date(),
@@ -137,14 +152,14 @@ const ChatBot = () => {
     setSelectedSubDomain(subDomain);
 
     const userMessage = {
-      id: messages.length + 1,
+      id: getNextMessageId(),
       text: subDomain,
       sender: 'user',
       timestamp: new Date()
     };
 
     const botMessage = {
-      id: messages.length + 2,
+      id: getNextMessageId(),
       text: `Perfect! Let's dive into ${subDomain}. Choose a starting point or type your challenge:`,
       sender: 'bot',
       timestamp: new Date(),
@@ -167,7 +182,7 @@ const ChatBot = () => {
 
   const handleGenerateBrief = () => {
     const userMessage = {
-      id: messages.length + 1,
+      id: getNextMessageId(),
       text: 'Generate Idea Brief',
       sender: 'user',
       timestamp: new Date()
@@ -192,14 +207,14 @@ const ChatBot = () => {
     if (!ideaBrief) return;
 
     const userMessage = {
-      id: messages.length + 1,
+      id: getNextMessageId(),
       text: 'Submit Idea',
       sender: 'user',
       timestamp: new Date()
     };
 
     const botMessage = {
-      id: messages.length + 2,
+      id: getNextMessageId(),
       text: '✅ **Thank you!** Your idea has been submitted successfully. We\'ll review it and get back to you soon.',
       sender: 'bot',
       timestamp: new Date()
@@ -218,7 +233,7 @@ const ChatBot = () => {
     setIdeaBrief(null);
 
     const botMessage = {
-      id: messages.length + 1,
+      id: getNextMessageId(),
       text: 'Great! Let\'s start fresh. Select a business domain for your new idea:',
       sender: 'bot',
       timestamp: new Date(),
@@ -235,7 +250,7 @@ const ChatBot = () => {
     setIdeaBrief(null);
 
     const botMessage = {
-      id: messages.length + 1,
+      id: getNextMessageId(),
       text: 'Perfect! Let\'s explore our products. Click on any product to learn more:',
       sender: 'bot',
       timestamp: new Date(),
@@ -248,6 +263,10 @@ const ChatBot = () => {
   const sendMessageToAPI = async (messageText, shouldGenerateBrief = false) => {
     try {
       console.log('Sending message to API...', { persona, shouldGenerateBrief });
+
+      // Get conversation history
+      const history = getConversationHistory();
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -256,6 +275,7 @@ const ChatBot = () => {
         body: JSON.stringify({
           message: messageText,
           persona: persona,
+          conversationHistory: history,
           context: {
             domain: selectedDomain?.name,
             subDomain: selectedSubDomain,
@@ -271,7 +291,7 @@ const ChatBot = () => {
       if (!response.ok) {
         console.error('API error:', data);
         const errorMessage = {
-          id: messages.length + 2,
+          id: getNextMessageId(),
           text: data.message || data.error || 'Failed to get response from server. Please check the console for details.',
           sender: 'bot',
           timestamp: new Date()
@@ -282,7 +302,7 @@ const ChatBot = () => {
       }
 
       const botMessage = {
-        id: messages.length + 2,
+        id: getNextMessageId(),
         text: data.message,
         sender: 'bot',
         timestamp: new Date(),
@@ -304,7 +324,7 @@ const ChatBot = () => {
       console.error('Error sending message:', error);
 
       const errorMessage = {
-        id: messages.length + 2,
+        id: getNextMessageId(),
         text: `Connection error: ${error.message}. Please check your internet connection and try again.`,
         sender: 'bot',
         timestamp: new Date()
@@ -338,7 +358,7 @@ const ChatBot = () => {
     if (!inputValue.trim()) return;
 
     const userMessage = {
-      id: messages.length + 1,
+      id: getNextMessageId(),
       text: inputValue,
       sender: 'user',
       timestamp: new Date()

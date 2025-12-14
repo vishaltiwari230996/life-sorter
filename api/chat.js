@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message, persona, context } = req.body;
+    const { message, persona, context, conversationHistory } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
@@ -118,8 +118,32 @@ Keep responses concise (2-3 sentences max). Be enthusiastic and collaborative. A
 2. Share a new idea or product request`;
     }
 
+    // Build messages array with conversation history
+    const messages = [
+      {
+        role: 'system',
+        content: systemPrompt
+      }
+    ];
+
+    // Add conversation history if available
+    if (conversationHistory && Array.isArray(conversationHistory)) {
+      messages.push(...conversationHistory);
+    }
+
+    // Add current message
+    messages.push({
+      role: 'user',
+      content: message
+    });
+
+    // Adjust parameters based on context
+    const isGeneratingBrief = context?.generateBrief === true;
+    const temperature = isGeneratingBrief ? 0.5 : 0.7; // Lower temp for structured output
+    const maxTokens = isGeneratingBrief ? 1500 : 600; // More tokens for brief
+
     // Call OpenAI API with detailed error handling
-    console.log('Calling OpenAI API...');
+    console.log('Calling OpenAI API...', { messagesCount: messages.length, isGeneratingBrief });
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -128,18 +152,9 @@ Keep responses concise (2-3 sentences max). Be enthusiastic and collaborative. A
       },
       body: JSON.stringify({
         model: modelName,
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: message
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 500
+        messages: messages,
+        temperature: temperature,
+        max_tokens: maxTokens
       })
     });
 
