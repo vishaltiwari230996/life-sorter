@@ -1,4 +1,4 @@
-import { Sun, Moon } from 'lucide-react';
+import { Moon, Droplet, Leaf } from 'lucide-react';
 import ChatBot from './components/ChatBot';
 import ProductSection from './components/ProductSection';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -17,10 +17,12 @@ function AppContent() {
         <button
           className="theme-toggle"
           onClick={toggleTheme}
-          aria-label="Toggle theme"
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          aria-label="Change theme"
+          title={`Current: ${theme.charAt(0).toUpperCase() + theme.slice(1)} theme - Click to cycle`}
         >
-          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          {theme === 'dark' && <Moon size={20} />}
+          {theme === 'blue' && <Droplet size={20} />}
+          {theme === 'green' && <Leaf size={20} />}
         </button>
       </header>
 

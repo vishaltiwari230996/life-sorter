@@ -31,14 +31,19 @@ export const ThemeProvider = ({ children }) => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    setTheme(prevTheme => {
+      if (prevTheme === 'dark') return 'blue';
+      if (prevTheme === 'blue') return 'green';
+      return 'dark';
+    });
   };
 
   const value = {
     theme,
     toggleTheme,
     isDark: theme === 'dark',
-    isLight: theme === 'light'
+    isBlue: theme === 'blue',
+    isGreen: theme === 'green'
   };
 
   return (
