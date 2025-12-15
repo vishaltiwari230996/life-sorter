@@ -20,6 +20,9 @@ const ChatBot = () => {
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [selectedSubDomain, setSelectedSubDomain] = useState(null);
   const [ideaBrief, setIdeaBrief] = useState(null);
+  const [userName, setUserName] = useState(null);
+  const [userEmail, setUserEmail] = useState(null);
+  const [collectingInfo, setCollectingInfo] = useState(null); // 'name' | 'email' | null
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const messageIdCounter = useRef(1);
@@ -150,6 +153,7 @@ const ChatBot = () => {
 
   const handleSubDomainClick = (subDomain) => {
     setSelectedSubDomain(subDomain);
+    setCollectingInfo('name'); // Start collecting user info
 
     const userMessage = {
       id: getNextMessageId(),
@@ -160,10 +164,9 @@ const ChatBot = () => {
 
     const botMessage = {
       id: getNextMessageId(),
-      text: `Great choice! Tell me about your product idea for ${subDomain}. What problem are you trying to solve?`,
+      text: `Perfect! Before we dive into your idea, what's your name?`,
       sender: 'bot',
-      timestamp: new Date(),
-      showGuidedPrompts: true
+      timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage, botMessage]);
@@ -346,7 +349,9 @@ const ChatBot = () => {
         body: JSON.stringify({
           userMessage,
           botResponse,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          userName: userName || 'Anonymous',
+          userEmail: userEmail || 'Not provided'
         })
       });
     } catch (error) {
@@ -367,8 +372,42 @@ const ChatBot = () => {
     setMessages(prev => [...prev, userMessage]);
     const currentInput = inputValue;
     setInputValue('');
-    setIsTyping(true);
 
+    // Handle collecting name
+    if (collectingInfo === 'name') {
+      setUserName(currentInput);
+      setCollectingInfo('email');
+
+      const botMessage = {
+        id: getNextMessageId(),
+        text: `Nice to meet you, ${currentInput}! And what's your email address so we can follow up on your idea?`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+      return;
+    }
+
+    // Handle collecting email
+    if (collectingInfo === 'email') {
+      setUserEmail(currentInput);
+      setCollectingInfo(null); // Done collecting
+
+      const botMessage = {
+        id: getNextMessageId(),
+        text: `Great! Now tell me about your product idea for ${selectedSubDomain}. What problem are you trying to solve?`,
+        sender: 'bot',
+        timestamp: new Date(),
+        showGuidedPrompts: true
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+      return;
+    }
+
+    // Normal message flow
+    setIsTyping(true);
     sendMessageToAPI(currentInput);
   };
 
