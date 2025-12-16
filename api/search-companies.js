@@ -4,9 +4,10 @@ import Papa from 'papaparse';
 const SHEET_ID = '1JKx3RwPbUL2-r5l8ayDUQfKU3kiIEg-FkFym3yJCNiw';
 
 // Map domain IDs to actual sheet tab names in Google Sheets
+// NOTE: Tab names must match EXACTLY (case-sensitive)
 const DOMAIN_TO_SHEET = {
   'marketing': 'Marketing',
-  'sales-support': 'sales and support',
+  'sales-support': 'Sales and support',  // Capital S
   'social-media': 'Social media',
   'legal': 'Legal',
   'hr-hiring': 'HR',
