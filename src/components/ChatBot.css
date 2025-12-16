@@ -405,7 +405,7 @@
   padding: 0.5rem 0.875rem; /* More compact */
   background: rgba(255, 255, 255, 0.04); /* More subtle */
   border: 1px solid rgba(255, 255, 255, 0.1); /* Lighter border */
-  border-radius: 8px; /* Less rounded */
+  border-radius: 16px; /* More rounded */
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
   display: inline-flex;
@@ -449,7 +449,7 @@
   padding: 0.45rem 0.8rem; /* More compact */
   background: rgba(255, 255, 255, 0.04); /* More subtle */
   border: 1px solid rgba(255, 255, 255, 0.08); /* Lighter border */
-  border-radius: 6px; /* Less rounded, more professional */
+  border-radius: 14px; /* More rounded */
   color: rgba(255, 255, 255, 0.82);
   font-size: 0.8rem; /* Slightly smaller */
   font-weight: 400;
@@ -624,6 +624,7 @@
   padding: 1rem 1.5rem;
   background: rgba(255, 255, 255, 0.02);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }

@@ -691,7 +691,38 @@ const ChatBot = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Persistent Button Bar - Always visible below chat */}
+      <div className="input-container">
+        <div className="input-wrapper">
+          <textarea
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder={isRecording ? "Listening..." : "Type your message here..."}
+            className="message-input"
+            rows="1"
+          />
+          {voiceSupported && flowStage === 'requirement' && (
+            <button
+              onClick={toggleVoiceRecording}
+              className={`voice-button ${isRecording ? 'recording' : ''}`}
+              aria-label={isRecording ? "Stop recording" : "Start voice input"}
+              title={isRecording ? "Stop recording" : "Click to speak"}
+            >
+              {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+            </button>
+          )}
+          <button
+            onClick={handleSend}
+            disabled={!inputValue.trim()}
+            className="send-button"
+            aria-label="Send message"
+          >
+            <Send size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Persistent Button Bar - Always visible below input */}
       {(flowStage === 'domain' || flowStage === 'subdomain') && (
         <div className="persistent-button-bar">
           {flowStage === 'domain' && (
@@ -729,37 +760,6 @@ const ChatBot = () => {
           )}
         </div>
       )}
-
-      <div className="input-container">
-        <div className="input-wrapper">
-          <textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder={isRecording ? "Listening..." : "Type your message here..."}
-            className="message-input"
-            rows="1"
-          />
-          {voiceSupported && flowStage === 'requirement' && (
-            <button
-              onClick={toggleVoiceRecording}
-              className={`voice-button ${isRecording ? 'recording' : ''}`}
-              aria-label={isRecording ? "Stop recording" : "Start voice input"}
-              title={isRecording ? "Stop recording" : "Click to speak"}
-            >
-              {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
-            </button>
-          )}
-          <button
-            onClick={handleSend}
-            disabled={!inputValue.trim()}
-            className="send-button"
-            aria-label="Send message"
-          >
-            <Send size={20} />
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
