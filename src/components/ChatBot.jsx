@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Mic, MicOff } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import './ChatBot.css';
+import { fetchCompaniesCSV, filterCompaniesByDomain, formatCompaniesForDisplay, analyzeMarketGaps } from '../utils/csvParser';
 
 const IdentityForm = ({ onSubmit }) => {
   const [name, setName] = useState('');
@@ -340,21 +341,98 @@ const ChatBot = () => {
     // Save identity to sheet
     await saveToSheet(`User Identity: ${name} (${email})`, '', selectedDomain?.name, selectedSubDomain);
 
-    // Generate final output
-    setTimeout(() => {
-      const finalOutput = {
-        id: getNextMessageId(),
-        text: `## Market Analysis\n\n**Existing Tools:**\n- Similar solutions in the ${selectedDomain?.name} space for ${selectedSubDomain}\n- [This is a placeholder - will be populated with real market research]\n\n**Gaps to Exploit:**\n- Opportunity areas identified\n- Differentiation possibilities\n\n## Ikshan's Suggested Direction\n\n**Proposed Solution:**\nBased on your requirement for "${requirement}", we can build a solution that...\n\n**Differentiators:**\n- Unique value propositions\n- Competitive advantages\n\n**Next Steps:**\n1. Schedule a discovery call\n2. Review detailed requirements\n3. Discuss implementation timeline`,
-        sender: 'bot',
-        timestamp: new Date(),
-        showFinalActions: true
-      };
+    // Generate final output with real market data
+    setTimeout(async () => {
+      try {
+        // Fetch and analyze companies from CSV
+        const allCompanies = await fetchCompaniesCSV();
+        const relevantCompanies = filterCompaniesByDomain(
+          allCompanies,
+          selectedDomain?.id,
+          selectedSubDomain
+        );
 
-      setMessages(prev => [...prev, finalOutput]);
-      setIsTyping(false);
+        // Format companies for display
+        const companiesText = formatCompaniesForDisplay(relevantCompanies, 5);
+        const gapsAnalysis = analyzeMarketGaps(requirement, relevantCompanies);
 
-      // Save final output to sheet
-      saveToSheet('Final Analysis Generated', finalOutput.text, selectedDomain?.name, selectedSubDomain);
+        // Build market analysis message
+        let marketAnalysis = `## 🔍 Market Analysis\n\n`;
+
+        // Existing Tools Section
+        marketAnalysis += `### Existing Tools in ${selectedDomain?.name}`;
+        if (selectedSubDomain) {
+          marketAnalysis += ` - ${selectedSubDomain}`;
+        }
+        marketAnalysis += `\n\n${companiesText}\n\n`;
+
+        // Market Gaps Section
+        marketAnalysis += `### 💡 Market Gaps & Opportunities\n\n${gapsAnalysis}\n\n`;
+
+        // Ikshan's Direction
+        marketAnalysis += `## 🎯 Ikshan's Suggested Direction\n\n`;
+        marketAnalysis += `### Your Requirement\n"${requirement}"\n\n`;
+
+        marketAnalysis += `### Proposed Approach\n`;
+        if (relevantCompanies.length === 0) {
+          marketAnalysis += `Since there are limited existing solutions in this space, we can:\n`;
+          marketAnalysis += `- Build a pioneering solution tailored to your specific needs\n`;
+          marketAnalysis += `- Establish your product as the market leader\n`;
+          marketAnalysis += `- Capture first-mover advantage\n\n`;
+        } else if (relevantCompanies.length <= 2) {
+          marketAnalysis += `With limited competition, we can:\n`;
+          marketAnalysis += `- Analyze what existing solutions are missing\n`;
+          marketAnalysis += `- Build a superior product with better UX and features\n`;
+          marketAnalysis += `- Position as the modern, user-friendly alternative\n\n`;
+        } else {
+          marketAnalysis += `In this competitive market, we'll focus on:\n`;
+          marketAnalysis += `- Identifying specific gaps in existing solutions\n`;
+          marketAnalysis += `- Creating unique value through innovation\n`;
+          marketAnalysis += `- Targeting underserved user segments or use cases\n\n`;
+        }
+
+        marketAnalysis += `### Key Differentiators\n`;
+        marketAnalysis += `- **Tailored Solution**: Built specifically for your requirements\n`;
+        marketAnalysis += `- **Modern Technology**: Latest AI and cloud infrastructure\n`;
+        marketAnalysis += `- **User-Centric Design**: Focus on exceptional user experience\n`;
+        marketAnalysis += `- **Scalable Architecture**: Ready to grow with your business\n\n`;
+
+        marketAnalysis += `### 🚀 Next Steps\n\n`;
+        marketAnalysis += `1. **Discovery Call**: Deep dive into your requirements and vision\n`;
+        marketAnalysis += `2. **Competitive Analysis**: Detailed review of similar solutions\n`;
+        marketAnalysis += `3. **Technical Design**: Architecture and feature specifications\n`;
+        marketAnalysis += `4. **Timeline & Budget**: Clear roadmap and cost estimates\n`;
+        marketAnalysis += `5. **MVP Development**: Start building your solution\n\n`;
+        marketAnalysis += `**We're excited to help bring your vision to life!** 💙`;
+
+        const finalOutput = {
+          id: getNextMessageId(),
+          text: marketAnalysis,
+          sender: 'bot',
+          timestamp: new Date(),
+          showFinalActions: true
+        };
+
+        setMessages(prev => [...prev, finalOutput]);
+        setIsTyping(false);
+
+        // Save final output to sheet
+        saveToSheet('Final Analysis Generated', finalOutput.text, selectedDomain?.name, selectedSubDomain);
+      } catch (error) {
+        console.error('Error generating market analysis:', error);
+
+        // Fallback to simple message if CSV loading fails
+        const fallbackOutput = {
+          id: getNextMessageId(),
+          text: `## Market Analysis\n\nThank you for sharing your idea in the ${selectedDomain?.name} space!\n\nBased on your requirement: "${requirement}"\n\n### Next Steps\n\n1. Schedule a discovery call\n2. Review detailed requirements\n3. Discuss implementation timeline\n\n**We're excited to help bring your vision to life!** 💙`,
+          sender: 'bot',
+          timestamp: new Date(),
+          showFinalActions: true
+        };
+
+        setMessages(prev => [...prev, fallbackOutput]);
+        setIsTyping(false);
+      }
     }, 2000);
   };
 
