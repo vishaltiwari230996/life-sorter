@@ -393,12 +393,13 @@ const ChatBot = () => {
         const data = await response.json();
         const aiAnswer = data.message || "I'm here to help!";
 
-        // Combine AI answer with redirect message
+        // Combine AI answer with redirect message and show domain chips
         const botMessage = {
           id: getNextMessageId(),
-          text: `${aiAnswer}\n\nNow, to help you find the right business solution, please select a domain from the options above that matches your needs.`,
+          text: `${aiAnswer}\n\nNow, to help you find the right business solution, please select a domain:`,
           sender: 'bot',
-          timestamp: new Date()
+          timestamp: new Date(),
+          showDomains: true  // Show domain chips right here
         };
 
         setMessages(prev => [...prev, botMessage]);
@@ -408,9 +409,10 @@ const ChatBot = () => {
         // Fallback if AI fails
         const botMessage = {
           id: getNextMessageId(),
-          text: `I'd love to help! To get started, please select a business domain from the options above that best matches your needs.`,
+          text: `I'd love to help! To get started, please select a business domain:`,
           sender: 'bot',
-          timestamp: new Date()
+          timestamp: new Date(),
+          showDomains: true  // Show domain chips
         };
 
         setMessages(prev => [...prev, botMessage]);
@@ -442,12 +444,14 @@ const ChatBot = () => {
         const data = await response.json();
         const aiAnswer = data.message || "Great question!";
 
-        // Combine AI answer with redirect message
+        // Combine AI answer with redirect message and show subdomain chips
         const botMessage = {
           id: getNextMessageId(),
-          text: `${aiAnswer}\n\nNow, please choose a specific area from the options above that you'd like to focus on in ${selectedDomain?.name}.`,
+          text: `${aiAnswer}\n\nNow, please choose a specific area in ${selectedDomain?.name}:`,
           sender: 'bot',
-          timestamp: new Date()
+          timestamp: new Date(),
+          showSubDomains: true,  // Show subdomain chips right here
+          domainId: selectedDomain?.id
         };
 
         setMessages(prev => [...prev, botMessage]);
@@ -457,9 +461,11 @@ const ChatBot = () => {
         // Fallback if AI fails
         const botMessage = {
           id: getNextMessageId(),
-          text: `Great! Now please choose a specific area from the options above that you'd like to focus on.`,
+          text: `Great! Now please choose a specific area in ${selectedDomain?.name}:`,
           sender: 'bot',
-          timestamp: new Date()
+          timestamp: new Date(),
+          showSubDomains: true,  // Show subdomain chips
+          domainId: selectedDomain?.id
         };
 
         setMessages(prev => [...prev, botMessage]);
