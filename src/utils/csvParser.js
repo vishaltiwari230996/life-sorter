@@ -1,54 +1,34 @@
-import Papa from 'papaparse';
-
-// Google Sheet ID from the provided link
-const SHEET_ID = '1JKx3RwPbUL2-r5l8ayDUQfKU3kiIEg-FkFym3yJCNiw';
-const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
-
 /**
- * Fetches and parses company data from Google Sheet
+ * Fetches company data from backend API (which fetches from Google Sheet)
+ * @param {string} domain - Domain ID to fetch the correct sheet tab
  * @returns {Promise<Array>} Array of company objects
  */
-export async function fetchCompaniesCSV() {
+export async function fetchCompaniesCSV(domain) {
   try {
-    const response = await fetch(SHEET_CSV_URL);
+    const url = domain
+      ? `/api/companies?domain=${encodeURIComponent(domain)}`
+      : '/api/companies';
+
+    console.log('Fetching companies for domain:', domain);
+    const response = await fetch(url);
 
     if (!response.ok) {
-      console.warn('Failed to fetch Google Sheet, status:', response.status);
+      console.error('Failed to fetch companies:', response.status);
       return [];
     }
 
-    const csvText = await response.text();
+    const data = await response.json();
 
-    return new Promise((resolve, reject) => {
-      Papa.parse(csvText, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: (header) => header.trim(),
-        complete: (results) => {
-          // Normalize column names for easier access
-          const normalized = results.data.map(row => ({
-            name: row['Startup name'] || '',
-            country: row['Country'] || '',
-            problem: row['Basic problem'] || '',
-            differentiator: row['Differentiator'] || '',
-            description: row['Core product description (<=3 lines)'] || '',
-            aiAdvantage: row['Main AI / data advantage'] || '',
-            fundingAmount: row['Latest Funding Amount'] || '',
-            fundingDate: row['Latest Funding Date'] || '',
-            pricing: row['Pricing motion & segment'] || '',
-            // Keep original row for any additional columns
-            _raw: row
-          }));
-          resolve(normalized);
-        },
-        error: (error) => {
-          console.error('CSV parsing error:', error);
-          reject(error);
-        }
-      });
-    });
+    if (!data.success) {
+      console.error('API error:', data.error);
+      return [];
+    }
+
+    console.log('Fetched companies:', data.count, 'for domain:', domain);
+    return data.companies || [];
+
   } catch (error) {
-    console.error('Error fetching Google Sheet:', error);
+    console.error('Error fetching companies:', error);
     return [];
   }
 }
@@ -93,10 +73,10 @@ export function searchCompanies(companies, query) {
 }
 
 /**
- * Filters companies by domain and subdomain keywords
- * @param {Array} companies - Array of all companies
- * @param {string} domain - Selected domain
- * @param {string} subdomain - Selected subdomain
+ * Filters companies by subdomain keywords (domain filtering done via sheet selection)
+ * @param {Array} companies - Array of companies from domain-specific sheet
+ * @param {string} domain - Selected domain (not used for filtering since sheet is domain-specific)
+ * @param {string} subdomain - Selected subdomain for optional filtering
  * @returns {Array} Filtered companies
  */
 export function filterCompaniesByDomain(companies, domain, subdomain) {
@@ -104,42 +84,30 @@ export function filterCompaniesByDomain(companies, domain, subdomain) {
     return [];
   }
 
-  // Domain keyword mappings
-  const domainKeywords = {
-    'marketing': ['marketing', 'seo', 'content', 'ads', 'advertising', 'campaign', 'brand'],
-    'sales-support': ['sales', 'crm', 'support', 'customer service', 'lead', 'conversion'],
-    'social-media': ['social', 'instagram', 'linkedin', 'twitter', 'video', 'influencer'],
-    'legal': ['legal', 'contract', 'compliance', 'law', 'litigation', 'attorney'],
-    'hr-hiring': ['hr', 'hiring', 'recruit', 'talent', 'interview', 'onboarding', 'employee'],
-    'finance': ['finance', 'accounting', 'invoice', 'expense', 'budget', 'cfo', 'bookkeeping'],
-    'supply-chain': ['supply', 'logistics', 'inventory', 'shipping', 'procurement', 'warehouse'],
-    'research': ['research', 'competitor', 'market', 'analysis', 'intelligence', 'insight'],
-    'data-analysis': ['data', 'analytics', 'dashboard', 'reporting', 'forecast', 'bi']
-  };
+  // Since we fetch from domain-specific sheets, all companies are already relevant
+  // Only filter by subdomain if specified and not "others"
+  if (!subdomain || subdomain === 'others') {
+    return companies; // Return all companies from the domain sheet
+  }
 
-  const keywords = domainKeywords[domain] || [domain?.toLowerCase()];
-  const subdomainLower = subdomain?.toLowerCase() || '';
+  const subdomainLower = subdomain.toLowerCase();
+  const subdomainTerms = subdomainLower.split(/\s+/).filter(t => t.length > 2);
 
-  return companies.filter(company => {
+  // If subdomain specified, try to find matches but fall back to all if none found
+  const filtered = companies.filter(company => {
     const searchText = [
       company.problem,
       company.description,
       company.differentiator,
-      company.aiAdvantage
+      company.aiAdvantage,
+      company.name
     ].join(' ').toLowerCase();
 
-    // Check domain match
-    const domainMatch = keywords.some(kw => searchText.includes(kw));
-
-    // Check subdomain match if provided
-    if (subdomain && subdomain !== 'others') {
-      const subdomainTerms = subdomainLower.split(/\s+/).filter(t => t.length > 2);
-      const subdomainMatch = subdomainTerms.some(term => searchText.includes(term));
-      return domainMatch && subdomainMatch;
-    }
-
-    return domainMatch;
+    return subdomainTerms.some(term => searchText.includes(term));
   });
+
+  // If no subdomain matches found, return all companies from domain
+  return filtered.length > 0 ? filtered : companies;
 }
 
 /**
@@ -155,8 +123,8 @@ export function formatCompaniesForDisplay(companies, limit = 5) {
 
   const limited = companies.slice(0, limit);
 
-  return limited.map(company => {
-    let output = `**${company.name}**`;
+  return limited.map((company, index) => {
+    let output = `${index + 1}. **${company.name}**`;
 
     if (company.country) {
       output += ` (${company.country})`;
@@ -165,19 +133,19 @@ export function formatCompaniesForDisplay(companies, limit = 5) {
     output += '\n';
 
     if (company.problem) {
-      output += `  Problem: ${company.problem}\n`;
+      output += `   - Problem: ${company.problem}\n`;
     }
 
     if (company.description) {
-      output += `  What they do: ${company.description}\n`;
+      output += `   - What they do: ${company.description}\n`;
     }
 
     if (company.differentiator) {
-      output += `  Differentiator: ${company.differentiator}\n`;
+      output += `   - Differentiator: ${company.differentiator}\n`;
     }
 
     if (company.fundingAmount) {
-      output += `  Funding: ${company.fundingAmount}`;
+      output += `   - Funding: ${company.fundingAmount}`;
       if (company.fundingDate) {
         output += ` (${company.fundingDate})`;
       }
@@ -199,7 +167,7 @@ export function getAlternatives(companies, domain) {
     return [];
   }
 
-  // Return random sample from related domains or all if no domain
+  // Return random sample
   const shuffled = [...companies].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, 5);
 }
