@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: 90vh; /* Ensure it fits in viewport */
   max-width: 820px; /* Reduced from 900px for less chunky feel */
   width: 100%;
   margin: 0 auto;
@@ -23,12 +24,14 @@
 @media (max-width: 768px) {
   .chatbot-container {
     padding: 0 0.5rem;
+    max-height: 85vh; /* More space for mobile keyboards */
   }
 }
 
 @media (max-width: 480px) {
   .chatbot-container {
     padding: 0;
+    max-height: 80vh; /* Even more space for small screens */
   }
 }
 
@@ -39,7 +42,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  min-height: 600px; /* Increased chat area height */
+  min-height: 0; /* Allow flex to control height */
 }
 
 .messages-container::-webkit-scrollbar {
