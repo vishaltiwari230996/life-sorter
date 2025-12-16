@@ -1,54 +1,28 @@
-import Papa from 'papaparse';
-
-// Google Sheet ID from the provided link
-const SHEET_ID = '1JKx3RwPbUL2-r5l8ayDUQfKU3kiIEg-FkFym3yJCNiw';
-const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
-
 /**
- * Fetches and parses company data from Google Sheet
+ * Fetches company data from backend API (which fetches from Google Sheet)
  * @returns {Promise<Array>} Array of company objects
  */
 export async function fetchCompaniesCSV() {
   try {
-    const response = await fetch(SHEET_CSV_URL);
+    const response = await fetch('/api/companies');
 
     if (!response.ok) {
-      console.warn('Failed to fetch Google Sheet, status:', response.status);
+      console.error('Failed to fetch companies:', response.status);
       return [];
     }
 
-    const csvText = await response.text();
+    const data = await response.json();
 
-    return new Promise((resolve, reject) => {
-      Papa.parse(csvText, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: (header) => header.trim(),
-        complete: (results) => {
-          // Normalize column names for easier access
-          const normalized = results.data.map(row => ({
-            name: row['Startup name'] || '',
-            country: row['Country'] || '',
-            problem: row['Basic problem'] || '',
-            differentiator: row['Differentiator'] || '',
-            description: row['Core product description (<=3 lines)'] || '',
-            aiAdvantage: row['Main AI / data advantage'] || '',
-            fundingAmount: row['Latest Funding Amount'] || '',
-            fundingDate: row['Latest Funding Date'] || '',
-            pricing: row['Pricing motion & segment'] || '',
-            // Keep original row for any additional columns
-            _raw: row
-          }));
-          resolve(normalized);
-        },
-        error: (error) => {
-          console.error('CSV parsing error:', error);
-          reject(error);
-        }
-      });
-    });
+    if (!data.success) {
+      console.error('API error:', data.error);
+      return [];
+    }
+
+    console.log('Fetched companies:', data.count);
+    return data.companies || [];
+
   } catch (error) {
-    console.error('Error fetching Google Sheet:', error);
+    console.error('Error fetching companies:', error);
     return [];
   }
 }
@@ -104,28 +78,29 @@ export function filterCompaniesByDomain(companies, domain, subdomain) {
     return [];
   }
 
-  // Domain keyword mappings
+  // Domain keyword mappings - expanded for better matching
   const domainKeywords = {
-    'marketing': ['marketing', 'seo', 'content', 'ads', 'advertising', 'campaign', 'brand'],
-    'sales-support': ['sales', 'crm', 'support', 'customer service', 'lead', 'conversion'],
-    'social-media': ['social', 'instagram', 'linkedin', 'twitter', 'video', 'influencer'],
-    'legal': ['legal', 'contract', 'compliance', 'law', 'litigation', 'attorney'],
-    'hr-hiring': ['hr', 'hiring', 'recruit', 'talent', 'interview', 'onboarding', 'employee'],
-    'finance': ['finance', 'accounting', 'invoice', 'expense', 'budget', 'cfo', 'bookkeeping'],
-    'supply-chain': ['supply', 'logistics', 'inventory', 'shipping', 'procurement', 'warehouse'],
-    'research': ['research', 'competitor', 'market', 'analysis', 'intelligence', 'insight'],
-    'data-analysis': ['data', 'analytics', 'dashboard', 'reporting', 'forecast', 'bi']
+    'marketing': ['marketing', 'seo', 'content', 'ads', 'advertising', 'campaign', 'brand', 'email', 'outreach', 'lead gen', 'demand'],
+    'sales-support': ['sales', 'crm', 'support', 'customer service', 'lead', 'conversion', 'sdr', 'outbound', 'inbound', 'ticket', 'helpdesk'],
+    'social-media': ['social', 'instagram', 'linkedin', 'twitter', 'video', 'influencer', 'creator', 'content', 'scheduling', 'post', 'engagement'],
+    'legal': ['legal', 'contract', 'compliance', 'law', 'litigation', 'attorney', 'lawyer', 'document', 'clause'],
+    'hr-hiring': ['hr', 'hiring', 'recruit', 'talent', 'interview', 'onboarding', 'employee', 'candidate', 'resume', 'job'],
+    'finance': ['finance', 'accounting', 'invoice', 'expense', 'budget', 'cfo', 'bookkeeping', 'payment', 'billing', 'tax'],
+    'supply-chain': ['supply', 'logistics', 'inventory', 'shipping', 'procurement', 'warehouse', 'fulfillment', 'order', 'delivery'],
+    'research': ['research', 'competitor', 'market', 'intelligence', 'insight', 'trend', 'analysis', 'monitor'],
+    'data-analysis': ['data', 'analytics', 'dashboard', 'reporting', 'forecast', 'bi', 'visualization', 'metrics', 'kpi']
   };
 
   const keywords = domainKeywords[domain] || [domain?.toLowerCase()];
   const subdomainLower = subdomain?.toLowerCase() || '';
 
-  return companies.filter(company => {
+  const results = companies.filter(company => {
     const searchText = [
       company.problem,
       company.description,
       company.differentiator,
-      company.aiAdvantage
+      company.aiAdvantage,
+      company.name
     ].join(' ').toLowerCase();
 
     // Check domain match
@@ -135,11 +110,13 @@ export function filterCompaniesByDomain(companies, domain, subdomain) {
     if (subdomain && subdomain !== 'others') {
       const subdomainTerms = subdomainLower.split(/\s+/).filter(t => t.length > 2);
       const subdomainMatch = subdomainTerms.some(term => searchText.includes(term));
-      return domainMatch && subdomainMatch;
+      return domainMatch || subdomainMatch; // Match either domain OR subdomain for broader results
     }
 
     return domainMatch;
   });
+
+  return results;
 }
 
 /**
@@ -155,8 +132,8 @@ export function formatCompaniesForDisplay(companies, limit = 5) {
 
   const limited = companies.slice(0, limit);
 
-  return limited.map(company => {
-    let output = `**${company.name}**`;
+  return limited.map((company, index) => {
+    let output = `${index + 1}. **${company.name}**`;
 
     if (company.country) {
       output += ` (${company.country})`;
@@ -165,19 +142,19 @@ export function formatCompaniesForDisplay(companies, limit = 5) {
     output += '\n';
 
     if (company.problem) {
-      output += `  Problem: ${company.problem}\n`;
+      output += `   - Problem: ${company.problem}\n`;
     }
 
     if (company.description) {
-      output += `  What they do: ${company.description}\n`;
+      output += `   - What they do: ${company.description}\n`;
     }
 
     if (company.differentiator) {
-      output += `  Differentiator: ${company.differentiator}\n`;
+      output += `   - Differentiator: ${company.differentiator}\n`;
     }
 
     if (company.fundingAmount) {
-      output += `  Funding: ${company.fundingAmount}`;
+      output += `   - Funding: ${company.fundingAmount}`;
       if (company.fundingDate) {
         output += ` (${company.fundingDate})`;
       }
@@ -199,7 +176,7 @@ export function getAlternatives(companies, domain) {
     return [];
   }
 
-  // Return random sample from related domains or all if no domain
+  // Return random sample
   const shuffled = [...companies].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, 5);
 }
