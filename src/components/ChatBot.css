@@ -70,7 +70,7 @@
 }
 
 .bot-message {
-  background: rgba(255, 255, 255, 0.015); /* More subtle */
+  background: transparent; /* Remove translucent box for cleaner look */
 }
 
 .user-message {
