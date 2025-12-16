@@ -619,6 +619,60 @@
   }
 }
 
+/* Persistent Button Bar */
+.persistent-button-bar {
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.button-bar-content {
+  max-width: 100%;
+}
+
+.button-bar-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.persistent-button-bar .domain-chips,
+.persistent-button-bar .subdomain-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+/* Custom scrollbar for button bar */
+.persistent-button-bar .domain-chips::-webkit-scrollbar,
+.persistent-button-bar .subdomain-chips::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.persistent-button-bar .domain-chips::-webkit-scrollbar-track,
+.persistent-button-bar .subdomain-chips::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.persistent-button-bar .domain-chips::-webkit-scrollbar-thumb,
+.persistent-button-bar .subdomain-chips::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.persistent-button-bar .domain-chips::-webkit-scrollbar-thumb:hover,
+.persistent-button-bar .subdomain-chips::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 .input-container {
   padding: 1.25rem 1.5rem 1.75rem 1.5rem; /* Reduced padding */
   background: transparent;
@@ -781,6 +835,22 @@
 
   .message-time {
     font-size: 0.7rem;
+  }
+
+  /* Persistent Button Bar */
+  .persistent-button-bar {
+    padding: 0.85rem 1rem;
+  }
+
+  .button-bar-label {
+    font-size: 0.8rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .persistent-button-bar .domain-chips,
+  .persistent-button-bar .subdomain-chips {
+    max-height: 200px;
+    gap: 0.6rem;
   }
 
   /* Domain Chips */
@@ -961,6 +1031,22 @@
   .message-time {
     font-size: 0.65rem;
     margin-top: 0.5rem;
+  }
+
+  /* Persistent Button Bar - Mobile */
+  .persistent-button-bar {
+    padding: 0.75rem;
+  }
+
+  .button-bar-label {
+    font-size: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .persistent-button-bar .domain-chips,
+  .persistent-button-bar .subdomain-chips {
+    max-height: 180px;
+    gap: 0.5rem;
   }
 
   /* Domain Chips - Stack on small screens */
