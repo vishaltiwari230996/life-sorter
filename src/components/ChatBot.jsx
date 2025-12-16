@@ -72,10 +72,10 @@ const ChatBot = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Hey, I'm Ikshan's AI Copilot. What are you here for today?\n\nLet's capture your idea! First, select the business domain:",
+      text: "✨ Welcome to Ikshan! 😊\n\nI'll help you find the right AI tools, step by step.\n\nJust pick your domain 🚀 and we'll take it from there.",
       sender: 'bot',
       timestamp: new Date(),
-      showDomains: true
+      showQuickReplies: true
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -103,6 +103,12 @@ const ChatBot = () => {
     { id: 'supply-chain', name: 'Supply chain', emoji: '🚚' },
     { id: 'research', name: 'Research', emoji: '🔬' },
     { id: 'data-analysis', name: 'Data Analysis', emoji: '📊' }
+  ];
+
+  const quickReplies = [
+    { id: 'about', text: 'What does Ikshan do?', icon: '💡' },
+    { id: 'tools', text: 'Show me AI tools', icon: '🤖' },
+    { id: 'custom', text: 'I have a custom idea', icon: '💭' }
   ];
 
   const subDomains = {
@@ -194,9 +200,12 @@ const ChatBot = () => {
   };
 
   const scrollToBottom = () => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
+    // Use setTimeout to ensure DOM has updated
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    }, 100);
   };
 
   useEffect(() => {
@@ -249,6 +258,55 @@ const ChatBot = () => {
     }
   };
 
+  const handleQuickReply = async (replyId, replyText) => {
+    // Add user message
+    const userMessage = {
+      id: getNextMessageId(),
+      text: replyText,
+      sender: 'user',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+
+    setIsTyping(true);
+
+    // Handle different quick reply actions
+    if (replyId === 'about') {
+      setTimeout(() => {
+        const botMessage = {
+          id: getNextMessageId(),
+          text: "Ikshan empowers startups and small businesses with **best-in-class AI tools** that eliminate barriers. 🚀\n\n✅ We offer AI solutions like SEO Optimizer and AnyOCR\n✅ If we don't have what you need, we'll connect you to the right tool\n✅ If it doesn't exist, we'll help you build it\n\n**Our philosophy:** Come to Ikshan, get a solution - no matter what. 💙\n\nReady to explore? Pick a domain below!",
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botMessage]);
+        setIsTyping(false);
+      }, 1000);
+    } else if (replyId === 'tools') {
+      setTimeout(() => {
+        const botMessage = {
+          id: getNextMessageId(),
+          text: "Great! I'll help you discover the perfect AI tools for your needs. 🎯\n\nFirst, let's understand what area you're working in. Pick a domain from the options below:",
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botMessage]);
+        setIsTyping(false);
+      }, 1000);
+    } else if (replyId === 'custom') {
+      setTimeout(() => {
+        const botMessage = {
+          id: getNextMessageId(),
+          text: "Awesome! Custom solutions are our specialty. 💡\n\nTo understand your vision better, let's start by picking the domain that matches your idea:",
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botMessage]);
+        setIsTyping(false);
+      }, 1000);
+    }
+  };
+
   const handleDomainClick = (domain) => {
     setSelectedDomain(domain);
     setFlowStage('subdomain');
@@ -262,11 +320,9 @@ const ChatBot = () => {
 
     const botMessage = {
       id: getNextMessageId(),
-      text: `Cool. Pick a sub-domain:`,
+      text: `Great choice! Now pick a specific area from the options below:`,
       sender: 'bot',
-      timestamp: new Date(),
-      showSubDomains: true,
-      domainId: domain.id
+      timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage, botMessage]);
@@ -487,13 +543,12 @@ const ChatBot = () => {
         const data = await response.json();
         const aiAnswer = data.message || "I'm here to help!";
 
-        // Combine AI answer with redirect message and show domain chips
+        // Combine AI answer with redirect message
         const botMessage = {
           id: getNextMessageId(),
-          text: `${aiAnswer}\n\nNow, to help you find the right business solution, please select a domain:`,
+          text: `${aiAnswer}\n\nNow, to help you find the right business solution, please select a domain from the options below:`,
           sender: 'bot',
-          timestamp: new Date(),
-          showDomains: true  // Show domain chips right here
+          timestamp: new Date()
         };
 
         setMessages(prev => [...prev, botMessage]);
@@ -503,10 +558,9 @@ const ChatBot = () => {
         // Fallback if AI fails
         const botMessage = {
           id: getNextMessageId(),
-          text: `I'd love to help! To get started, please select a business domain:`,
+          text: `I'd love to help! To get started, please select a domain from the options below:`,
           sender: 'bot',
-          timestamp: new Date(),
-          showDomains: true  // Show domain chips
+          timestamp: new Date()
         };
 
         setMessages(prev => [...prev, botMessage]);
@@ -554,14 +608,12 @@ const ChatBot = () => {
         const data = await response.json();
         const aiAnswer = data.message || "Great question!";
 
-        // Combine AI answer with redirect message and show subdomain chips
+        // Combine AI answer with redirect message
         const botMessage = {
           id: getNextMessageId(),
-          text: `${aiAnswer}\n\nNow, please choose a specific area in ${selectedDomain?.name}:`,
+          text: `${aiAnswer}\n\nNow, please choose a specific area from the options below:`,
           sender: 'bot',
-          timestamp: new Date(),
-          showSubDomains: true,  // Show subdomain chips right here
-          domainId: selectedDomain?.id
+          timestamp: new Date()
         };
 
         setMessages(prev => [...prev, botMessage]);
@@ -571,11 +623,9 @@ const ChatBot = () => {
         // Fallback if AI fails
         const botMessage = {
           id: getNextMessageId(),
-          text: `Great! Now please choose a specific area in ${selectedDomain?.name}:`,
+          text: `Great! Now please choose a specific area from the options below:`,
           sender: 'bot',
-          timestamp: new Date(),
-          showSubDomains: true,  // Show subdomain chips
-          domainId: selectedDomain?.id
+          timestamp: new Date()
         };
 
         setMessages(prev => [...prev, botMessage]);
@@ -667,29 +717,16 @@ const ChatBot = () => {
                   message.text
                 )}
               </div>
-              {message.showDomains && (
-                <div className="domain-chips">
-                  {domains.map((domain) => (
+              {message.showQuickReplies && flowStage === 'domain' && (
+                <div className="quick-replies">
+                  {quickReplies.map((reply) => (
                     <button
-                      key={domain.id}
-                      className="domain-chip"
-                      onClick={() => handleDomainClick(domain)}
+                      key={reply.id}
+                      className="quick-reply-button"
+                      onClick={() => handleQuickReply(reply.id, reply.text)}
                     >
-                      <span className="domain-emoji">{domain.emoji}</span>
-                      <span className="domain-name">{domain.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {message.showSubDomains && message.domainId && (
-                <div className="subdomain-chips">
-                  {subDomains[message.domainId]?.map((subDomain, index) => (
-                    <button
-                      key={index}
-                      className="subdomain-chip"
-                      onClick={() => handleSubDomainClick(subDomain)}
-                    >
-                      {subDomain}
+                      <span className="quick-reply-icon">{reply.icon}</span>
+                      <span className="quick-reply-text">{reply.text}</span>
                     </button>
                   ))}
                 </div>
@@ -757,6 +794,39 @@ const ChatBot = () => {
           </button>
         </div>
       </div>
+
+      {/* Persistent Button Bar - Always visible below input */}
+      {(flowStage === 'domain' || flowStage === 'subdomain') && (
+        <div className="persistent-button-bar">
+          {flowStage === 'domain' && (
+            <div className="domain-chips">
+              {domains.map((domain) => (
+                <button
+                  key={domain.id}
+                  className="domain-chip"
+                  onClick={() => handleDomainClick(domain)}
+                >
+                  <span className="domain-emoji">{domain.emoji}</span>
+                  <span className="domain-name">{domain.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {flowStage === 'subdomain' && selectedDomain && (
+            <div className="subdomain-chips">
+              {subDomains[selectedDomain.id]?.map((subDomain, index) => (
+                <button
+                  key={index}
+                  className="subdomain-chip"
+                  onClick={() => handleSubDomainClick(subDomain)}
+                >
+                  {subDomain}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

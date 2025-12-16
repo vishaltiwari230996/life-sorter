@@ -1,13 +1,14 @@
 .chatbot-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 90vh; /* Fixed height - doesn't grow with content */
   max-width: 820px; /* Reduced from 900px for less chunky feel */
   width: 100%;
   margin: 0 auto;
   background: transparent;
   position: relative;
   z-index: 1;
+  overflow: hidden; /* Prevent double scrollbar */
   font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px; /* Base font size for professional look */
 }
@@ -23,22 +24,25 @@
 @media (max-width: 768px) {
   .chatbot-container {
     padding: 0 0.5rem;
+    height: 85vh; /* Fixed height for tablet */
   }
 }
 
 @media (max-width: 480px) {
   .chatbot-container {
     padding: 0;
+    height: 80vh; /* Fixed height for mobile */
   }
 }
 
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem 0; /* Reduced padding */
+  padding: 1rem 0 1.5rem 0; /* Add breathing room at top */
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 1.25rem; /* Add space between messages */
+  min-height: 0; /* Allow flex to control height */
 }
 
 .messages-container::-webkit-scrollbar {
@@ -60,13 +64,13 @@
 
 .message {
   display: flex;
-  gap: 1rem; /* Reduced gap */
-  padding: 1rem 1.5rem; /* Reduced padding for less chunky feel */
+  gap: 1rem;
+  padding: 1.5rem 1.5rem; /* Increased vertical padding for breathing room */
   animation: slideIn 0.3s ease-out;
 }
 
 .bot-message {
-  background: rgba(255, 255, 255, 0.015); /* More subtle */
+  background: transparent; /* Remove translucent box for cleaner look */
 }
 
 .user-message {
@@ -125,8 +129,8 @@
 }
 
 .message-text {
-  font-size: 14px; /* Smaller, more professional */
-  line-height: 1.6; /* Tighter line height */
+  font-size: 14px;
+  line-height: 1.8; /* More spacious line height for readability */
   color: rgba(255, 255, 255, 0.88);
   word-wrap: break-word;
   font-weight: 400;
@@ -159,8 +163,8 @@
 }
 
 .message-text p {
-  margin: 0.75rem 0;
-  line-height: 1.7;
+  margin: 0.85rem 0;
+  line-height: 1.85;
 }
 
 .message-text p:first-child {
@@ -338,6 +342,53 @@
   transform: scale(0.97);
 }
 
+/* Quick Reply Buttons */
+.quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 0.5rem;
+}
+
+.quick-reply-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.25rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1.5px solid #8b5cf6; /* Purple/violet border */
+  border-radius: 24px; /* Pill-shaped */
+  color: #6d28d9; /* Purple text */
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(139, 92, 246, 0.1);
+}
+
+.quick-reply-button:hover {
+  background: #faf5ff; /* Light purple tint */
+  border-color: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(139, 92, 246, 0.2);
+}
+
+.quick-reply-button:active {
+  transform: scale(0.98);
+}
+
+.quick-reply-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.quick-reply-text {
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
 /* Product Chips */
 .product-chips {
   display: grid;
@@ -405,7 +456,7 @@
   padding: 0.5rem 0.875rem; /* More compact */
   background: rgba(255, 255, 255, 0.04); /* More subtle */
   border: 1px solid rgba(255, 255, 255, 0.1); /* Lighter border */
-  border-radius: 8px; /* Less rounded */
+  border-radius: 16px; /* More rounded */
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother transition */
   display: inline-flex;
@@ -449,7 +500,7 @@
   padding: 0.45rem 0.8rem; /* More compact */
   background: rgba(255, 255, 255, 0.04); /* More subtle */
   border: 1px solid rgba(255, 255, 255, 0.08); /* Lighter border */
-  border-radius: 6px; /* Less rounded, more professional */
+  border-radius: 14px; /* More rounded */
   color: rgba(255, 255, 255, 0.82);
   font-size: 0.8rem; /* Slightly smaller */
   font-weight: 400;
@@ -619,6 +670,63 @@
   }
 }
 
+/* Persistent Button Bar */
+.persistent-button-bar {
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.button-bar-content {
+  max-width: 100%;
+}
+
+.button-bar-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.persistent-button-bar .domain-chips,
+.persistent-button-bar .subdomain-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.85rem;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+/* Custom scrollbar for button bar */
+.persistent-button-bar .domain-chips::-webkit-scrollbar,
+.persistent-button-bar .subdomain-chips::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.persistent-button-bar .domain-chips::-webkit-scrollbar-track,
+.persistent-button-bar .subdomain-chips::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.persistent-button-bar .domain-chips::-webkit-scrollbar-thumb,
+.persistent-button-bar .subdomain-chips::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.persistent-button-bar .domain-chips::-webkit-scrollbar-thumb:hover,
+.persistent-button-bar .subdomain-chips::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 .input-container {
   padding: 1.25rem 1.5rem 1.75rem 1.5rem; /* Reduced padding */
   background: transparent;
@@ -781,6 +889,22 @@
 
   .message-time {
     font-size: 0.7rem;
+  }
+
+  /* Persistent Button Bar */
+  .persistent-button-bar {
+    padding: 0.85rem 1rem;
+  }
+
+  .button-bar-label {
+    font-size: 0.8rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .persistent-button-bar .domain-chips,
+  .persistent-button-bar .subdomain-chips {
+    max-height: 200px;
+    gap: 0.6rem;
   }
 
   /* Domain Chips */
@@ -961,6 +1085,22 @@
   .message-time {
     font-size: 0.65rem;
     margin-top: 0.5rem;
+  }
+
+  /* Persistent Button Bar - Mobile */
+  .persistent-button-bar {
+    padding: 0.75rem;
+  }
+
+  .button-bar-label {
+    font-size: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .persistent-button-bar .domain-chips,
+  .persistent-button-bar .subdomain-chips {
+    max-height: 180px;
+    gap: 0.5rem;
   }
 
   /* Domain Chips - Stack on small screens */
