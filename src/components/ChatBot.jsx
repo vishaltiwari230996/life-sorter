@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Mic, MicOff, Home, MessageSquare, Settings, Clipboard, Search, ThumbsUp } from 'lucide-react';
+import { Send, Bot, User, Mic, MicOff, Home, MessageSquare, Settings, Clipboard, Search, ThumbsUp, Sparkles, FileSearch, Zap, LayoutDashboard } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import './ChatBot.css';
 import { formatCompaniesForDisplay, analyzeMarketGaps } from '../utils/csvParser';
@@ -69,68 +69,88 @@ const IdentityForm = ({ onSubmit }) => {
 };
 
 // Left Sidebar Component
-const LeftSidebar = ({ userName, userEmail, isRecording, toggleVoiceRecording, voiceSupported }) => {
-  const [activeNav, setActiveNav] = useState('dashboard');
+const LeftSidebar = ({ userName, userEmail, isRecording, toggleVoiceRecording, voiceSupported, activeProduct, setActiveProduct }) => {
+  const [activeNav, setActiveNav] = useState('assistant');
+
+  const products = [
+    { id: 'assistant', name: 'AI Assistant', icon: Sparkles, description: 'Find AI tools' },
+    { id: 'seo', name: 'SEO Optimizer', icon: FileSearch, description: 'Boost rankings' },
+    { id: 'ocr', name: 'AnyOCR', icon: Zap, description: 'Extract text' },
+  ];
 
   return (
     <div className="left-sidebar">
-      <div className="user-profile">
-        <div className="user-avatar">
-          {userName ? userName.charAt(0).toUpperCase() : 'G'}
+      {/* Ikshan Logo */}
+      <div className="sidebar-logo">
+        <div className="logo-icon">
+          <img src="/ikshan-logo.svg" alt="Ikshan" className="logo-img" />
         </div>
-        <div className="user-info">
-          <span className="user-name">{userName || 'Guest User'}</span>
-          <span className="user-email">{userEmail || 'guest@email.com'}</span>
-        </div>
+        <span className="logo-text">Ikshan</span>
       </div>
 
-      <nav className="nav-menu">
-        <button
-          className={`nav-item ${activeNav === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveNav('dashboard')}
-        >
-          <Home size={20} />
-          Dashboard
-        </button>
-        <button
-          className={`nav-item ${activeNav === 'messages' ? 'active' : ''}`}
-          onClick={() => setActiveNav('messages')}
-        >
-          <MessageSquare size={20} />
-          Messages
-        </button>
-        <button
-          className={`nav-item ${activeNav === 'settings' ? 'active' : ''}`}
-          onClick={() => setActiveNav('settings')}
-        >
-          <Settings size={20} />
-          Settings
-        </button>
-        <button
-          className={`nav-item ${activeNav === 'clipboard' ? 'active' : ''}`}
-          onClick={() => setActiveNav('clipboard')}
-        >
-          <Clipboard size={20} />
-          Clipboard
-        </button>
-      </nav>
-
-      <div className="sidebar-input-wrapper">
-        <input
-          type="text"
-          placeholder="Type your message..."
-          className="sidebar-input"
-        />
+      {/* Products Section */}
+      <div className="products-section">
+        <div className="section-label">Products</div>
+        <nav className="products-nav">
+          {products.map((product) => (
+            <button
+              key={product.id}
+              className={`product-nav-item ${activeNav === product.id ? 'active' : ''}`}
+              onClick={() => {
+                setActiveNav(product.id);
+                if (setActiveProduct) setActiveProduct(product.id);
+              }}
+            >
+              <product.icon size={18} />
+              <div className="product-nav-info">
+                <span className="product-nav-name">{product.name}</span>
+                <span className="product-nav-desc">{product.description}</span>
+              </div>
+            </button>
+          ))}
+        </nav>
       </div>
 
-      {voiceSupported && (
-        <button
-          className={`voice-button-large ${isRecording ? 'recording' : ''}`}
-          onClick={toggleVoiceRecording}
-        >
-          {isRecording ? <MicOff size={28} /> : <Mic size={28} />}
-        </button>
-      )}
+      {/* Navigation */}
+      <div className="nav-section">
+        <div className="section-label">Menu</div>
+        <nav className="nav-menu">
+          <button className="nav-item">
+            <LayoutDashboard size={18} />
+            Dashboard
+          </button>
+          <button className="nav-item">
+            <MessageSquare size={18} />
+            History
+          </button>
+          <button className="nav-item">
+            <Settings size={18} />
+            Settings
+          </button>
+        </nav>
+      </div>
+
+      {/* User Profile at bottom */}
+      <div className="sidebar-footer">
+        <div className="user-profile">
+          <div className="user-avatar">
+            {userName ? userName.charAt(0).toUpperCase() : 'G'}
+          </div>
+          <div className="user-info">
+            <span className="user-name">{userName || 'Guest User'}</span>
+            <span className="user-email">{userEmail || 'guest@email.com'}</span>
+          </div>
+        </div>
+
+        {voiceSupported && (
+          <button
+            className={`voice-button-large ${isRecording ? 'recording' : ''}`}
+            onClick={toggleVoiceRecording}
+          >
+            {isRecording ? <MicOff size={24} /> : <Mic size={24} />}
+          </button>
+        )}
+      </div>
     </div>
   );
 };
