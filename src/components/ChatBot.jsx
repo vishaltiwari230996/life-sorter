@@ -521,20 +521,19 @@ Rules:
         if (helpfulResponse) {
           // Use the AI-generated helpful response
           marketAnalysis = `## Here's what I found for you\n\n${helpfulResponse}\n\n`;
+        } else if (relevantCompanies.length > 0) {
+          // Fallback to simple listing if we have companies but no AI response
+          marketAnalysis = `## Here are some tools that could help\n\n`;
+          relevantCompanies.forEach((company, i) => {
+            marketAnalysis += `**${company.name}** - ${company.problem || company.description || 'An AI-powered solution that could help with your needs'}\n\n`;
+          });
         } else {
-          // Fallback to simple listing
-          marketAnalysis = `## Here's what I found\n\n`;
-          if (relevantCompanies.length > 0) {
-            relevantCompanies.forEach((company, i) => {
-              marketAnalysis += `**${company.name}** - ${company.problem || 'Helps with business automation'}\n\n`;
-            });
-          } else {
-            marketAnalysis += `I couldn't find exact matches, but don't worry - this could be a great opportunity to build something new!\n\n`;
-          }
+          // Ultimate fallback - should rarely happen
+          marketAnalysis = `## Let me help you\n\nI'm looking into the best tools for your needs in ${selectedDomain?.name || 'this area'}. Based on what you're looking for ("${requirement}"), there are several approaches we could explore together.\n\n`;
         }
 
         marketAnalysis += `---\n\n`;
-        marketAnalysis += `Would you like to explore a different idea or learn how to use one of these tools for your specific needs?`;
+        marketAnalysis += `What would you like to do next?`;
 
         const finalOutput = {
           id: getNextMessageId(),

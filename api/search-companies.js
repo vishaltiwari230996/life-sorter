@@ -47,18 +47,33 @@ export default async function handler(req, res) {
       transformHeader: (header) => header.trim()
     });
 
-    // Normalize column names
+    // Helper function to find column value with flexible matching
+    const getColumnValue = (row, possibleNames) => {
+      for (const name of possibleNames) {
+        if (row[name]) return row[name];
+        // Try case-insensitive match
+        const lowerName = name.toLowerCase();
+        for (const key of Object.keys(row)) {
+          if (key.toLowerCase() === lowerName || key.toLowerCase().includes(lowerName.split(' ')[0])) {
+            if (row[key]) return row[key];
+          }
+        }
+      }
+      return '';
+    };
+
+    // Normalize column names with flexible matching
     const companies = parsed.data
       .map(row => ({
-        name: row['Startup name'] || row['Startup Name'] || '',
-        country: row['Country'] || '',
-        problem: row['Basic problem'] || row['Basic Problem'] || '',
-        differentiator: row['Differentiator'] || '',
-        description: row['Core product description (<=3 lines)'] || row['Core product description'] || '',
-        aiAdvantage: row['Main AI / data advantage'] || row['Main AI/data advantage'] || '',
-        fundingAmount: row['Latest Funding Amount'] || '',
-        fundingDate: row['Latest Funding Date'] || '',
-        pricing: row['Pricing motion & segment'] || ''
+        name: getColumnValue(row, ['Startup name', 'Startup Name', 'Company', 'Name', 'Company Name']),
+        country: getColumnValue(row, ['Country', 'Location', 'Region']),
+        problem: getColumnValue(row, ['Basic problem', 'Basic Problem', 'Problem', 'Problem Statement', 'What they solve']),
+        differentiator: getColumnValue(row, ['Differentiator', 'Unique Value', 'USP', 'What makes them special']),
+        description: getColumnValue(row, ['Core product description (<=3 lines)', 'Core product description', 'Description', 'Product Description', 'What they do']),
+        aiAdvantage: getColumnValue(row, ['Main AI / data advantage', 'Main AI/data advantage', 'AI Advantage', 'Tech Advantage']),
+        fundingAmount: getColumnValue(row, ['Latest Funding Amount', 'Funding', 'Funding Amount']),
+        fundingDate: getColumnValue(row, ['Latest Funding Date', 'Funding Date']),
+        pricing: getColumnValue(row, ['Pricing motion & segment', 'Pricing', 'Price', 'Pricing Model'])
       }))
       .filter(c => c.name && c.name.trim());
 
@@ -110,8 +125,11 @@ export default async function handler(req, res) {
     ).join('\n');
 
     // First GPT call: Find relevant companies
-    const searchPrompt = `You are an AI assistant that matches user requirements to relevant AI/SaaS companies.
-Find the TOP 3 most relevant companies that can solve the user's problem.
+    const searchPrompt = `You are an AI assistant that matches user requirements to AI/SaaS companies.
+You MUST always find the TOP 3 BEST matches from the available companies - there is ALWAYS a best match.
+
+IMPORTANT: Even if no company is a perfect match, find the 3 CLOSEST ones that could potentially help.
+Think creatively - a marketing tool might help with sales, a data tool might help with research, etc.
 
 User's context: ${subdomain ? `${subdomain} in ${domain}` : domain || 'General business'}
 User's requirement: "${requirement}"
@@ -119,7 +137,7 @@ User's requirement: "${requirement}"
 Available companies (${companies.length} total):
 ${companySummaries}
 
-Return ONLY a JSON array of indices: [0, 2, 5]`;
+You MUST return exactly 3 indices. Return ONLY a JSON array: [0, 2, 5]`;
 
     console.log('Calling GPT for intelligent search...');
 
@@ -172,13 +190,13 @@ Return ONLY a JSON array of indices: [0, 2, 5]`;
     const matchedCompanies = matchedIndices.map(i => companies[i]);
 
     // Second GPT call: Generate helpful, layman explanation
-    const explanationPrompt = `You are a friendly business advisor helping someone find the right AI tool for their needs.
+    const explanationPrompt = `You are a friendly business advisor helping someone find AI tools for their needs.
 Write in VERY SIMPLE language - like explaining to a friend who isn't technical.
 
 The user needs help with: "${requirement}"
 Context: ${subdomain ? `${subdomain} in ${domain}` : domain || 'their business'}
 
-Here are the best solutions I found:
+Here are the best available solutions I found:
 
 ${matchedCompanies.map((c, i) => `
 Tool ${i + 1}: ${c.name}
@@ -188,18 +206,21 @@ Tool ${i + 1}: ${c.name}
 `).join('\n')}
 
 Write a helpful response that:
-1. Starts with a brief understanding of what the user is trying to solve (1 sentence)
-2. For each tool, explain in simple words:
+1. Start with understanding what the user wants (1 sentence)
+2. For each tool, explain:
    - The tool name (bold it with **)
-   - What problem it actually solves (in everyday language)
-   - Why it might be a good fit for their specific need (be specific!)
-3. Keep each tool explanation to 2-3 short sentences max
-4. Use a warm, helpful tone - like a knowledgeable friend giving advice
-5. End with an encouraging note
+   - What it does in simple words
+   - How it COULD help with their need (even if not a perfect fit, explain the connection)
+3. Keep each tool to 2-3 sentences
+4. Be warm and helpful - like a friend giving advice
+5. End with encouragement
 
-DO NOT use technical jargon. Imagine explaining to your grandmother.
-DO NOT use bullet points - write in flowing sentences.
-Keep the total response under 250 words.`;
+IMPORTANT RULES:
+- NEVER say "no matches found" or "not a perfect fit"
+- Always be positive and show how each tool can help
+- If a tool isn't directly related, explain how it could still be useful
+- Use everyday language, no jargon
+- Keep under 250 words`;
 
     const explanationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
