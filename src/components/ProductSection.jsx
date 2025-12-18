@@ -5,9 +5,9 @@ const ProductSection = () => {
   const products = [
     {
       id: 1,
-      name: 'SEO Optimizer',
-      tagline: 'SEO / Listing Optimization Engine',
-      description: 'Maximize your e-commerce success with AI-powered SEO optimization for Amazon and Flipkart. Boost visibility, drive sales, and dominate the marketplace.',
+      name: 'Ecom Listing Optimizer',
+      tagline: 'AI-Powered E-commerce Listing Engine',
+      description: 'Maximize your e-commerce success with AI-powered listing optimization for Amazon and Flipkart. Boost visibility, drive sales, and dominate the marketplace.',
       icon: ShoppingCart,
       color: '#fbbf24',
       gradient: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',

@@ -82,12 +82,15 @@ const ChatBot = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [selectedSubDomain, setSelectedSubDomain] = useState(null);
+  const [userRole, setUserRole] = useState(null); // 'business-owner' | 'professional' | 'other'
   const [requirement, setRequirement] = useState(null);
   const [userName, setUserName] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
-  const [flowStage, setFlowStage] = useState('domain'); // 'domain' | 'subdomain' | 'requirement' | 'identity' | 'complete'
+  const [flowStage, setFlowStage] = useState('domain'); // 'domain' | 'subdomain' | 'role' | 'requirement' | 'identity' | 'complete'
   const [isRecording, setIsRecording] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const messageIdCounter = useRef(1);
@@ -109,6 +112,13 @@ const ChatBot = () => {
     { id: 'about', text: 'What does Ikshan do?', icon: '💡' },
     { id: 'tools', text: 'Show me AI tools', icon: '🤖' },
     { id: 'custom', text: 'I have a custom idea', icon: '💭' }
+  ];
+
+  const roleOptions = [
+    { id: 'business-owner', text: 'Business Owner / Founder', emoji: '👔', description: 'I run my own business' },
+    { id: 'professional', text: 'Professional / Employee', emoji: '💼', description: 'I work for a company' },
+    { id: 'freelancer', text: 'Freelancer / Consultant', emoji: '🎯', description: 'I work independently' },
+    { id: 'student', text: 'Student / Learner', emoji: '📚', description: 'I\'m learning and exploring' }
   ];
 
   const subDomains = {
@@ -242,6 +252,64 @@ const ChatBot = () => {
     }
   }, []);
 
+  // Initialize Google Sign-In
+  useEffect(() => {
+    const checkGoogleLoaded = setInterval(() => {
+      if (window.google?.accounts?.id) {
+        setIsGoogleLoaded(true);
+        clearInterval(checkGoogleLoaded);
+      }
+    }, 100);
+
+    // Cleanup after 5 seconds if not loaded
+    setTimeout(() => clearInterval(checkGoogleLoaded), 5000);
+
+    return () => clearInterval(checkGoogleLoaded);
+  }, []);
+
+  const handleGoogleSignIn = () => {
+    if (!isGoogleLoaded || !window.google?.accounts?.id) {
+      // If Google isn't loaded, just reload
+      window.location.reload();
+      return;
+    }
+
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    if (!clientId) {
+      // No client ID configured, just reload
+      window.location.reload();
+      return;
+    }
+
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: handleGoogleCallback,
+    });
+
+    window.google.accounts.id.prompt();
+  };
+
+  const handleGoogleCallback = (response) => {
+    // Decode the JWT to get user info
+    const payload = JSON.parse(atob(response.credential.split('.')[1]));
+    setUserName(payload.name);
+    setUserEmail(payload.email);
+    setShowAuthModal(false);
+    window.location.reload();
+  };
+
+  const handleStartNewIdea = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    if (clientId && isGoogleLoaded) {
+      setShowAuthModal(true);
+    } else {
+      // No Google Auth configured, just reload
+      window.location.reload();
+    }
+  };
+
   const toggleVoiceRecording = () => {
     if (!recognitionRef.current) return;
 
@@ -275,7 +343,7 @@ const ChatBot = () => {
       setTimeout(() => {
         const botMessage = {
           id: getNextMessageId(),
-          text: "Ikshan empowers startups and small businesses with **best-in-class AI tools** that eliminate barriers. 🚀\n\n✅ We offer AI solutions like SEO Optimizer and AnyOCR\n✅ If we don't have what you need, we'll connect you to the right tool\n✅ If it doesn't exist, we'll help you build it\n\n**Our philosophy:** Come to Ikshan, get a solution - no matter what. 💙\n\nReady to explore? Pick a domain below!",
+          text: "Ikshan empowers startups and small businesses with **best-in-class AI tools** that eliminate barriers. 🚀\n\n✅ We offer AI solutions like Ecom Listing Optimizer and AnyOCR\n✅ If we don't have what you need, we'll connect you to the right tool\n✅ If it doesn't exist, we'll help you build it\n\n**Our philosophy:** Come to Ikshan, get a solution - no matter what. 💙\n\nReady to explore? Pick a domain below!",
           sender: 'bot',
           timestamp: new Date()
         };
@@ -333,7 +401,7 @@ const ChatBot = () => {
 
   const handleSubDomainClick = (subDomain) => {
     setSelectedSubDomain(subDomain);
-    setFlowStage('requirement');
+    setFlowStage('role');
 
     const userMessage = {
       id: getNextMessageId(),
@@ -344,15 +412,52 @@ const ChatBot = () => {
 
     const botMessage = {
       id: getNextMessageId(),
-      text: `In 2-3 lines, what do you want to build or solve?`,
+      text: `Quick question - this helps me find the best solution for you:\n\n**What best describes you?**`,
       sender: 'bot',
-      timestamp: new Date()
+      timestamp: new Date(),
+      showRoleOptions: true
     };
 
     setMessages(prev => [...prev, userMessage, botMessage]);
 
     // Save subdomain selection to sheet
     saveToSheet(`Selected Sub-domain: ${subDomain}`, '', selectedDomain?.name, subDomain);
+  };
+
+  const handleRoleClick = (role) => {
+    setUserRole(role);
+    setFlowStage('requirement');
+
+    const userMessage = {
+      id: getNextMessageId(),
+      text: `${role.emoji} ${role.text}`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    // Personalized message based on role
+    let contextMessage = '';
+    if (role.id === 'business-owner') {
+      contextMessage = `As a business owner, you\'re looking for solutions that can help grow your business.`;
+    } else if (role.id === 'professional') {
+      contextMessage = `As a professional, you\'re looking for tools to help you work smarter.`;
+    } else if (role.id === 'freelancer') {
+      contextMessage = `As a freelancer, you need flexible tools that scale with your work.`;
+    } else {
+      contextMessage = `Great! Let me help you find the right tools.`;
+    }
+
+    const botMessage = {
+      id: getNextMessageId(),
+      text: `${contextMessage}\n\nNow, **tell me in 2-3 lines**: What problem are you trying to solve? What would success look like for you?`,
+      sender: 'bot',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage, botMessage]);
+
+    // Save role selection to sheet
+    saveToSheet(`User Role: ${role.text}`, '', selectedDomain?.name, selectedSubDomain);
   };
 
 
@@ -807,12 +912,29 @@ Rules:
                   ))}
                 </div>
               )}
+              {message.showRoleOptions && flowStage === 'role' && (
+                <div className="role-options">
+                  {roleOptions.map((role) => (
+                    <button
+                      key={role.id}
+                      className="role-option-button"
+                      onClick={() => handleRoleClick(role)}
+                    >
+                      <span className="role-emoji">{role.emoji}</span>
+                      <div className="role-info">
+                        <span className="role-text">{role.text}</span>
+                        <span className="role-description">{role.description}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
               {message.showIdentityForm && (
                 <IdentityForm onSubmit={handleIdentitySubmit} />
               )}
               {message.showFinalActions && (
                 <div className="final-actions">
-                  <button className="action-button secondary" onClick={() => window.location.reload()}>
+                  <button className="action-button secondary" onClick={handleStartNewIdea}>
                     🔄 Start Another Idea
                   </button>
                   {message.companies && message.companies.length > 0 && (
@@ -911,6 +1033,39 @@ Rules:
           </button>
         </div>
       </div>
+
+      {/* Google Auth Modal */}
+      {showAuthModal && (
+        <div className="auth-modal-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="auth-modal-close" onClick={() => setShowAuthModal(false)}>
+              ✕
+            </button>
+            <div className="auth-modal-content">
+              <h2>Start Fresh</h2>
+              <p>Sign in to save your progress and preferences</p>
+
+              <button className="google-signin-button" onClick={handleGoogleSignIn}>
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+              </button>
+
+              <div className="auth-divider">
+                <span>or</span>
+              </div>
+
+              <button className="skip-auth-button" onClick={() => window.location.reload()}>
+                Continue without signing in
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
