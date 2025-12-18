@@ -82,12 +82,30 @@ const ChatBot = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [selectedSubDomain, setSelectedSubDomain] = useState(null);
+  const [userRole, setUserRole] = useState(null); // 'business-owner' | 'professional' | 'freelancer' | 'student'
   const [requirement, setRequirement] = useState(null);
   const [userName, setUserName] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
-  const [flowStage, setFlowStage] = useState('domain'); // 'domain' | 'subdomain' | 'requirement' | 'identity' | 'complete'
+  const [flowStage, setFlowStage] = useState('domain'); // 'domain' | 'subdomain' | 'role' | 'role-q1' | 'role-q2' | 'role-q3' | 'role-q4' | 'requirement' | 'identity' | 'complete'
+
+  // Context collection for business owners
+  const [businessContext, setBusinessContext] = useState({
+    businessType: null,      // What kind of business
+    industry: null,          // Which sector/industry
+    targetAudience: null,    // Who is target audience
+    marketSegment: null      // What market segment
+  });
+
+  // Context collection for professionals
+  const [professionalContext, setProfessionalContext] = useState({
+    roleAndIndustry: null,   // Role/job title and industry
+    solutionFor: null,       // For self or company
+    salaryContext: null      // If salary related, the context
+  });
   const [isRecording, setIsRecording] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const messageIdCounter = useRef(1);
@@ -109,6 +127,13 @@ const ChatBot = () => {
     { id: 'about', text: 'What does Ikshan do?', icon: '💡' },
     { id: 'tools', text: 'Show me AI tools', icon: '🤖' },
     { id: 'custom', text: 'I have a custom idea', icon: '💭' }
+  ];
+
+  const roleOptions = [
+    { id: 'business-owner', text: 'Business Owner / Founder', emoji: '👔', description: 'I run my own business' },
+    { id: 'professional', text: 'Professional / Employee', emoji: '💼', description: 'I work for a company' },
+    { id: 'freelancer', text: 'Freelancer / Consultant', emoji: '🎯', description: 'I work independently' },
+    { id: 'student', text: 'Student / Learner', emoji: '📚', description: 'I\'m learning and exploring' }
   ];
 
   const subDomains = {
@@ -242,6 +267,64 @@ const ChatBot = () => {
     }
   }, []);
 
+  // Initialize Google Sign-In
+  useEffect(() => {
+    const checkGoogleLoaded = setInterval(() => {
+      if (window.google?.accounts?.id) {
+        setIsGoogleLoaded(true);
+        clearInterval(checkGoogleLoaded);
+      }
+    }, 100);
+
+    // Cleanup after 5 seconds if not loaded
+    setTimeout(() => clearInterval(checkGoogleLoaded), 5000);
+
+    return () => clearInterval(checkGoogleLoaded);
+  }, []);
+
+  const handleGoogleSignIn = () => {
+    if (!isGoogleLoaded || !window.google?.accounts?.id) {
+      // If Google isn't loaded, just reload
+      window.location.reload();
+      return;
+    }
+
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    if (!clientId) {
+      // No client ID configured, just reload
+      window.location.reload();
+      return;
+    }
+
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: handleGoogleCallback,
+    });
+
+    window.google.accounts.id.prompt();
+  };
+
+  const handleGoogleCallback = (response) => {
+    // Decode the JWT to get user info
+    const payload = JSON.parse(atob(response.credential.split('.')[1]));
+    setUserName(payload.name);
+    setUserEmail(payload.email);
+    setShowAuthModal(false);
+    window.location.reload();
+  };
+
+  const handleStartNewIdea = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    if (clientId && isGoogleLoaded) {
+      setShowAuthModal(true);
+    } else {
+      // No Google Auth configured, just reload
+      window.location.reload();
+    }
+  };
+
   const toggleVoiceRecording = () => {
     if (!recognitionRef.current) return;
 
@@ -275,7 +358,7 @@ const ChatBot = () => {
       setTimeout(() => {
         const botMessage = {
           id: getNextMessageId(),
-          text: "Ikshan empowers startups and small businesses with **best-in-class AI tools** that eliminate barriers. 🚀\n\n✅ We offer AI solutions like SEO Optimizer and AnyOCR\n✅ If we don't have what you need, we'll connect you to the right tool\n✅ If it doesn't exist, we'll help you build it\n\n**Our philosophy:** Come to Ikshan, get a solution - no matter what. 💙\n\nReady to explore? Pick a domain below!",
+          text: "Ikshan empowers startups and small businesses with **best-in-class AI tools** that eliminate barriers. 🚀\n\n✅ We offer AI solutions like Ecom Listing Optimizer and AnyOCR\n✅ If we don't have what you need, we'll connect you to the right tool\n✅ If it doesn't exist, we'll help you build it\n\n**Our philosophy:** Come to Ikshan, get a solution - no matter what. 💙\n\nReady to explore? Pick a domain below!",
           sender: 'bot',
           timestamp: new Date()
         };
@@ -333,7 +416,7 @@ const ChatBot = () => {
 
   const handleSubDomainClick = (subDomain) => {
     setSelectedSubDomain(subDomain);
-    setFlowStage('requirement');
+    setFlowStage('role');
 
     const userMessage = {
       id: getNextMessageId(),
@@ -344,15 +427,233 @@ const ChatBot = () => {
 
     const botMessage = {
       id: getNextMessageId(),
-      text: `In 2-3 lines, what do you want to build or solve?`,
+      text: `Quick question - this helps me find the best solution for you:\n\n**What best describes you?**`,
       sender: 'bot',
-      timestamp: new Date()
+      timestamp: new Date(),
+      showRoleOptions: true
     };
 
     setMessages(prev => [...prev, userMessage, botMessage]);
 
     // Save subdomain selection to sheet
     saveToSheet(`Selected Sub-domain: ${subDomain}`, '', selectedDomain?.name, subDomain);
+  };
+
+  const handleRoleClick = (role) => {
+    setUserRole(role);
+
+    const userMessage = {
+      id: getNextMessageId(),
+      text: `${role.emoji} ${role.text}`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    // Save role selection to sheet
+    saveToSheet(`User Role: ${role.text}`, '', selectedDomain?.name, selectedSubDomain);
+
+    // Start the appropriate questioning flow based on role
+    if (role.id === 'business-owner') {
+      setFlowStage('role-q1');
+      const botMessage = {
+        id: getNextMessageId(),
+        text: `Great! As a business owner, I'd love to understand your business better to find the perfect solution. 🏢\n\n**What kind of business do you run?**\n\n_(e.g., E-commerce store, Consulting firm, Restaurant, SaaS company, etc.)_`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage, botMessage]);
+
+    } else if (role.id === 'professional') {
+      setFlowStage('role-q1');
+      const botMessage = {
+        id: getNextMessageId(),
+        text: `Thanks! Let me understand your professional context better. 💼\n\n**What is your role/job title and which industry are you in?**\n\n_(e.g., Marketing Manager in Healthcare, Software Developer in Fintech, HR Lead in Retail, etc.)_`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage, botMessage]);
+
+    } else if (role.id === 'freelancer') {
+      setFlowStage('role-q1');
+      const botMessage = {
+        id: getNextMessageId(),
+        text: `Awesome! Freelancers often have unique needs. 🎯\n\n**What type of freelance work do you do and who are your typical clients?**\n\n_(e.g., Web design for small businesses, Content writing for startups, etc.)_`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage, botMessage]);
+
+    } else {
+      // Student/Learner - simpler flow
+      setFlowStage('requirement');
+      const botMessage = {
+        id: getNextMessageId(),
+        text: `Great! Let me help you explore and learn. 📚\n\n**What specific problem or topic are you trying to learn about or solve?**\n\n_(Tell me in 2-3 lines what you're looking for)_`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage, botMessage]);
+    }
+  };
+
+  // Handle step-by-step role questions
+  const handleRoleQuestion = (answer) => {
+    const userMessage = {
+      id: getNextMessageId(),
+      text: answer,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    // Business Owner Flow
+    if (userRole?.id === 'business-owner') {
+      if (flowStage === 'role-q1') {
+        // Q1: What kind of business
+        setBusinessContext(prev => ({ ...prev, businessType: answer }));
+        setFlowStage('role-q2');
+        const botMessage = {
+          id: getNextMessageId(),
+          text: `Got it! 👍\n\n**Which sector or industry is your business in?**\n\n_(e.g., Technology, Healthcare, Education, Fashion, Food & Beverage, Finance, etc.)_`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage, botMessage]);
+
+      } else if (flowStage === 'role-q2') {
+        // Q2: Which industry/sector
+        setBusinessContext(prev => ({ ...prev, industry: answer }));
+        setFlowStage('role-q3');
+        const botMessage = {
+          id: getNextMessageId(),
+          text: `Interesting! 🎯\n\n**Who is your target audience?**\n\n_(e.g., Young professionals aged 25-35, Small business owners, Parents with young children, B2B enterprise clients, etc.)_`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage, botMessage]);
+
+      } else if (flowStage === 'role-q3') {
+        // Q3: Target audience
+        setBusinessContext(prev => ({ ...prev, targetAudience: answer }));
+        setFlowStage('role-q4');
+        const botMessage = {
+          id: getNextMessageId(),
+          text: `Perfect! Last question about your business: 📊\n\n**What market segment do you target?**\n\n• **Size:** Small businesses / SMBs / Mid-market / Enterprises\n• **Reach:** Local / National / Global\n\n_(e.g., "SMBs, National" or "Enterprises, Global")_`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage, botMessage]);
+
+      } else if (flowStage === 'role-q4') {
+        // Q4: Market segment - now ask the main problem
+        setBusinessContext(prev => ({ ...prev, marketSegment: answer }));
+        setFlowStage('requirement');
+        const botMessage = {
+          id: getNextMessageId(),
+          text: `Excellent! Now I have a good picture of your business. 🎉\n\n**What specific problem are you trying to solve right now?**\n\n_(Tell me in 2-3 lines what challenge you're facing and what success would look like for you)_`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage, botMessage]);
+
+        // Save business context to sheet
+        saveToSheet(`Business Context: ${JSON.stringify({ ...businessContext, marketSegment: answer })}`, '', selectedDomain?.name, selectedSubDomain);
+      }
+
+    // Professional Flow
+    } else if (userRole?.id === 'professional') {
+      if (flowStage === 'role-q1') {
+        // Q1: Role and industry
+        setProfessionalContext(prev => ({ ...prev, roleAndIndustry: answer }));
+        setFlowStage('role-q2');
+        const botMessage = {
+          id: getNextMessageId(),
+          text: `Thanks for sharing! 👍\n\n**Are you looking for a solution for yourself personally, or for the company/team you work for?**\n\n_(e.g., "For myself to be more productive" or "For my team/department" or "For the whole company")_`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage, botMessage]);
+
+      } else if (flowStage === 'role-q2') {
+        // Q2: For self or company
+        setProfessionalContext(prev => ({ ...prev, solutionFor: answer }));
+
+        // Check if the context involves salary/compensation
+        const lowerAnswer = answer.toLowerCase();
+        const prevContext = (selectedSubDomain || '').toLowerCase() + ' ' + (selectedDomain?.name || '').toLowerCase();
+        const isSalaryRelated = ['salary', 'compensation', 'pay', 'payroll', 'wage', 'bonus'].some(term =>
+          lowerAnswer.includes(term) || prevContext.includes(term)
+        );
+
+        if (isSalaryRelated) {
+          setFlowStage('role-q3');
+          const botMessage = {
+            id: getNextMessageId(),
+            text: `I notice this might involve compensation. Let me clarify: 💰\n\n**Is this about your own salary/compensation, or about employee payroll/company compensation structure?**\n\n_(This helps me recommend the right type of solution)_`,
+            sender: 'bot',
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, userMessage, botMessage]);
+        } else {
+          // Skip salary question and go to requirement
+          setFlowStage('requirement');
+          const botMessage = {
+            id: getNextMessageId(),
+            text: `Great context! 🎉\n\n**What's the specific situation and goal you're trying to achieve?**\n\n_(Tell me in 2-3 lines what problem you're facing and what success would look like)_`,
+            sender: 'bot',
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, userMessage, botMessage]);
+
+          // Save professional context to sheet
+          saveToSheet(`Professional Context: ${JSON.stringify({ ...professionalContext, solutionFor: answer })}`, '', selectedDomain?.name, selectedSubDomain);
+        }
+
+      } else if (flowStage === 'role-q3') {
+        // Q3: Salary context (only if salary-related)
+        setProfessionalContext(prev => ({ ...prev, salaryContext: answer }));
+        setFlowStage('requirement');
+        const botMessage = {
+          id: getNextMessageId(),
+          text: `Got it! Now I understand the context better. 🎉\n\n**What's the specific situation and goal you're trying to achieve?**\n\n_(Tell me in 2-3 lines what problem you're facing and what success would look like)_`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage, botMessage]);
+
+        // Save professional context to sheet
+        saveToSheet(`Professional Context: ${JSON.stringify({ ...professionalContext, salaryContext: answer })}`, '', selectedDomain?.name, selectedSubDomain);
+      }
+
+    // Freelancer Flow
+    } else if (userRole?.id === 'freelancer') {
+      if (flowStage === 'role-q1') {
+        // Q1: Type of freelance work
+        setBusinessContext(prev => ({ ...prev, businessType: answer }));
+        setFlowStage('role-q2');
+        const botMessage = {
+          id: getNextMessageId(),
+          text: `Nice! 🎯\n\n**What's your biggest challenge or bottleneck in your freelance work right now?**\n\n_(e.g., Finding clients, Managing projects, Invoicing, Time management, etc.)_`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage, botMessage]);
+
+      } else if (flowStage === 'role-q2') {
+        // Q2: Biggest challenge - now ask the main problem
+        setBusinessContext(prev => ({ ...prev, targetAudience: answer }));
+        setFlowStage('requirement');
+        const botMessage = {
+          id: getNextMessageId(),
+          text: `I understand! 🎉\n\n**What specific problem are you trying to solve right now?**\n\n_(Tell me in 2-3 lines what you need help with and what would make your work easier)_`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage, botMessage]);
+
+        // Save freelancer context to sheet
+        saveToSheet(`Freelancer Context: ${JSON.stringify(businessContext)}`, '', selectedDomain?.name, selectedSubDomain);
+      }
+    }
   };
 
 
@@ -379,6 +680,286 @@ const ChatBot = () => {
     }
   };
 
+  // Handler for "Learn how to implement" button
+  const handleLearnImplementation = async (companies, userRequirement) => {
+    setIsTyping(true);
+
+    const loadingMessage = {
+      id: getNextMessageId(),
+      text: "Let me put together a comprehensive implementation guide with practical steps you can start using right away...",
+      sender: 'bot',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, loadingMessage]);
+
+    // Build context from collected user info
+    const contextSummary = userRole?.id === 'business-owner'
+      ? `Business: ${businessContext.businessType || 'Not specified'}, Industry: ${businessContext.industry || 'Not specified'}, Target: ${businessContext.targetAudience || 'Not specified'}, Segment: ${businessContext.marketSegment || 'Not specified'}`
+      : userRole?.id === 'professional'
+      ? `Role: ${professionalContext.roleAndIndustry || 'Not specified'}, For: ${professionalContext.solutionFor || 'Not specified'}`
+      : userRole?.id === 'freelancer'
+      ? `Freelance work: ${businessContext.businessType || 'Not specified'}, Challenge: ${businessContext.targetAudience || 'Not specified'}`
+      : 'General user';
+
+    try {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+
+      if (!apiKey) {
+        // Fallback response without API - still provide starter prompts
+        const topTool = companies[0];
+        const fallbackGuide = {
+          id: getNextMessageId(),
+          text: `## 🚀 Your Implementation Guide for ${topTool?.name || 'Your Solution'}
+
+### 1️⃣ Where This Fits in Your Workflow
+This solution helps at the **processing & execution stage** - taking your inputs and automating the heavy lifting.
+
+### 2️⃣ What to Prepare (Checklist)
+Before you start:
+- ☐ 3-5 example documents/data you currently work with
+- ☐ Your current step-by-step process written down
+- ☐ List of edge cases or special situations
+- ☐ Your success metric (time saved? errors reduced?)
+
+### 3️⃣ Minimal Pilot Plan (14 days)
+**Week 1:** Test with ONE workflow or use case
+**Week 2:** Expand to 2-3 similar cases, measure results
+
+### 4️⃣ Questions to Ask in Demo
+- "Can you show me a case study in my industry?"
+- "What's the typical setup time?"
+- "How does it handle [your edge case]?"
+- "What integrations are available?"
+- "What's the pricing for my scale?"
+
+---
+
+## 🎯 Start RIGHT NOW - Starter Prompts
+
+**While waiting for demos, use these prompts in ChatGPT/Claude:**
+
+### Prompt 1: Clarify Your Problem
+\`\`\`
+You are my analyst. Convert this into a clear one-page spec:
+Context: ${userRequirement}
+Goal: [WHAT SUCCESS LOOKS LIKE]
+Users: [WHO USES THIS]
+Constraints: [TIME/BUDGET/TOOLS]
+Output: problem statement, success metrics, top requirements, and non-goals.
+\`\`\`
+
+### Prompt 2: Design Your Workflow
+\`\`\`
+Act as a process designer. Build a step-by-step workflow for:
+Problem: ${userRequirement}
+Inputs: [YOUR TYPICAL INPUTS]
+Outputs: [WHAT YOU NEED PRODUCED]
+Include: steps, handoffs, failure points, and where automation should happen.
+\`\`\`
+
+### Prompt 3: Create First Draft
+\`\`\`
+Create a ready-to-use first draft of:
+Artifact: [DOCUMENT/TEMPLATE/EMAIL/PLAN needed]
+Requirements: ${userRequirement}
+Tone: [Professional/Casual/Formal]
+Return: (1) full version (2) short version (3) checklist to use it.
+\`\`\`
+
+### Prompt 4: Review for Gaps
+\`\`\`
+Critique and improve this for gaps, edge cases, and risks:
+[PASTE YOUR DRAFT HERE]
+Return: issues list (severity), fixes, and a revised improved version.
+\`\`\`
+
+### Prompt 5: Create Pilot Plan
+\`\`\`
+Create a 14-day rollout plan for implementing this in a small team:
+Current process: [HOW YOU DO IT NOW]
+Target process: [HOW YOU WANT IT TO WORK]
+Tools available: [YOUR CURRENT TOOLS]
+Return: day-by-day plan, owners, quick wins, KPIs, and review cadence.
+\`\`\`
+
+---
+💡 **Pro tip:** Run these prompts NOW - you'll have real outputs before your first demo!`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, fallbackGuide]);
+        setIsTyping(false);
+        return;
+      }
+
+      const implementationPrompt = `You are an expert implementation advisor. Create a COMPREHENSIVE, ACTIONABLE guide.
+
+USER CONTEXT:
+- Requirement: "${userRequirement}"
+- Profile: ${contextSummary}
+- Domain: ${selectedDomain?.name || 'General'}
+- Subdomain: ${selectedSubDomain || 'Not specified'}
+
+RECOMMENDED TOOLS:
+${companies.map((c, i) => `${i + 1}. ${c.name}
+   - Problem: ${c.problem || 'Business automation'}
+   - Description: ${c.description || 'AI-powered solution'}
+   - Domain: ${c.domain || 'General'}`).join('\n')}
+
+CREATE A GUIDE WITH THESE EXACT SECTIONS:
+
+## 🚀 Your Implementation Guide for [TOP TOOL NAME]
+
+### 1️⃣ Where This Fits in Your Workflow
+Explain which stage this plugs into:
+- Intake (input collection)
+- Processing (generation/analysis)
+- Review (approval/collaboration)
+- Execution (handoff/publish/send)
+- Monitoring (tracking/audits)
+Be specific to their use case.
+
+### 2️⃣ What to Prepare (Checklist)
+4-5 specific items they should gather NOW:
+- Example documents/data
+- Current workflow documentation
+- Edge cases list
+- Success metrics
+
+### 3️⃣ Minimal Pilot Plan (3 Steps)
+Specific 14-day pilot:
+- Week 1: [specific first step]
+- Week 2: [expansion step]
+- Success criteria
+
+### 4️⃣ Demo Questions to Ask
+5 specific questions for their demo call, tailored to their problem.
+
+### 5️⃣ Start RIGHT NOW - Starter Prompts
+Provide 5 COPY-PASTE prompts they can use in ChatGPT/Claude IMMEDIATELY:
+
+**Prompt 1: Clarify the Problem → Turn into Spec**
+Create a prompt that helps them document their problem clearly.
+
+**Prompt 2: Design the Workflow**
+Create a prompt that helps them map their process.
+
+**Prompt 3: Generate First Working Artifact**
+Create a prompt that produces something useful (document, template, plan).
+
+**Prompt 4: Quality/Risk/Edge-Case Review**
+Create a prompt that reviews and improves their work.
+
+**Prompt 5: Pilot Plan + Rollout**
+Create a prompt that creates their implementation plan.
+
+IMPORTANT:
+- Each prompt must be in code block format
+- Include placeholders like [PASTE YOUR DATA], [YOUR GOAL], etc.
+- Make prompts directly relevant to their specific requirement: "${userRequirement}"
+- Prompts must produce ACTIONABLE outputs, not vague advice
+- Add a pro tip at the end
+
+TONE: Friendly, practical, no jargon. User should feel empowered to start immediately.`;
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: implementationPrompt },
+            { role: 'user', content: `Create a comprehensive implementation guide for: "${userRequirement}"` }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const guide = data.choices[0]?.message?.content || '';
+
+        const guideMessage = {
+          id: getNextMessageId(),
+          text: guide + `\n\n---\n\n🎉 **You're all set!** Start with the prompts above while exploring ${companies[0]?.name || 'the recommended tools'}. Feel free to start a new conversation if you need more help!`,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, guideMessage]);
+      } else {
+        throw new Error('API request failed');
+      }
+    } catch (error) {
+      console.error('Error generating implementation guide:', error);
+      // Provide meaningful fallback with starter prompts
+      const topTool = companies[0];
+      const errorMessage = {
+        id: getNextMessageId(),
+        text: `## 🚀 Quick Start Guide for ${topTool?.name || 'Your Solution'}
+
+### What to Do First
+1. **Prepare Examples** - Gather 3-5 samples of your current work
+2. **Document Your Process** - Write down your current steps
+3. **Define Success** - What would "solved" look like?
+
+### Demo Checklist
+When you talk to ${topTool?.name || 'the vendor'}:
+- Ask for a case study in your industry
+- Request a sandbox/trial environment
+- Clarify pricing for your scale
+- Understand integration requirements
+
+---
+
+## 🎯 Start NOW - Use These Prompts in ChatGPT/Claude
+
+### Prompt 1: Problem Spec
+\`\`\`
+Convert this into a clear spec:
+Problem: ${userRequirement}
+Output: problem statement, success metrics, requirements list.
+\`\`\`
+
+### Prompt 2: Workflow Design
+\`\`\`
+Design a workflow for: ${userRequirement}
+Include: steps, inputs, outputs, handoffs, automation opportunities.
+\`\`\`
+
+### Prompt 3: First Draft
+\`\`\`
+Create a first draft for solving: ${userRequirement}
+Format: Ready-to-use document with checklist.
+\`\`\`
+
+### Prompt 4: Gap Analysis
+\`\`\`
+Review this solution for gaps and edge cases:
+[PASTE YOUR DRAFT]
+Return: issues, fixes, improved version.
+\`\`\`
+
+### Prompt 5: 14-Day Pilot Plan
+\`\`\`
+Create a 14-day pilot plan for: ${userRequirement}
+Include: daily tasks, owners, KPIs, review points.
+\`\`\`
+
+---
+💡 Run these prompts NOW to make progress before any demo!`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+
+    setIsTyping(false);
+  };
+
   const handleIdentitySubmit = async (name, email) => {
     setUserName(name);
     setUserEmail(email);
@@ -400,6 +981,27 @@ const ChatBot = () => {
     // Generate final output with real market data using AI search
     setTimeout(async () => {
       try {
+        // Build user context for richer search results
+        const userContext = {
+          role: userRole?.id,
+          roleText: userRole?.text,
+          ...(userRole?.id === 'business-owner' && {
+            businessType: businessContext.businessType,
+            industry: businessContext.industry,
+            targetAudience: businessContext.targetAudience,
+            marketSegment: businessContext.marketSegment
+          }),
+          ...(userRole?.id === 'professional' && {
+            roleAndIndustry: professionalContext.roleAndIndustry,
+            solutionFor: professionalContext.solutionFor,
+            salaryContext: professionalContext.salaryContext
+          }),
+          ...(userRole?.id === 'freelancer' && {
+            freelanceType: businessContext.businessType,
+            challenge: businessContext.targetAudience
+          })
+        };
+
         // Use AI-powered search to find relevant companies
         const searchResponse = await fetch('/api/search-companies', {
           method: 'POST',
@@ -409,7 +1011,8 @@ const ChatBot = () => {
           body: JSON.stringify({
             domain: selectedDomain?.id,
             subdomain: selectedSubDomain,
-            requirement: requirement
+            requirement: requirement,
+            userContext: userContext
           })
         });
 
@@ -417,66 +1020,36 @@ const ChatBot = () => {
         console.log('Search API response:', searchData);
         console.log('Debug info:', searchData.debug);
         const relevantCompanies = searchData.companies || [];
+        const helpfulResponse = searchData.helpfulResponse || '';
 
-        // Format companies for display
-        const companiesText = formatCompaniesForDisplay(relevantCompanies, 5);
-        const gapsAnalysis = analyzeMarketGaps(requirement, relevantCompanies);
+        // Build user-friendly response
+        let marketAnalysis = '';
 
-        // Build market analysis message
-        let marketAnalysis = `## 🔍 Market Analysis\n\n`;
-
-        // Existing Tools Section
-        marketAnalysis += `### Existing Tools in ${selectedDomain?.name}`;
-        if (selectedSubDomain) {
-          marketAnalysis += ` - ${selectedSubDomain}`;
-        }
-        marketAnalysis += `\n\n${companiesText}\n\n`;
-
-        // Market Gaps Section
-        marketAnalysis += `### 💡 Market Gaps & Opportunities\n\n${gapsAnalysis}\n\n`;
-
-        // Ikshan's Direction
-        marketAnalysis += `## 🎯 Ikshan's Suggested Direction\n\n`;
-        marketAnalysis += `### Your Requirement\n"${requirement}"\n\n`;
-
-        marketAnalysis += `### Proposed Approach\n`;
-        if (relevantCompanies.length === 0) {
-          marketAnalysis += `Since there are limited existing solutions in this space, we can:\n`;
-          marketAnalysis += `- Build a pioneering solution tailored to your specific needs\n`;
-          marketAnalysis += `- Establish your product as the market leader\n`;
-          marketAnalysis += `- Capture first-mover advantage\n\n`;
-        } else if (relevantCompanies.length <= 2) {
-          marketAnalysis += `With limited competition, we can:\n`;
-          marketAnalysis += `- Analyze what existing solutions are missing\n`;
-          marketAnalysis += `- Build a superior product with better UX and features\n`;
-          marketAnalysis += `- Position as the modern, user-friendly alternative\n\n`;
+        if (helpfulResponse) {
+          // Use the AI-generated helpful response
+          marketAnalysis = `## Here's what I found for you\n\n${helpfulResponse}\n\n`;
+        } else if (relevantCompanies.length > 0) {
+          // Fallback to simple listing if we have companies but no AI response
+          marketAnalysis = `## Here are some tools that could help\n\n`;
+          relevantCompanies.forEach((company, i) => {
+            marketAnalysis += `**${company.name}** - ${company.problem || company.description || 'An AI-powered solution that could help with your needs'}\n\n`;
+          });
         } else {
-          marketAnalysis += `In this competitive market, we'll focus on:\n`;
-          marketAnalysis += `- Identifying specific gaps in existing solutions\n`;
-          marketAnalysis += `- Creating unique value through innovation\n`;
-          marketAnalysis += `- Targeting underserved user segments or use cases\n\n`;
+          // Ultimate fallback - should rarely happen
+          marketAnalysis = `## Let me help you\n\nI'm looking into the best tools for your needs in ${selectedDomain?.name || 'this area'}. Based on what you're looking for ("${requirement}"), there are several approaches we could explore together.\n\n`;
         }
 
-        marketAnalysis += `### Key Differentiators\n`;
-        marketAnalysis += `- **Tailored Solution**: Built specifically for your requirements\n`;
-        marketAnalysis += `- **Modern Technology**: Latest AI and cloud infrastructure\n`;
-        marketAnalysis += `- **User-Centric Design**: Focus on exceptional user experience\n`;
-        marketAnalysis += `- **Scalable Architecture**: Ready to grow with your business\n\n`;
-
-        marketAnalysis += `### 🚀 Next Steps\n\n`;
-        marketAnalysis += `1. **Discovery Call**: Deep dive into your requirements and vision\n`;
-        marketAnalysis += `2. **Competitive Analysis**: Detailed review of similar solutions\n`;
-        marketAnalysis += `3. **Technical Design**: Architecture and feature specifications\n`;
-        marketAnalysis += `4. **Timeline & Budget**: Clear roadmap and cost estimates\n`;
-        marketAnalysis += `5. **MVP Development**: Start building your solution\n\n`;
-        marketAnalysis += `**We're excited to help bring your vision to life!** 💙`;
+        marketAnalysis += `---\n\n`;
+        marketAnalysis += `What would you like to do next?`;
 
         const finalOutput = {
           id: getNextMessageId(),
           text: marketAnalysis,
           sender: 'bot',
           timestamp: new Date(),
-          showFinalActions: true
+          showFinalActions: true,
+          companies: relevantCompanies,
+          userRequirement: requirement
         };
 
         setMessages(prev => [...prev, finalOutput]);
@@ -646,6 +1219,14 @@ const ChatBot = () => {
       return;
     }
 
+    // Handle role question stages (step-by-step questioning)
+    if (flowStage.startsWith('role-q')) {
+      // Remove the user message we already added above, since handleRoleQuestion will add it
+      setMessages(prev => prev.slice(0, -1));
+      handleRoleQuestion(currentInput);
+      return;
+    }
+
     // Handle requirement text input
     if (flowStage === 'requirement') {
       setRequirement(currentInput);
@@ -741,14 +1322,39 @@ const ChatBot = () => {
                   ))}
                 </div>
               )}
+              {message.showRoleOptions && flowStage === 'role' && (
+                <div className="role-options">
+                  {roleOptions.map((role) => (
+                    <button
+                      key={role.id}
+                      className="role-option-button"
+                      onClick={() => handleRoleClick(role)}
+                    >
+                      <span className="role-emoji">{role.emoji}</span>
+                      <div className="role-info">
+                        <span className="role-text">{role.text}</span>
+                        <span className="role-description">{role.description}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
               {message.showIdentityForm && (
                 <IdentityForm onSubmit={handleIdentitySubmit} />
               )}
               {message.showFinalActions && (
                 <div className="final-actions">
-                  <button className="action-button primary" onClick={() => window.location.reload()}>
+                  <button className="action-button secondary" onClick={handleStartNewIdea}>
                     🔄 Start Another Idea
                   </button>
+                  {message.companies && message.companies.length > 0 && (
+                    <button
+                      className="action-button primary"
+                      onClick={() => handleLearnImplementation(message.companies, message.userRequirement)}
+                    >
+                      📚 Learn How to Implement
+                    </button>
+                  )}
                 </div>
               )}
               <div className="message-time">{formatTime(message.timestamp)}</div>
@@ -837,6 +1443,39 @@ const ChatBot = () => {
           </button>
         </div>
       </div>
+
+      {/* Google Auth Modal */}
+      {showAuthModal && (
+        <div className="auth-modal-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="auth-modal-close" onClick={() => setShowAuthModal(false)}>
+              ✕
+            </button>
+            <div className="auth-modal-content">
+              <h2>Start Fresh</h2>
+              <p>Sign in to save your progress and preferences</p>
+
+              <button className="google-signin-button" onClick={handleGoogleSignIn}>
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+              </button>
+
+              <div className="auth-divider">
+                <span>or</span>
+              </div>
+
+              <button className="skip-auth-button" onClick={() => window.location.reload()}>
+                Continue without signing in
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
