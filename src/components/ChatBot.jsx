@@ -686,22 +686,104 @@ const ChatBot = () => {
 
     const loadingMessage = {
       id: getNextMessageId(),
-      text: "Let me put together a simple guide on how you can use these tools for your needs...",
+      text: "Let me put together a comprehensive implementation guide with practical steps you can start using right away...",
       sender: 'bot',
       timestamp: new Date()
     };
     setMessages(prev => [...prev, loadingMessage]);
 
+    // Build context from collected user info
+    const contextSummary = userRole?.id === 'business-owner'
+      ? `Business: ${businessContext.businessType || 'Not specified'}, Industry: ${businessContext.industry || 'Not specified'}, Target: ${businessContext.targetAudience || 'Not specified'}, Segment: ${businessContext.marketSegment || 'Not specified'}`
+      : userRole?.id === 'professional'
+      ? `Role: ${professionalContext.roleAndIndustry || 'Not specified'}, For: ${professionalContext.solutionFor || 'Not specified'}`
+      : userRole?.id === 'freelancer'
+      ? `Freelance work: ${businessContext.businessType || 'Not specified'}, Challenge: ${businessContext.targetAudience || 'Not specified'}`
+      : 'General user';
+
     try {
       const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
       if (!apiKey) {
-        // Fallback response without API
+        // Fallback response without API - still provide starter prompts
+        const topTool = companies[0];
         const fallbackGuide = {
           id: getNextMessageId(),
-          text: `## Getting Started Guide\n\nHere's how you can begin using these tools:\n\n${companies.map((c, i) =>
-            `**${i + 1}. ${c.name}**\nVisit their website to sign up for a free trial or demo. Most AI tools offer a starter plan to help you get familiar with the features.\n\n`
-          ).join('')}\n**Next Steps:**\n- Pick one tool that seems like the best fit\n- Sign up for their free trial\n- Try it with a small project first\n- See if it solves your problem before committing\n\nNeed help deciding? Feel free to start another conversation!`,
+          text: `## 🚀 Your Implementation Guide for ${topTool?.name || 'Your Solution'}
+
+### 1️⃣ Where This Fits in Your Workflow
+This solution helps at the **processing & execution stage** - taking your inputs and automating the heavy lifting.
+
+### 2️⃣ What to Prepare (Checklist)
+Before you start:
+- ☐ 3-5 example documents/data you currently work with
+- ☐ Your current step-by-step process written down
+- ☐ List of edge cases or special situations
+- ☐ Your success metric (time saved? errors reduced?)
+
+### 3️⃣ Minimal Pilot Plan (14 days)
+**Week 1:** Test with ONE workflow or use case
+**Week 2:** Expand to 2-3 similar cases, measure results
+
+### 4️⃣ Questions to Ask in Demo
+- "Can you show me a case study in my industry?"
+- "What's the typical setup time?"
+- "How does it handle [your edge case]?"
+- "What integrations are available?"
+- "What's the pricing for my scale?"
+
+---
+
+## 🎯 Start RIGHT NOW - Starter Prompts
+
+**While waiting for demos, use these prompts in ChatGPT/Claude:**
+
+### Prompt 1: Clarify Your Problem
+\`\`\`
+You are my analyst. Convert this into a clear one-page spec:
+Context: ${userRequirement}
+Goal: [WHAT SUCCESS LOOKS LIKE]
+Users: [WHO USES THIS]
+Constraints: [TIME/BUDGET/TOOLS]
+Output: problem statement, success metrics, top requirements, and non-goals.
+\`\`\`
+
+### Prompt 2: Design Your Workflow
+\`\`\`
+Act as a process designer. Build a step-by-step workflow for:
+Problem: ${userRequirement}
+Inputs: [YOUR TYPICAL INPUTS]
+Outputs: [WHAT YOU NEED PRODUCED]
+Include: steps, handoffs, failure points, and where automation should happen.
+\`\`\`
+
+### Prompt 3: Create First Draft
+\`\`\`
+Create a ready-to-use first draft of:
+Artifact: [DOCUMENT/TEMPLATE/EMAIL/PLAN needed]
+Requirements: ${userRequirement}
+Tone: [Professional/Casual/Formal]
+Return: (1) full version (2) short version (3) checklist to use it.
+\`\`\`
+
+### Prompt 4: Review for Gaps
+\`\`\`
+Critique and improve this for gaps, edge cases, and risks:
+[PASTE YOUR DRAFT HERE]
+Return: issues list (severity), fixes, and a revised improved version.
+\`\`\`
+
+### Prompt 5: Create Pilot Plan
+\`\`\`
+Create a 14-day rollout plan for implementing this in a small team:
+Current process: [HOW YOU DO IT NOW]
+Target process: [HOW YOU WANT IT TO WORK]
+Tools available: [YOUR CURRENT TOOLS]
+Return: day-by-day plan, owners, quick wins, KPIs, and review cadence.
+\`\`\`
+
+---
+💡 **Pro tip:** Run these prompts NOW - you'll have real outputs before your first demo!`,
           sender: 'bot',
           timestamp: new Date()
         };
@@ -710,26 +792,75 @@ const ChatBot = () => {
         return;
       }
 
-      const implementationPrompt = `You are a friendly tech advisor helping someone implement AI tools in their business.
-Write in VERY SIMPLE language - like explaining to a friend who isn't technical.
+      const implementationPrompt = `You are an expert implementation advisor. Create a COMPREHENSIVE, ACTIONABLE guide.
 
-The user wants to: "${userRequirement}"
+USER CONTEXT:
+- Requirement: "${userRequirement}"
+- Profile: ${contextSummary}
+- Domain: ${selectedDomain?.name || 'General'}
+- Subdomain: ${selectedSubDomain || 'Not specified'}
 
-They're interested in these tools:
-${companies.map((c, i) => `${i + 1}. ${c.name} - ${c.description || c.problem || 'AI solution'}`).join('\n')}
+RECOMMENDED TOOLS:
+${companies.map((c, i) => `${i + 1}. ${c.name}
+   - Problem: ${c.problem || 'Business automation'}
+   - Description: ${c.description || 'AI-powered solution'}
+   - Domain: ${c.domain || 'General'}`).join('\n')}
 
-Write a practical, easy-to-follow guide that:
-1. Picks the BEST tool for their specific need (just one recommendation)
-2. Explains step-by-step how to get started (4-5 simple steps)
-3. Gives one practical tip for success
-4. Mentions what results they can expect
+CREATE A GUIDE WITH THESE EXACT SECTIONS:
 
-Rules:
-- NO technical jargon
-- Keep it under 200 words
-- Use simple numbered steps
-- Be encouraging and helpful
-- Don't overwhelm with too many options`;
+## 🚀 Your Implementation Guide for [TOP TOOL NAME]
+
+### 1️⃣ Where This Fits in Your Workflow
+Explain which stage this plugs into:
+- Intake (input collection)
+- Processing (generation/analysis)
+- Review (approval/collaboration)
+- Execution (handoff/publish/send)
+- Monitoring (tracking/audits)
+Be specific to their use case.
+
+### 2️⃣ What to Prepare (Checklist)
+4-5 specific items they should gather NOW:
+- Example documents/data
+- Current workflow documentation
+- Edge cases list
+- Success metrics
+
+### 3️⃣ Minimal Pilot Plan (3 Steps)
+Specific 14-day pilot:
+- Week 1: [specific first step]
+- Week 2: [expansion step]
+- Success criteria
+
+### 4️⃣ Demo Questions to Ask
+5 specific questions for their demo call, tailored to their problem.
+
+### 5️⃣ Start RIGHT NOW - Starter Prompts
+Provide 5 COPY-PASTE prompts they can use in ChatGPT/Claude IMMEDIATELY:
+
+**Prompt 1: Clarify the Problem → Turn into Spec**
+Create a prompt that helps them document their problem clearly.
+
+**Prompt 2: Design the Workflow**
+Create a prompt that helps them map their process.
+
+**Prompt 3: Generate First Working Artifact**
+Create a prompt that produces something useful (document, template, plan).
+
+**Prompt 4: Quality/Risk/Edge-Case Review**
+Create a prompt that reviews and improves their work.
+
+**Prompt 5: Pilot Plan + Rollout**
+Create a prompt that creates their implementation plan.
+
+IMPORTANT:
+- Each prompt must be in code block format
+- Include placeholders like [PASTE YOUR DATA], [YOUR GOAL], etc.
+- Make prompts directly relevant to their specific requirement: "${userRequirement}"
+- Prompts must produce ACTIONABLE outputs, not vague advice
+- Add a pro tip at the end
+
+TONE: Friendly, practical, no jargon. User should feel empowered to start immediately.`;
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -741,10 +872,10 @@ Rules:
           model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: implementationPrompt },
-            { role: 'user', content: `Help me implement a solution for: "${userRequirement}"` }
+            { role: 'user', content: `Create a comprehensive implementation guide for: "${userRequirement}"` }
           ],
           temperature: 0.7,
-          max_tokens: 500
+          max_tokens: 2000
         })
       });
 
@@ -754,7 +885,7 @@ Rules:
 
         const guideMessage = {
           id: getNextMessageId(),
-          text: `## Your Implementation Guide\n\n${guide}\n\n---\n\nGood luck with your implementation! Feel free to start a new conversation if you need more help.`,
+          text: guide + `\n\n---\n\n🎉 **You're all set!** Start with the prompts above while exploring ${companies[0]?.name || 'the recommended tools'}. Feel free to start a new conversation if you need more help!`,
           sender: 'bot',
           timestamp: new Date()
         };
@@ -764,9 +895,62 @@ Rules:
       }
     } catch (error) {
       console.error('Error generating implementation guide:', error);
+      // Provide meaningful fallback with starter prompts
+      const topTool = companies[0];
       const errorMessage = {
         id: getNextMessageId(),
-        text: `## Quick Start Tips\n\nHere's how to get started:\n\n1. **Pick one tool** - Start with ${companies[0]?.name || 'the first option'}\n2. **Sign up** - Most offer free trials\n3. **Start small** - Test with one simple task\n4. **Learn as you go** - Don't try to master everything at once\n\nThe best way to learn is by doing. Give it a try!`,
+        text: `## 🚀 Quick Start Guide for ${topTool?.name || 'Your Solution'}
+
+### What to Do First
+1. **Prepare Examples** - Gather 3-5 samples of your current work
+2. **Document Your Process** - Write down your current steps
+3. **Define Success** - What would "solved" look like?
+
+### Demo Checklist
+When you talk to ${topTool?.name || 'the vendor'}:
+- Ask for a case study in your industry
+- Request a sandbox/trial environment
+- Clarify pricing for your scale
+- Understand integration requirements
+
+---
+
+## 🎯 Start NOW - Use These Prompts in ChatGPT/Claude
+
+### Prompt 1: Problem Spec
+\`\`\`
+Convert this into a clear spec:
+Problem: ${userRequirement}
+Output: problem statement, success metrics, requirements list.
+\`\`\`
+
+### Prompt 2: Workflow Design
+\`\`\`
+Design a workflow for: ${userRequirement}
+Include: steps, inputs, outputs, handoffs, automation opportunities.
+\`\`\`
+
+### Prompt 3: First Draft
+\`\`\`
+Create a first draft for solving: ${userRequirement}
+Format: Ready-to-use document with checklist.
+\`\`\`
+
+### Prompt 4: Gap Analysis
+\`\`\`
+Review this solution for gaps and edge cases:
+[PASTE YOUR DRAFT]
+Return: issues, fixes, improved version.
+\`\`\`
+
+### Prompt 5: 14-Day Pilot Plan
+\`\`\`
+Create a 14-day pilot plan for: ${userRequirement}
+Include: daily tasks, owners, KPIs, review points.
+\`\`\`
+
+---
+💡 Run these prompts NOW to make progress before any demo!`,
         sender: 'bot',
         timestamp: new Date()
       };
