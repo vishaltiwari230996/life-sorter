@@ -1,8 +1,8 @@
 .chatbot-container {
   display: flex;
   flex-direction: column;
-  height: 90vh;
-  max-height: 90vh; /* Prevent container from exceeding viewport */
+  height: calc(100vh - 120px); /* Account for header/nav */
+  max-height: calc(100vh - 120px);
   max-width: 820px;
   width: 100%;
   margin: 0 auto;
