@@ -1411,6 +1411,7 @@
   .input-container {
     padding: 6px 10px 12px;
     background: transparent;
+    margin-bottom: 80px;
   }
 
   .input-wrapper {
