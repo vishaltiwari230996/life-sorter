@@ -3,6 +3,7 @@ import { Send, Bot, User, Mic, MicOff } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import './ChatBot.css';
 import { formatCompaniesForDisplay, analyzeMarketGaps } from '../utils/csvParser';
+import ProductSelection from './ProductSelection';
 
 const IdentityForm = ({ onSubmit }) => {
   const [name, setName] = useState('');
@@ -1421,37 +1422,19 @@ Be specific to their industry, role, and requirement. No generic advice.`;
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Persistent Button Bar - Above input for better UX */}
+      {/* Product Selection Overlay */}
       {(flowStage === 'domain' || flowStage === 'subdomain') && (
-        <div className="persistent-button-bar">
-          {flowStage === 'domain' && (
-            <div className="domain-chips">
-              {domains.map((domain) => (
-                <button
-                  key={domain.id}
-                  className="domain-chip"
-                  onClick={() => handleDomainClick(domain)}
-                >
-                  <span className="domain-emoji">{domain.emoji}</span>
-                  <span className="domain-name">{domain.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {flowStage === 'subdomain' && selectedDomain && (
-            <div className="subdomain-chips">
-              {subDomains[selectedDomain.id]?.map((subDomain, index) => (
-                <button
-                  key={index}
-                  className="subdomain-chip"
-                  onClick={() => handleSubDomainClick(subDomain)}
-                >
-                  {subDomain}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <ProductSelection
+          domains={domains}
+          subDomains={subDomains}
+          selectedDomain={flowStage === 'subdomain' ? selectedDomain : null}
+          onDomainSelect={handleDomainClick}
+          onSubDomainSelect={handleSubDomainClick}
+          onBack={() => {
+            setSelectedDomain(null);
+            setFlowStage('domain');
+          }}
+        />
       )}
 
       <div className="input-container">
