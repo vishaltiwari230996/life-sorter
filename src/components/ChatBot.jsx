@@ -120,7 +120,8 @@ const ChatBot = () => {
     { id: 'finance', name: 'Finance', emoji: '💰' },
     { id: 'supply-chain', name: 'Supply chain', emoji: '🚚' },
     { id: 'research', name: 'Research', emoji: '🔬' },
-    { id: 'data-analysis', name: 'Data Analysis', emoji: '📊' }
+    { id: 'data-analysis', name: 'Data Analysis', emoji: '📊' },
+    { id: 'other', name: 'Other', emoji: '✨' }
   ];
 
   const roleOptions = [
@@ -387,7 +388,6 @@ const ChatBot = () => {
 
   const handleDomainClick = (domain) => {
     setSelectedDomain(domain);
-    setFlowStage('subdomain');
 
     const userMessage = {
       id: getNextMessageId(),
@@ -396,14 +396,26 @@ const ChatBot = () => {
       timestamp: new Date()
     };
 
-    const botMessage = {
-      id: getNextMessageId(),
-      text: `Great choice! Now pick a specific area from the options below:`,
-      sender: 'bot',
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage, botMessage]);
+    // Handle "Other" domain differently
+    if (domain.id === 'other') {
+      setFlowStage('other-domain');
+      const botMessage = {
+        id: getNextMessageId(),
+        text: `No problem! Tell us about your domain.\n\n**What area or industry do you work in?**\n\n_(e.g., Education, Healthcare, Real Estate, Agriculture, Entertainment, etc.)_`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage, botMessage]);
+    } else {
+      setFlowStage('subdomain');
+      const botMessage = {
+        id: getNextMessageId(),
+        text: `Great choice! Now pick a specific area from the options below:`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage, botMessage]);
+    }
 
     // Save domain selection to sheet
     saveToSheet(`Selected Domain: ${domain.name}`, '', domain.name, '');
@@ -1272,6 +1284,28 @@ Be specific to their industry, role, and requirement. No generic advice.`;
         setIsTyping(false);
       }
 
+      return;
+    }
+
+    // Handle 'other' domain - user tells us their domain
+    if (flowStage === 'other-domain') {
+      // Update the domain name with what user typed
+      setSelectedDomain({ id: 'other', name: currentInput, emoji: '✨' });
+      setSelectedSubDomain(currentInput); // Use their input as the subdomain too
+      setFlowStage('role');
+
+      const botMessage = {
+        id: getNextMessageId(),
+        text: `Got it! **${currentInput}** - that's interesting! 🎯\n\nNow tell me a bit about yourself:`,
+        sender: 'bot',
+        timestamp: new Date(),
+        showRoleOptions: true
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+
+      // Save to sheet
+      saveToSheet(`Custom Domain: ${currentInput}`, '', currentInput, currentInput);
       return;
     }
 
