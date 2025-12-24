@@ -308,14 +308,32 @@ const ChatBot = () => {
   };
 
   const handleStartNewIdea = () => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    // Continue in the same chat - reset to domain selection
+    setSelectedDomain(null);
+    setSelectedSubDomain(null);
+    setUserRole(null);
+    setRequirement(null);
+    setBusinessContext({
+      businessType: null,
+      industry: null,
+      targetAudience: null,
+      marketSegment: null
+    });
+    setProfessionalContext({
+      roleAndIndustry: null,
+      solutionFor: null,
+      salaryContext: null
+    });
+    setFlowStage('domain');
 
-    if (clientId && isGoogleLoaded) {
-      setShowAuthModal(true);
-    } else {
-      // No Google Auth configured, just reload
-      window.location.reload();
-    }
+    // Add a message to continue the conversation
+    const botMessage = {
+      id: getNextMessageId(),
+      text: "Let's explore another idea! 🚀\n\nPick a domain to get started:",
+      sender: 'bot',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, botMessage]);
   };
 
   const toggleVoiceRecording = () => {
@@ -449,58 +467,22 @@ const ChatBot = () => {
       timestamp: new Date()
     };
 
-    // Business Owner Flow
+    // Business Owner Flow - simplified (removed industry, target audience, market segment questions)
     if (userRole?.id === 'business-owner') {
       if (flowStage === 'role-q1') {
-        // Q1: What kind of business
+        // Q1: What kind of business - then go directly to requirement
         setBusinessContext(prev => ({ ...prev, businessType: answer }));
-        setFlowStage('role-q2');
-        const botMessage = {
-          id: getNextMessageId(),
-          text: `Got it! 👍\n\n**Which sector or industry is your business in?**\n\n_(e.g., Technology, Healthcare, Education, Fashion, Food & Beverage, Finance, etc.)_`,
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage, botMessage]);
-
-      } else if (flowStage === 'role-q2') {
-        // Q2: Which industry/sector
-        setBusinessContext(prev => ({ ...prev, industry: answer }));
-        setFlowStage('role-q3');
-        const botMessage = {
-          id: getNextMessageId(),
-          text: `Interesting! 🎯\n\n**Who is your target audience?**\n\n_(e.g., Young professionals aged 25-35, Small business owners, Parents with young children, B2B enterprise clients, etc.)_`,
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage, botMessage]);
-
-      } else if (flowStage === 'role-q3') {
-        // Q3: Target audience
-        setBusinessContext(prev => ({ ...prev, targetAudience: answer }));
-        setFlowStage('role-q4');
-        const botMessage = {
-          id: getNextMessageId(),
-          text: `Perfect! Last question about your business: 📊\n\n**What market segment do you target?**\n\n• **Size:** Small businesses / SMBs / Mid-market / Enterprises\n• **Reach:** Local / National / Global\n\n_(e.g., "SMBs, National" or "Enterprises, Global")_`,
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage, botMessage]);
-
-      } else if (flowStage === 'role-q4') {
-        // Q4: Market segment - now ask the main problem
-        setBusinessContext(prev => ({ ...prev, marketSegment: answer }));
         setFlowStage('requirement');
         const botMessage = {
           id: getNextMessageId(),
-          text: `Excellent! Now I have a good picture of your business. 🎉\n\n**What specific problem are you trying to solve right now?**\n\n_(Tell me in 2-3 lines what challenge you're facing and what success would look like for you)_`,
+          text: `Got it! 👍\n\n**What specific problem are you trying to solve right now?**\n\n_(Tell me in 2-3 lines what challenge you're facing and what success would look like for you)_`,
           sender: 'bot',
           timestamp: new Date()
         };
         setMessages(prev => [...prev, userMessage, botMessage]);
 
         // Save business context to sheet
-        saveToSheet(`Business Context: ${JSON.stringify({ ...businessContext, marketSegment: answer })}`, '', selectedDomain?.name, selectedSubDomain);
+        saveToSheet(`Business Context: ${JSON.stringify({ ...businessContext, businessType: answer })}`, '', selectedDomain?.name, selectedSubDomain);
       }
 
     // Professional Flow
