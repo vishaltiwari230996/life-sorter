@@ -304,11 +304,8 @@ const ChatBot = () => {
     setUserName(payload.name);
     setUserEmail(payload.email);
     setShowAuthModal(false);
-    window.location.reload();
-  };
 
-  const handleStartNewIdea = () => {
-    // Continue in the same chat - reset to domain selection
+    // Continue in same chat - reset to domain selection
     setSelectedDomain(null);
     setSelectedSubDomain(null);
     setUserRole(null);
@@ -328,12 +325,47 @@ const ChatBot = () => {
 
     // Add a message to continue the conversation
     const botMessage = {
-      id: getNextMessageId(),
-      text: "Let's explore another idea! 🚀\n\nPick a domain to get started:",
+      id: messageIdCounter.current++,
+      text: `Welcome back, ${payload.name}! 🚀\n\nLet's explore another idea. Pick a domain to get started:`,
       sender: 'bot',
       timestamp: new Date()
     };
     setMessages(prev => [...prev, botMessage]);
+  };
+
+  const handleStartNewIdea = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    if (clientId && isGoogleLoaded) {
+      // Show Google OAuth modal
+      setShowAuthModal(true);
+    } else {
+      // No Google Auth configured, just continue in same chat
+      setSelectedDomain(null);
+      setSelectedSubDomain(null);
+      setUserRole(null);
+      setRequirement(null);
+      setBusinessContext({
+        businessType: null,
+        industry: null,
+        targetAudience: null,
+        marketSegment: null
+      });
+      setProfessionalContext({
+        roleAndIndustry: null,
+        solutionFor: null,
+        salaryContext: null
+      });
+      setFlowStage('domain');
+
+      const botMessage = {
+        id: getNextMessageId(),
+        text: "Let's explore another idea! 🚀\n\nPick a domain to get started:",
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, botMessage]);
+    }
   };
 
   const toggleVoiceRecording = () => {
