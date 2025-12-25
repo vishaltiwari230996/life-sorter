@@ -160,8 +160,12 @@ const ChatBot = () => {
       'others'
     ],
     'social-media': [
-      'DM, Leads & Influencer Automation',
+      'Post Content Creation',
       'Personal Branding',
+      'Video Scripting and SEO',
+      'Scheduling and growth automation',
+      'Brand Monitoring & Crisis Alerts',
+      'DM, Leads & Influencer Automation',
       'others'
     ],
     'legal-finance': [
