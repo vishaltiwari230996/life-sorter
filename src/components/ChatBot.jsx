@@ -115,12 +115,17 @@ const ChatBot = () => {
     { id: 'marketing', name: 'Marketing', emoji: '📢' },
     { id: 'sales-support', name: 'Sales and Customer Support', emoji: '📈' },
     { id: 'social-media', name: 'Social Media', emoji: '📱' },
-    { id: 'legal', name: 'Legal', emoji: '⚖️' },
-    { id: 'hr-hiring', name: 'HR and talent Hiring', emoji: '👥' },
-    { id: 'finance', name: 'Finance', emoji: '💰' },
-    { id: 'supply-chain', name: 'Supply chain', emoji: '🚚' },
+    { id: 'legal-finance', name: 'Legal + Finance', emoji: '⚖️' },
+    { id: 'hr-hiring', name: 'HR and Talent Hiring', emoji: '👥' },
+    { id: 'supply-chain', name: 'Supply Chain', emoji: '🚚' },
     { id: 'research', name: 'Research', emoji: '🔬' },
     { id: 'data-analysis', name: 'Data Analysis', emoji: '📊' },
+    { id: 'website-seo', name: 'Website & SEO', emoji: '🌐' },
+    { id: 'ecommerce', name: 'Ecommerce & Online Stores', emoji: '🛒' },
+    { id: 'document-ocr', name: 'Document – OCR / RAG', emoji: '📄' },
+    { id: 'personal-productivity', name: 'Personal Productivity & Career', emoji: '🎯' },
+    { id: 'customer-success', name: 'Customer Success & Retention', emoji: '🤝' },
+    { id: 'automated-ops', name: 'Fully Automated Ops', emoji: '⚙️' },
     { id: 'other', name: 'Other', emoji: '✨' }
   ];
 
@@ -134,56 +139,57 @@ const ChatBot = () => {
   const subDomains = {
     marketing: [
       'Getting more leads',
-      'Replying to customers fast',
-      'Following up properly',
-      'Selling on WhatsApp/Instagram',
-      'Reducing sales/agency cost',
-      'Understanding why customers don\'t convert',
+      'Post Content Creation',
+      'Improving Google Business profile and visibility',
+      'Writing product titles and descriptions that rank',
+      'Video Scripting and SEO',
+      'Brand Monitoring & Crisis Alerts',
+      'Marketing & Campaign Performance Tracking',
+      'Tracking clicks, calls and form fills from Google',
+      'Digital Paid Ads',
+      'Generating A+ content / store content ideas',
+      'Checking basic on-page SEO issues',
+      'Finding the right keywords for your business',
+      'Writing SEO-friendly pages and blog posts',
+      'Optimising website copy for conversions',
       'others'
     ],
     'sales-support': [
       'AI Sales Agent / SDR',
+      'Lead Follow-up & Auto Reply',
+      'Lead Qualification & Conversion',
+      'Following up properly',
+      'Scheduling and growth automation',
+      'Selling on WhatsApp / Instagram',
       'Customer Support Automation',
       'Conversational Chat & Voice Bots',
-      'Lead Qualification & Conversion',
-      'Customer Success & Retention',
       'Call, Chat & Ticket Intelligence',
+      '24/7 Customer Support Assistant',
+      'Track My Orders',
+      'Suggesting cross-sell / upsell bundles',
       'others'
     ],
     'social-media': [
-      'Content Creation & Scheduling',
-      'Personal Branding & LinkedIn Growth',
-      'Video Repurposing (Long → Short)',
-      'Ad Creative & Performance',
-      'Brand Monitoring & Crisis Alerts',
       'DM, Leads & Influencer Automation',
+      'Personal Branding',
       'others'
     ],
-    legal: [
+    'legal-finance': [
       'Contract Drafting & Review AI',
-      'CLM & Workflow Automation',
-      'Litigation & eDiscovery AI',
-      'Legal Research Copilot',
       'Legal Ops & Matter Management',
-      'Case Origination & Lead Gen',
+      'Virtual CFO & Insights',
+      'Expenses & Spend Control',
+      'Budgeting & Forecasting',
+      'Bookkeeping & Accounting',
       'others'
     ],
     'hr-hiring': [
       'Find candidates faster',
       'Automate interviews',
       'High-volume hiring',
+      'Improve hire quality',
       'Candidate follow-ups',
       'Onboarding & HR help',
-      'Improve hire quality',
-      'others'
-    ],
-    finance: [
-      'Bookkeeping & Accounting',
-      'Expenses & Spend Control',
-      'Virtual CFO & Insights',
-      'Budgeting & Forecasting',
-      'Finance Ops & Close',
-      'Invoices & Compliance',
       'others'
     ],
     'supply-chain': [
@@ -191,26 +197,64 @@ const ChatBot = () => {
       'Procurement Automation',
       'Supplier Risk',
       'Shipping & Logistics',
-      'Track My Orders',
-      'Fully Automated Ops',
+      'Predict Demand & Business Outcomes',
       'others'
     ],
     research: [
-      'Track My Competitors',
       'Find Market & Industry Trends',
-      'Understand Customer Reviews & Sentiment',
-      'Monitor Websites, Prices & Online Changes',
-      'Predict Demand & Business Outcomes',
       'Get AI Research Summary & Insights',
+      'Track My Competitors',
+      'Monitor Websites, Prices & Online Changes',
+      'Tracking competitor pricing and offers',
       'others'
     ],
     'data-analysis': [
-      'Lead Follow-up & Auto Reply',
       'Sales & Revenue Forecasting',
-      'Customer Churn & Retention Insights',
       'Instant Business Dashboards',
-      'Marketing & Campaign Performance Tracking',
-      '24/7 Customer Support Assistant',
+      'Understand Customer Reviews & Sentiment',
+      'Analysing reviews to improve products',
+      'Customer Churn & Retention Insights',
+      'Understanding why customers don\'t convert',
+      'others'
+    ],
+    'website-seo': [
+      'Google Business',
+      'Website & SEO Optimization',
+      'Writing SEO-friendly pages and blog posts',
+      'Optimising website copy for conversions',
+      'others'
+    ],
+    'ecommerce': [
+      'Bulk creating or updating listings',
+      'Writing product titles and descriptions that rank',
+      'Generating A+ content / store content ideas',
+      'others'
+    ],
+    'document-ocr': [
+      'Scanning and extracting data from PDFs / images',
+      'Auto-tagging and organising documents',
+      'Searching across all documents with a chat interface',
+      'Creating an internal Q&A bot from your files',
+      'Classifying documents by type (invoice, contract, report, etc.)',
+      'Building a knowledge base from SOPs & policies',
+      'others'
+    ],
+    'personal-productivity': [
+      'Planning daily / weekly tasks and priorities',
+      'Summarising meetings, calls and long documents',
+      'Drafting emails, proposals and reports faster',
+      'Preparing for interviews, pitches and presentations',
+      'Creating learning plans and study summaries',
+      'Managing personal notes and knowledge with AI',
+      'others'
+    ],
+    'customer-success': [
+      'Customer Success & Retention',
+      'Customer Churn & Retention Insights',
+      'others'
+    ],
+    'automated-ops': [
+      'Fully Automated Ops',
       'others'
     ]
   };
