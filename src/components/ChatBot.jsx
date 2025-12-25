@@ -595,34 +595,22 @@ const ChatBot = () => {
         saveToSheet(`Professional Context: ${JSON.stringify({ ...professionalContext, salaryContext: answer })}`, '', selectedDomain?.name, selectedSubDomain);
       }
 
-    // Freelancer Flow
+    // Freelancer Flow - simplified (go directly to requirement)
     } else if (userRole?.id === 'freelancer') {
       if (flowStage === 'role-q1') {
-        // Q1: Type of freelance work
+        // Q1: Type of freelance work - then go directly to requirement
         setBusinessContext(prev => ({ ...prev, businessType: answer }));
-        setFlowStage('role-q2');
-        const botMessage = {
-          id: getNextMessageId(),
-          text: `Nice! 🎯\n\n**What's your biggest challenge or bottleneck in your freelance work right now?**\n\n_(e.g., Finding clients, Managing projects, Invoicing, Time management, etc.)_`,
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage, botMessage]);
-
-      } else if (flowStage === 'role-q2') {
-        // Q2: Biggest challenge - now ask the main problem
-        setBusinessContext(prev => ({ ...prev, targetAudience: answer }));
         setFlowStage('requirement');
         const botMessage = {
           id: getNextMessageId(),
-          text: `I understand! 🎉\n\n**What specific problem are you trying to solve right now?**\n\n_(Tell me in 2-3 lines what you need help with and what would make your work easier)_`,
+          text: `Nice! 🎯\n\n**What specific problem are you trying to solve right now?**\n\n_(Tell me in 2-3 lines what you need help with and what would make your work easier)_`,
           sender: 'bot',
           timestamp: new Date()
         };
         setMessages(prev => [...prev, userMessage, botMessage]);
 
         // Save freelancer context to sheet
-        saveToSheet(`Freelancer Context: ${JSON.stringify(businessContext)}`, '', selectedDomain?.name, selectedSubDomain);
+        saveToSheet(`Freelancer Context: ${JSON.stringify({ ...businessContext, businessType: answer })}`, '', selectedDomain?.name, selectedSubDomain);
       }
     }
   };
