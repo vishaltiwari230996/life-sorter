@@ -41,8 +41,8 @@ const ProductSelection = ({ domains, subDomains, onDomainSelect, onSubDomainSele
     <div className="product-selection-overlay">
       <div className="product-selection-container">
         <div className="selection-header">
-          <h2>Pick your domain</h2>
-          <p>Select the area where you need AI tools</p>
+          <h2>Select your focus area</h2>
+          <p>We'll guide you to the right AI tools</p>
         </div>
 
         <div className="domain-grid">
