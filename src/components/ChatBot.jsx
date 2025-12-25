@@ -935,7 +935,8 @@ When you talk to ${topTool?.name || 'the vendor'}:
           id: getNextMessageId(),
           text: guideHeader + starterPrompts,
           sender: 'bot',
-          timestamp: new Date()
+          timestamp: new Date(),
+          showFinalActions: true
         };
         setMessages(prev => [...prev, fallbackGuide]);
         setIsTyping(false);
@@ -1007,7 +1008,8 @@ Be specific to their industry, role, and requirement. No generic advice.`;
           id: getNextMessageId(),
           text: personalizedHeader + starterPrompts,
           sender: 'bot',
-          timestamp: new Date()
+          timestamp: new Date(),
+          showFinalActions: true
         };
         setMessages(prev => [...prev, guideMessage]);
       } else {
@@ -1020,7 +1022,8 @@ Be specific to their industry, role, and requirement. No generic advice.`;
         id: getNextMessageId(),
         text: guideHeader + starterPrompts,
         sender: 'bot',
-        timestamp: new Date()
+        timestamp: new Date(),
+        showFinalActions: true
       };
       setMessages(prev => [...prev, errorMessage]);
     }
