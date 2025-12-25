@@ -124,8 +124,6 @@ const ChatBot = () => {
     { id: 'ecommerce', name: 'Ecommerce & Online Stores', emoji: '🛒' },
     { id: 'document-ocr', name: 'Document – OCR / RAG', emoji: '📄' },
     { id: 'personal-productivity', name: 'Personal Productivity & Career', emoji: '🎯' },
-    { id: 'customer-success', name: 'Customer Success & Retention', emoji: '🤝' },
-    { id: 'automated-ops', name: 'Fully Automated Ops', emoji: '⚙️' },
     { id: 'other', name: 'Other', emoji: '✨' }
   ];
 
@@ -246,15 +244,6 @@ const ChatBot = () => {
       'Preparing for interviews, pitches and presentations',
       'Creating learning plans and study summaries',
       'Managing personal notes and knowledge with AI',
-      'others'
-    ],
-    'customer-success': [
-      'Customer Success & Retention',
-      'Customer Churn & Retention Insights',
-      'others'
-    ],
-    'automated-ops': [
-      'Fully Automated Ops',
       'others'
     ]
   };
