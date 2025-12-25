@@ -137,11 +137,11 @@ const ChatBot = () => {
   const subDomains = {
     marketing: [
       'Getting more leads',
-      'Post Content Creation',
+      'Selling on WhatsApp/Instagram',
+      'Google Business',
+      'Following up properly',
       'Digital Paid Ads',
-      'Finding the right keywords for your business',
-      'Writing SEO-friendly pages and blog posts',
-      'Optimising website copy for conversions',
+      'Understanding why customers don\'t convert',
       'others'
     ],
     'sales-support': [
