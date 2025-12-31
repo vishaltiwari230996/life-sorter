@@ -3,14 +3,23 @@ import { Send, Bot, User, ChevronLeft, ChevronRight, Check, Sparkles, Copy, Chec
 import ReactMarkdown from 'react-markdown';
 import './ChatBotHorizontal.css';
 
+// Import data files
+import { budgetOptions, teamSizeOptions, getToolsForDomain } from '../data/selectionOptions';
+import { getQuestionsForDomain } from '../data/deepDiveQuestions';
+import { getTopAppsForDomain } from '../data/workspaceApps';
+import { getTopToolsForDomain, filterToolsByBudget } from '../data/productHuntTools';
+
 const steps = [
   { id: 'welcome', title: 'Welcome', icon: '✨' },
   { id: 'domain', title: 'Domain', icon: '🎯' },
   { id: 'subdomain', title: 'Focus Area', icon: '🔍' },
+  { id: 'currentTools', title: 'Your Tools', icon: '🔧' },
+  { id: 'budget', title: 'Budget', icon: '💰' },
+  { id: 'teamSize', title: 'Team', icon: '👥' },
   { id: 'role', title: 'Your Role', icon: '👤' },
   { id: 'details', title: 'Details', icon: '📝' },
   { id: 'identity', title: 'Contact', icon: '📧' },
-  { id: 'consultant', title: 'Deep Dive', icon: '🔬' },
+  { id: 'deepDive', title: 'Deep Dive', icon: '🔬' },
   { id: 'complete', title: 'Results', icon: '🎉' },
 ];
 
@@ -193,10 +202,21 @@ const ChatBotHorizontal = () => {
   const [selections, setSelections] = useState({
     domain: null,
     subdomain: null,
+    currentTools: [],
+    budget: null,
+    teamSize: null,
     role: null,
     details: '',
     name: '',
-    email: ''
+    email: '',
+    deepDive: {
+      source: null,
+      volume: null,
+      pain: null,
+      timeSpent: null,
+      previousAttempts: null,
+      successGoal: null
+    }
   });
   const [isAnimating, setIsAnimating] = useState(false);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
@@ -1005,6 +1025,32 @@ Also provide:
     setTimeout(nextStep, 300);
   };
 
+  const handleToolToggle = (toolId) => {
+    setSelections(prev => {
+      const currentTools = prev.currentTools.includes(toolId)
+        ? prev.currentTools.filter(t => t !== toolId)
+        : [...prev.currentTools, toolId];
+      return { ...prev, currentTools };
+    });
+  };
+
+  const handleBudgetSelect = (budget) => {
+    setSelections(prev => ({ ...prev, budget }));
+    setTimeout(nextStep, 300);
+  };
+
+  const handleTeamSizeSelect = (teamSize) => {
+    setSelections(prev => ({ ...prev, teamSize }));
+    setTimeout(nextStep, 300);
+  };
+
+  const handleDeepDiveSelect = (questionKey, value) => {
+    setSelections(prev => ({
+      ...prev,
+      deepDive: { ...prev.deepDive, [questionKey]: value }
+    }));
+  };
+
   const handleRoleSelect = (role) => {
     setSelections(prev => ({ ...prev, role }));
     setTimeout(nextStep, 300);
@@ -1020,10 +1066,8 @@ Also provide:
   const handleIdentitySubmit = (e) => {
     e.preventDefault();
     if (selections.name.trim() && selections.email.trim()) {
-      // Go to consultant mode first, not directly to results
+      // Go to deep dive mode
       nextStep();
-      // Start the consultant conversation
-      generateConsultantQuestion();
     }
   };
 
@@ -1089,6 +1133,67 @@ Also provide:
                   onClick={() => handleSubdomainSelect(sub)}
                 >
                   {sub}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'currentTools':
+        const toolsForDomain = getToolsForDomain(selections.domain);
+        return (
+          <div className="step-content">
+            <h2>What tools do you already use?</h2>
+            <p>Select all that apply (helps us recommend add-ons)</p>
+            <div className="options-list">
+              {toolsForDomain.map((tool) => (
+                <button
+                  key={tool.id}
+                  className={`option-pill ${selections.currentTools.includes(tool.id) ? 'selected' : ''}`}
+                  onClick={() => handleToolToggle(tool.id)}
+                >
+                  {tool.emoji} {tool.name}
+                </button>
+              ))}
+            </div>
+            <button className="skip-link" onClick={nextStep}>
+              Skip - I'll tell you later →
+            </button>
+          </div>
+        );
+
+      case 'budget':
+        return (
+          <div className="step-content">
+            <h2>What's your monthly budget?</h2>
+            <p>This helps us filter recommendations</p>
+            <div className="options-list">
+              {budgetOptions.map((option) => (
+                <button
+                  key={option.id}
+                  className={`option-pill ${selections.budget === option.id ? 'selected' : ''}`}
+                  onClick={() => handleBudgetSelect(option.id)}
+                >
+                  {option.emoji} {option.text}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'teamSize':
+        return (
+          <div className="step-content">
+            <h2>How many people will use this?</h2>
+            <p>Helps with pricing and scalability recommendations</p>
+            <div className="options-list">
+              {teamSizeOptions.map((option) => (
+                <button
+                  key={option.id}
+                  className={`option-pill ${selections.teamSize === option.id ? 'selected' : ''}`}
+                  onClick={() => handleTeamSizeSelect(option.id)}
+                >
+                  {option.emoji} {option.text}
                 </button>
               ))}
             </div>
@@ -1162,71 +1267,77 @@ Also provide:
           </div>
         );
 
-      case 'consultant':
+      case 'deepDive':
+        const deepDiveQuestions = getQuestionsForDomain(selections.domain);
+        const deepDiveSteps = ['source', 'volume', 'pain', 'timeSpent', 'previousAttempts', 'successGoal'];
+        const currentDeepDiveStep = deepDiveSteps.findIndex(step => !selections.deepDive[step]);
+        const isDeepDiveComplete = currentDeepDiveStep === -1;
+
+        const getCurrentQuestion = () => {
+          if (isDeepDiveComplete) return null;
+          const stepKey = deepDiveSteps[currentDeepDiveStep];
+          return { key: stepKey, ...deepDiveQuestions[stepKey] };
+        };
+
+        const currentQuestion = getCurrentQuestion();
+
         return (
-          <div className="step-content consultant-step">
-            <div className="consultant-mode-header">
-              <div className="consultant-badge">
-                <MessageCircle size={24} />
-                <span>Deep Dive Mode</span>
+          <div className="step-content deep-dive-step">
+            <div className="deep-dive-header">
+              <div className="deep-dive-badge">
+                <MessageCircle size={20} />
+                <span>Quick Questions</span>
               </div>
-              <h2>Let me understand your situation better</h2>
+              <h2>Help me find you the perfect solution</h2>
+              <div className="deep-dive-progress">
+                {deepDiveSteps.map((step, idx) => (
+                  <div
+                    key={step}
+                    className={`progress-dot ${selections.deepDive[step] ? 'completed' : ''} ${idx === currentDeepDiveStep ? 'active' : ''}`}
+                  />
+                ))}
+              </div>
             </div>
 
-            <div className="consultant-chat" ref={consultantChatRef}>
-              {consultantMessages.map((msg, idx) => (
-                <div key={idx} className={`consultant-message ${msg.role}`}>
-                  <div className="message-avatar">
-                    {msg.role === 'assistant' ? <Bot size={18} /> : <User size={18} />}
-                  </div>
-                  <div className="message-content">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
+            {!isDeepDiveComplete ? (
+              <div className="deep-dive-question">
+                <h3>{currentQuestion.question}</h3>
+                <div className="options-list">
+                  {currentQuestion.options.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`option-pill ${selections.deepDive[currentQuestion.key] === option.id ? 'selected' : ''}`}
+                      onClick={() => handleDeepDiveSelect(currentQuestion.key, option.id)}
+                    >
+                      {option.emoji} {option.text}
+                    </button>
+                  ))}
                 </div>
-              ))}
-              
-              {isConsultantTyping && (
-                <div className="consultant-message assistant">
-                  <div className="message-avatar">
-                    <Bot size={18} />
-                  </div>
-                  <div className="message-content typing">
-                    <span></span><span></span><span></span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {!consultantReady ? (
-              <div className="consultant-input-area">
-                <input
-                  type="text"
-                  placeholder="Type your response..."
-                  value={consultantInput}
-                  onChange={(e) => setConsultantInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleConsultantReply()}
-                  disabled={isConsultantTyping}
-                />
-                <button 
-                  onClick={handleConsultantReply} 
-                  disabled={!consultantInput.trim() || isConsultantTyping}
-                  className="send-btn"
-                >
-                  <Send size={18} />
-                </button>
               </div>
             ) : (
-              <div className="consultant-ready">
-                <div className="ready-icon">✅</div>
-                <p>Great! I have a clear understanding of your needs.</p>
-                <button className="primary-btn" onClick={handleConsultantComplete}>
+              <div className="deep-dive-summary">
+                <div className="summary-icon">✅</div>
+                <h3>Got it! Here's what I understood:</h3>
+                <div className="summary-list">
+                  {deepDiveSteps.map(step => {
+                    const question = deepDiveQuestions[step];
+                    const selectedOption = question.options.find(o => o.id === selections.deepDive[step]);
+                    return selectedOption ? (
+                      <div key={step} className="summary-item">
+                        <span className="summary-emoji">{selectedOption.emoji}</span>
+                        <span>{selectedOption.text}</span>
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+                <button className="primary-btn" onClick={() => { fetchResults(); nextStep(); }}>
                   Show My Solutions <ChevronRight size={20} />
                 </button>
               </div>
             )}
 
-            <button className="skip-btn" onClick={() => { skipConsultantMode(); handleConsultantComplete(); }}>
-              Skip deep dive → Show results now
+            <button className="skip-link" onClick={() => { fetchResults(); nextStep(); }}>
+              Skip → Show results now
             </button>
           </div>
         );
@@ -1245,18 +1356,23 @@ Also provide:
                                        selections.details?.toLowerCase().includes('data entry') ||
                                        selections.subdomain?.toLowerCase().includes('data');
 
-        // Solution categories for the horizontal roadmap - Google Automation only if needed
-        const baseSolutionCategories = [
-          { id: 'tools', title: 'Existing Tools', subtitle: 'Ready-to-use products', icon: '🛠️', color: '#9359B6' },
-          { id: 'gpts', title: 'Custom GPTs', subtitle: 'AI assistants', icon: '🤖', color: '#3C8AD1' },
-          { id: 'prompts', title: 'Action Prompts', subtitle: 'Copy-paste templates', icon: '📝', color: '#10b981' },
-          { id: 'workflows', title: 'n8n Workflows', subtitle: 'Agentic automations', icon: '⚡', color: '#f59e0b' }
+        // Get Google Workspace apps and Product Hunt tools for this domain
+        const workspaceAppsForDomain = getTopAppsForDomain(selections.domain);
+        const productHuntToolsForDomain = getTopToolsForDomain(selections.domain);
+
+        // Check if user uses Google tools
+        const usesGoogleTools = selections.currentTools.some(t =>
+          ['gmail', 'google-sheets', 'google-docs'].includes(t)
+        );
+
+        // Solution categories for the horizontal roadmap
+        const solutionCategories = [
+          { id: 'quickWins', title: 'Quick Wins', subtitle: 'Do these now', icon: '🆓', color: '#10b981' },
+          { id: 'workspace', title: 'Google Add-ons', subtitle: 'Install in 1 click', icon: '🔌', color: '#4285f4' },
+          { id: 'productHunt', title: 'Trending Tools', subtitle: 'Product Hunt picks', icon: '🚀', color: '#da552f' },
+          { id: 'tools', title: 'Enterprise Tools', subtitle: 'Full solutions', icon: '🛠️', color: '#9359B6' },
+          { id: 'prompts', title: 'AI Prompts', subtitle: 'Copy-paste', icon: '📝', color: '#f59e0b' }
         ];
-        
-        // Only add Google Automations if actually relevant
-        const solutionCategories = needsGoogleAutomation 
-          ? [...baseSolutionCategories, { id: 'appscript', title: 'Google Automations', subtitle: 'Apps Script', icon: '📊', color: '#ec4899' }]
-          : baseSolutionCategories;
 
         return (
           <div className="step-content complete-step consultant-view">
@@ -1405,11 +1521,96 @@ Also provide:
                 {expandedSection && (
                   <div className="detail-panel" style={{ '--panel-color': solutionCategories.find(c => c.id === expandedSection)?.color }}>
                     <button className="close-panel" onClick={() => setExpandedSection(null)}>✕</button>
-                    
+
+                    {expandedSection === 'quickWins' && (
+                      <div className="panel-content">
+                        <h4>🆓 Quick Wins - Do These Now (Free)</h4>
+                        <p className="panel-desc">Zero cost actions you can take immediately</p>
+                        <div className="quick-wins-list">
+                          <div className="quick-win-item">
+                            <span className="qw-number">1</span>
+                            <div className="qw-content">
+                              <strong>Use AI to analyze your current process</strong>
+                              <p>Paste your workflow into ChatGPT and ask for optimization suggestions</p>
+                            </div>
+                          </div>
+                          <div className="quick-win-item">
+                            <span className="qw-number">2</span>
+                            <div className="qw-content">
+                              <strong>Set up free automation triggers</strong>
+                              <p>Use Google Forms + Sheets for basic data collection</p>
+                            </div>
+                          </div>
+                          <div className="quick-win-item">
+                            <span className="qw-number">3</span>
+                            <div className="qw-content">
+                              <strong>Template your repetitive tasks</strong>
+                              <p>Create reusable templates for common responses</p>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="panel-tip">💡 These take 5-15 minutes each and cost nothing!</p>
+                      </div>
+                    )}
+
+                    {expandedSection === 'workspace' && (
+                      <div className="panel-content">
+                        <h4>🔌 Google Workspace Add-ons</h4>
+                        <p className="panel-desc">Install these directly into Gmail, Sheets, or Docs - 1 click setup</p>
+                        <div className="workspace-grid">
+                          {workspaceAppsForDomain.map((app, i) => (
+                            <div key={i} className="workspace-card">
+                              <div className="workspace-card-header">
+                                <strong>{app.name}</strong>
+                                <span className="workspace-rating">⭐ {app.rating}</span>
+                              </div>
+                              <span className="workspace-type">{app.type}</span>
+                              <p>{app.description}</p>
+                              <div className="workspace-meta">
+                                <span className="workspace-price">{app.price}</span>
+                                <span className="workspace-installs">{app.installs} installs</span>
+                              </div>
+                              <a href={app.link} target="_blank" rel="noopener noreferrer" className="workspace-install-btn">
+                                Install Free →
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="panel-tip">💡 Most have free tiers - try before you buy!</p>
+                      </div>
+                    )}
+
+                    {expandedSection === 'productHunt' && (
+                      <div className="panel-content">
+                        <h4>🚀 Trending on Product Hunt</h4>
+                        <p className="panel-desc">Popular, vetted tools with real user reviews</p>
+                        <div className="ph-grid">
+                          {productHuntToolsForDomain.map((tool, i) => (
+                            <div key={i} className="ph-card">
+                              <div className="ph-card-header">
+                                <strong>{tool.name}</strong>
+                                <span className="ph-upvotes">🔺 {tool.upvotes.toLocaleString()}</span>
+                              </div>
+                              <p className="ph-tagline">"{tool.tagline}"</p>
+                              <p className="ph-description">{tool.description}</p>
+                              <div className="ph-meta">
+                                <span className="ph-price">{tool.price}</span>
+                                {tool.deal && <span className="ph-deal">🎁 {tool.deal}</span>}
+                              </div>
+                              <a href={tool.website} target="_blank" rel="noopener noreferrer" className="ph-visit-btn">
+                                Visit Website →
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="panel-tip">💡 Sort by your priorities: price, features, or user reviews</p>
+                      </div>
+                    )}
+
                     {expandedSection === 'tools' && (
                       <div className="panel-content">
-                        <h4>🛠️ Existing AI Tools</h4>
-                        <p className="panel-desc">These companies offer ready-made solutions. Request demos to see if they fit your needs.</p>
+                        <h4>🛠️ Enterprise Solutions</h4>
+                        <p className="panel-desc">Full-featured solutions with dedicated support</p>
                         <div className="tools-grid">
                           {companies.slice(0, 4).map((tool, i) => (
                             <div key={i} className="tool-card-slim">
@@ -1420,30 +1621,6 @@ Also provide:
                           ))}
                         </div>
                         <p className="panel-tip">💡 Contact these companies for demos to evaluate fit and budget.</p>
-                      </div>
-                    )}
-
-                    {expandedSection === 'gpts' && (
-                      <div className="panel-content">
-                        <h4>🤖 Custom GPTs</h4>
-                        <p className="panel-desc">AI assistants tailored for your use case</p>
-                        <div className="gpts-grid">
-                          <div className="gpt-item">
-                            <strong>{domainName} Assistant</strong>
-                            <p>Custom GPT for {selections.subdomain}</p>
-                          </div>
-                          <div className="gpt-item">
-                            <strong>Document Analyzer</strong>
-                            <p>Process & extract insights from files</p>
-                          </div>
-                        </div>
-                        <div className="access-box">
-                          <h5>How to Access:</h5>
-                          <ul>
-                            <li><strong>ChatGPT Plus:</strong> <a href="https://chat.openai.com/gpts" target="_blank" rel="noopener noreferrer">chat.openai.com/gpts</a> → Search for your use case</li>
-                            <li><strong>Create Your Own:</strong> ChatGPT → Explore GPTs → Create</li>
-                          </ul>
-                        </div>
                       </div>
                     )}
 
