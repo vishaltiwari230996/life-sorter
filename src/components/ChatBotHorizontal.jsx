@@ -1100,18 +1100,14 @@ Also provide:
           <div className="step-content">
             <h2>What describes you best?</h2>
             <p>This helps us personalize recommendations</p>
-            <div className="role-options">
+            <div className="options-list">
               {roleOptions.map((role) => (
                 <button
                   key={role.id}
-                  className={`role-card ${selections.role === role.id ? 'selected' : ''}`}
+                  className={`option-pill ${selections.role === role.id ? 'selected' : ''}`}
                   onClick={() => handleRoleSelect(role.id)}
                 >
-                  <span className="role-emoji">{role.emoji}</span>
-                  <div className="role-info">
-                    <span className="role-title">{role.text}</span>
-                    <span className="role-desc">{role.description}</span>
-                  </div>
+                  {role.emoji} {role.text}
                 </button>
               ))}
             </div>
