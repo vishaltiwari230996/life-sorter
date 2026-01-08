@@ -42,13 +42,9 @@ export default async function handler(req, res) {
     // URL to fetch specific sheet by name
     const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
 
-    console.log('Fetching sheet:', sheetName, 'for domain:', domain);
-    console.log('URL:', SHEET_CSV_URL);
-
     const response = await fetch(SHEET_CSV_URL);
 
     if (!response.ok) {
-      console.error('Failed to fetch sheet:', response.status, response.statusText);
       return res.status(500).json({
         error: 'Failed to fetch Google Sheet',
         status: response.status,
@@ -57,7 +53,6 @@ export default async function handler(req, res) {
     }
 
     const csvText = await response.text();
-    console.log('CSV fetched, length:', csvText.length);
 
     // Parse CSV
     const parsed = Papa.parse(csvText, {
@@ -65,10 +60,6 @@ export default async function handler(req, res) {
       skipEmptyLines: true,
       transformHeader: (header) => header.trim()
     });
-
-    if (parsed.errors.length > 0) {
-      console.error('CSV parsing errors:', parsed.errors);
-    }
 
     // Normalize column names
     const companies = parsed.data
@@ -85,26 +76,13 @@ export default async function handler(req, res) {
       }))
       .filter(c => c.name && c.name.trim()); // Filter out empty rows
 
-    console.log('Parsed companies:', companies.length);
-    console.log('First company:', companies[0]);
-    console.log('Raw headers:', parsed.meta?.fields);
-
     return res.status(200).json({
       success: true,
       count: companies.length,
-      companies: companies,
-      debug: {
-        sheetName,
-        domain,
-        csvLength: csvText.length,
-        csvPreview: csvText.substring(0, 500),
-        headers: parsed.meta?.fields,
-        rawRowCount: parsed.data?.length
-      }
+      companies: companies
     });
 
   } catch (error) {
-    console.error('Error fetching companies:', error);
     return res.status(500).json({
       error: 'Internal server error',
       message: error.message

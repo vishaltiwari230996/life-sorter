@@ -9,26 +9,21 @@ export async function fetchCompaniesCSV(domain) {
       ? `/api/companies?domain=${encodeURIComponent(domain)}`
       : '/api/companies';
 
-    console.log('Fetching companies for domain:', domain);
     const response = await fetch(url);
 
     if (!response.ok) {
-      console.error('Failed to fetch companies:', response.status);
       return [];
     }
 
     const data = await response.json();
 
     if (!data.success) {
-      console.error('API error:', data.error);
       return [];
     }
 
-    console.log('Fetched companies:', data.count, 'for domain:', domain);
     return data.companies || [];
 
   } catch (error) {
-    console.error('Error fetching companies:', error);
     return [];
   }
 }

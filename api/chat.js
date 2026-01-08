@@ -26,17 +26,7 @@ export default async function handler(req, res) {
     const apiKey = process.env.OPENAI_API_KEY;
     const modelName = process.env.OPENAI_MODEL_NAME || 'gpt-4o-mini';
 
-    // Log for debugging (without exposing the key)
-    console.log('Environment check:', {
-      hasApiKey: !!apiKey,
-      apiKeyPrefix: apiKey ? apiKey.substring(0, 10) + '...' : 'NOT_SET',
-      modelName: modelName,
-      messageLength: message.length,
-      persona: persona
-    });
-
     if (!apiKey) {
-      console.error('CRITICAL: OpenAI API key not found in environment variables');
       return res.status(500).json({
         error: 'Configuration error',
         message: 'API key not configured. Please check Vercel environment variables.'

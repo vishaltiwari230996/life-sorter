@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  life-sorter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      # Add your API keys here or use .env file
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+    env_file:
+      - .env
+    restart: unless-stopped
+    
+  # Development mode - uncomment to use for development
+  # life-sorter-dev:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.dev
+  #   ports:
+  #     - "5173:5173"
+  #     - "3001:3001"
+  #   volumes:
+  #     - .:/app
+  #     - /app/node_modules
+  #   environment:
+  #     - NODE_ENV=development
+  #   env_file:
+  #     - .env

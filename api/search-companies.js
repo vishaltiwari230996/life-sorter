@@ -49,9 +49,6 @@ export default async function handler(req, res) {
   try {
     const { domain, subdomain, requirement, userContext } = req.body;
 
-    console.log('Priority search for domain:', domain, 'subdomain:', subdomain);
-    console.log('User context:', userContext);
-
     const response = await fetch(SHEET_CSV_URL);
 
     if (!response.ok) {
@@ -63,7 +60,6 @@ export default async function handler(req, res) {
     }
 
     const csvText = await response.text();
-    console.log('CSV fetched, length:', csvText.length);
 
     // Parse CSV without headers first (to detect row types)
     const parsed = Papa.parse(csvText, {
@@ -72,7 +68,6 @@ export default async function handler(req, res) {
     });
 
     const rawRows = parsed.data;
-    console.log('Total raw rows:', rawRows.length);
 
     // Helper function to detect row type
     const detectRowType = (row, rowIndex) => {
@@ -130,10 +125,8 @@ export default async function handler(req, res) {
 
       if (rowType === 'domain-header') {
         currentDomain = (row[0] || 'General').toString().trim();
-        console.log(`Found domain: ${currentDomain} at row ${i + 1}`);
       } else if (rowType === 'column-header') {
         currentHeaders = row.map(h => (h || '').toString().trim());
-        console.log(`Found headers at row ${i + 1}:`, currentHeaders.slice(0, 5));
       } else if (rowType === 'startup-record' && currentHeaders.length > 0) {
         // Extract priority fields
         const name = getColumnValue(row, currentHeaders, PRIORITY_COLUMNS.name);
@@ -176,8 +169,6 @@ export default async function handler(req, res) {
         }
       }
     }
-
-    console.log('Parsed startups:', startups.length);
 
     // If no startups found, return empty
     if (startups.length === 0) {
@@ -299,8 +290,6 @@ Return EXACTLY this JSON format:
   ],
   "alternatives": [{"index": 8, "score": 5}, {"index": 12, "score": 4}]
 }`;
-
-    console.log('Calling GPT for priority-based search...');
 
     const searchResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
