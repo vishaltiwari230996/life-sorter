@@ -448,23 +448,27 @@
 }
 
 .sidebar-user-profile {
-  margin-top: auto;
+  margin-top: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding-bottom: 16px;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
 }
 
 .sidebar-user-name {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
 }
 
 .sidebar-user-avatar {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
   border: 2px solid rgba(255, 255, 255, 0.4);
@@ -591,6 +595,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
   padding: 0.875rem 1.75rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
@@ -606,6 +611,11 @@
   position: relative;
   overflow: hidden;
   animation: typeformBtnIn 0.4s ease-out both;
+}
+
+.option-emoji {
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 @keyframes typeformBtnIn {
@@ -1749,4 +1759,696 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* ============================================
+   PROGRESS TREE ANIMATION
+   ============================================ */
+.progress-tree-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  margin-top: 1rem;
+  background: transparent;
+  border-radius: 16px;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  min-height: 280px;
+}
+
+.progress-tree-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+/* Tree Visualization Container */
+.tree-visualization {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 40px;
+  min-height: 160px;
+}
+
+/* Ground/Base */
+.tree-ground {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 20px;
+  background: linear-gradient(180deg, #8B5E3C 0%, #6B4423 100%);
+  border-radius: 40% 40% 50% 50%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.ground-grass {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 12px;
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
+  border-radius: 50% 50% 0 0;
+  animation: grassWave 3s ease-in-out infinite;
+}
+
+@keyframes grassWave {
+  0%, 100% { transform: translateX(-50%) scaleX(1); }
+  50% { transform: translateX(-50%) scaleX(1.02); }
+}
+
+/* Tree Trunk - Grows with levels */
+.tree-trunk {
+  position: absolute;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+  border-radius: 4px;
+  transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 2;
+}
+
+.tree-trunk.level-0 {
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.tree-trunk.level-1 {
+  width: 6px;
+  height: 20px;
+}
+
+.tree-trunk.level-2 {
+  width: 10px;
+  height: 35px;
+}
+
+.tree-trunk.level-3 {
+  width: 14px;
+  height: 50px;
+}
+
+.tree-trunk.level-4 {
+  width: 16px;
+  height: 60px;
+}
+
+.tree-trunk.level-5 {
+  width: 18px;
+  height: 70px;
+}
+
+.trunk-texture {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 8px,
+    rgba(0,0,0,0.1) 8px,
+    rgba(0,0,0,0.1) 10px
+  );
+  border-radius: inherit;
+}
+
+/* Roots */
+.tree-roots {
+  position: absolute;
+  bottom: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.tree-roots.visible {
+  opacity: 1;
+}
+
+.root {
+  position: absolute;
+  background: #6B4423;
+  border-radius: 4px;
+}
+
+.root-1 {
+  width: 20px;
+  height: 4px;
+  left: -18px;
+  top: 8px;
+  transform: rotate(30deg);
+}
+
+.root-2 {
+  width: 22px;
+  height: 4px;
+  left: 0px;
+  top: 12px;
+  transform: rotate(-25deg);
+}
+
+.root-3 {
+  width: 16px;
+  height: 3px;
+  left: -8px;
+  top: 6px;
+  transform: rotate(45deg);
+}
+
+/* Tree Crown Container */
+.tree-crown {
+  position: absolute;
+  bottom: 65px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  transition: all 0.6s ease;
+}
+
+.tree-crown.level-0 { bottom: 50px; }
+.tree-crown.level-1 { bottom: 68px; }
+.tree-crown.level-2 { bottom: 80px; }
+.tree-crown.level-3 { bottom: 95px; }
+.tree-crown.level-4 { bottom: 105px; }
+.tree-crown.level-5 { bottom: 115px; }
+
+/* Seed Stage */
+.seed {
+  position: relative;
+  animation: seedPulse 2s ease-in-out infinite;
+}
+
+.seed-body {
+  font-size: 28px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+.seed-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  background: radial-gradient(circle, rgba(74, 222, 128, 0.4) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: seedGlow 2s ease-in-out infinite;
+}
+
+@keyframes seedPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes seedGlow {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+}
+
+/* Sprout Stage */
+.sprout {
+  position: relative;
+  width: 40px;
+  height: 50px;
+  animation: sproutGrow 0.8s ease-out forwards;
+}
+
+.sprout-stem {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 30px;
+  background: linear-gradient(180deg, #86efac 0%, #22c55e 100%);
+  border-radius: 2px;
+}
+
+.sprout-leaf {
+  position: absolute;
+  width: 18px;
+  height: 12px;
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: leafSway 3s ease-in-out infinite;
+}
+
+.sprout-leaf.left {
+  top: 8px;
+  left: -6px;
+  transform: rotate(-30deg);
+  animation-delay: 0s;
+}
+
+.sprout-leaf.right {
+  top: 8px;
+  right: -6px;
+  transform: rotate(30deg);
+  animation-delay: 0.5s;
+}
+
+@keyframes sproutGrow {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes leafSway {
+  0%, 100% { transform: rotate(-30deg); }
+  50% { transform: rotate(-25deg); }
+}
+
+.sprout-leaf.right {
+  animation-name: leafSwayRight;
+}
+
+@keyframes leafSwayRight {
+  0%, 100% { transform: rotate(30deg); }
+  50% { transform: rotate(25deg); }
+}
+
+/* Sapling Stage */
+.sapling {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  animation: saplingAppear 0.6s ease-out forwards;
+}
+
+.sapling-branch {
+  position: absolute;
+  display: flex;
+  gap: 4px;
+}
+
+.sapling-branch.left {
+  left: 0;
+  top: 20px;
+  transform: rotate(-20deg);
+}
+
+.sapling-branch.right {
+  right: 0;
+  top: 20px;
+  transform: rotate(20deg);
+}
+
+.sapling-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.sapling .leaf {
+  width: 14px;
+  height: 20px;
+  background: linear-gradient(135deg, #86efac 0%, #22c55e 100%);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: saplingLeafSway 2.5s ease-in-out infinite;
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
+}
+
+.sapling-branch.left .leaf:nth-child(1) { animation-delay: 0s; }
+.sapling-branch.left .leaf:nth-child(2) { animation-delay: 0.3s; }
+.sapling-branch.right .leaf:nth-child(1) { animation-delay: 0.15s; }
+.sapling-branch.right .leaf:nth-child(2) { animation-delay: 0.45s; }
+
+@keyframes saplingAppear {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes saplingLeafSway {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+/* Growing Tree Stage */
+.growing-tree,
+.blooming-tree,
+.harvest-tree {
+  position: relative;
+  width: 90px;
+  height: 80px;
+  animation: treeAppear 0.8s ease-out forwards;
+}
+
+@keyframes treeAppear {
+  0% { transform: scale(0.7); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Foliage Layers */
+.foliage-layer {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
+  box-shadow: 
+    inset -5px -5px 15px rgba(0,0,0,0.1),
+    0 4px 12px rgba(34, 197, 94, 0.3);
+  animation: foliageSway 4s ease-in-out infinite;
+}
+
+.foliage-layer.layer-1 {
+  width: 70px;
+  height: 35px;
+  bottom: 0;
+  animation-delay: 0s;
+}
+
+.foliage-layer.layer-2 {
+  width: 55px;
+  height: 30px;
+  bottom: 25px;
+  animation-delay: 0.3s;
+}
+
+.foliage-layer.layer-3 {
+  width: 40px;
+  height: 25px;
+  bottom: 45px;
+  border-radius: 50% 50% 50% 50%;
+  animation-delay: 0.6s;
+}
+
+.foliage-layer.lush {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
+  box-shadow: 
+    inset -5px -5px 15px rgba(0,0,0,0.15),
+    0 6px 16px rgba(34, 197, 94, 0.4);
+}
+
+@keyframes foliageSway {
+  0%, 100% { transform: translateX(-50%) scaleX(1); }
+  50% { transform: translateX(-50%) scaleX(1.02); }
+}
+
+/* Flowers */
+.flower {
+  position: absolute;
+  font-size: 14px;
+  animation: flowerBounce 2s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.flower-1 { top: 10px; left: 10px; animation-delay: 0s; }
+.flower-2 { top: 25px; right: 8px; animation-delay: 0.4s; }
+.flower-3 { top: 5px; right: 20px; animation-delay: 0.8s; }
+
+@keyframes flowerBounce {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.1) rotate(10deg); }
+}
+
+/* Fruits */
+.fruit {
+  position: absolute;
+  font-size: 16px;
+  animation: fruitSwing 3s ease-in-out infinite;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.25));
+}
+
+.fruit-1 { top: 30px; left: 5px; animation-delay: 0s; }
+.fruit-2 { top: 15px; right: 5px; animation-delay: 0.5s; }
+.fruit-3 { top: 40px; right: 15px; animation-delay: 1s; }
+.fruit-4 { top: 5px; left: 20px; animation-delay: 1.5s; }
+.fruit-5 { top: 50px; left: 25px; animation-delay: 2s; }
+
+@keyframes fruitSwing {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+/* Sparkles for harvest */
+.sparkle {
+  position: absolute;
+  font-size: 12px;
+  animation: sparkleFloat 2s ease-in-out infinite;
+  opacity: 0.8;
+}
+
+.sparkle-1 { top: -5px; left: 0; animation-delay: 0s; }
+.sparkle-2 { top: 10px; right: -5px; animation-delay: 0.7s; }
+.sparkle-3 { top: -10px; right: 15px; animation-delay: 1.4s; }
+
+@keyframes sparkleFloat {
+  0%, 100% { 
+    transform: translateY(0) scale(1); 
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translateY(-8px) scale(1.2); 
+    opacity: 1;
+  }
+}
+
+/* Sun Animation */
+.tree-sun {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  transition: all 0.8s ease;
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.tree-sun.level-1 { opacity: 0.3; transform: scale(0.6); }
+.tree-sun.level-2 { opacity: 0.5; transform: scale(0.7); }
+.tree-sun.level-3 { opacity: 0.7; transform: scale(0.8); }
+.tree-sun.level-4 { opacity: 0.85; transform: scale(0.9); }
+.tree-sun.level-5 { opacity: 1; transform: scale(1); }
+
+.sun-core {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #fde047 0%, #facc15 50%, #eab308 100%);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 20px rgba(250, 204, 21, 0.6),
+    0 0 40px rgba(250, 204, 21, 0.3);
+  animation: sunPulse 3s ease-in-out infinite;
+}
+
+.sun-rays {
+  position: absolute;
+  inset: -5px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(250, 204, 21, 0.4) 10deg,
+    transparent 20deg,
+    transparent 40deg,
+    rgba(250, 204, 21, 0.4) 50deg,
+    transparent 60deg,
+    transparent 80deg,
+    rgba(250, 204, 21, 0.4) 90deg,
+    transparent 100deg,
+    transparent 120deg,
+    rgba(250, 204, 21, 0.4) 130deg,
+    transparent 140deg,
+    transparent 160deg,
+    rgba(250, 204, 21, 0.4) 170deg,
+    transparent 180deg,
+    transparent 200deg,
+    rgba(250, 204, 21, 0.4) 210deg,
+    transparent 220deg,
+    transparent 240deg,
+    rgba(250, 204, 21, 0.4) 250deg,
+    transparent 260deg,
+    transparent 280deg,
+    rgba(250, 204, 21, 0.4) 290deg,
+    transparent 300deg,
+    transparent 320deg,
+    rgba(250, 204, 21, 0.4) 330deg,
+    transparent 340deg,
+    transparent 360deg
+  );
+  border-radius: 50%;
+  animation: sunRaysSpin 20s linear infinite;
+}
+
+@keyframes sunPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes sunRaysSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Birds */
+.tree-birds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.bird {
+  position: absolute;
+  font-size: 14px;
+  animation: birdFly 4s ease-in-out infinite;
+}
+
+.bird-1 {
+  top: 15px;
+  left: 5px;
+  animation-delay: 0s;
+}
+
+.bird-2 {
+  top: 25px;
+  left: 25px;
+  animation-delay: 1s;
+}
+
+@keyframes birdFly {
+  0%, 100% { 
+    transform: translate(0, 0) rotate(0deg); 
+  }
+  25% { 
+    transform: translate(15px, -8px) rotate(5deg); 
+  }
+  50% { 
+    transform: translate(25px, -3px) rotate(0deg); 
+  }
+  75% { 
+    transform: translate(10px, 5px) rotate(-5deg); 
+  }
+}
+
+/* Progress Bar */
+.progress-stages {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.progress-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+}
+
+.stage-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stage-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+}
+
+.stage-sublabel {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Progress Dots */
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 0.75rem;
+}
+
+.progress-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-dot.completed {
+  background: #22c55e;
+  border-color: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+}
+
+.progress-dot.current {
+  border-color: #4ade80;
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.6);
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+.dot-check {
+  font-size: 8px;
+  color: white;
+  font-weight: bold;
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* Mobile responsiveness for progress tree */
+@media (max-width: 768px) {
+  .progress-tree-container {
+    min-height: 220px;
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  
+  .tree-visualization {
+    min-height: 120px;
+  }
+  
+  .progress-tree-label {
+    font-size: 0.65rem;
+  }
+  
+  .stage-name {
+    font-size: 0.75rem;
+  }
+  
+  .progress-dots {
+    gap: 6px;
+  }
+  
+  .progress-dot {
+    width: 10px;
+    height: 10px;
+  }
 }

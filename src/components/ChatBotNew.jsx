@@ -100,21 +100,22 @@ const ChatBotNew = () => {
   const [messages, setMessages] = useState([
     {
       id: 'welcome-msg',
-      text: "✨ Welcome to Ikshan! 😊\n\nPick your domain - Select the area where you need AI tools:",
+      text: "✨ Welcome to Ikshan! 😊\n\nLet's find the perfect AI solution for you.",
       sender: 'bot',
       timestamp: new Date(),
-      showDomainOptions: true
+      showGoalOptions: true
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState(null);
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [selectedSubDomain, setSelectedSubDomain] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [requirement, setRequirement] = useState(null);
   const [userName, setUserName] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
-  const [flowStage, setFlowStage] = useState('domain');
+  const [flowStage, setFlowStage] = useState('goal');
 
   const [businessContext, setBusinessContext] = useState({
     businessType: null,
@@ -175,11 +176,22 @@ const ChatBotNew = () => {
     { id: 'other', name: 'Other', emoji: '✨' }
   ];
 
+  const goalOptions = [
+    { id: 'grow-revenue', text: 'Grow Revenue', emoji: '📈' },
+    { id: 'save-time', text: 'Save Time', emoji: '⏱️' },
+    { id: 'better-decisions', text: 'Make Better Decisions', emoji: '🎯' },
+    { id: 'improve-yourself', text: 'Improve Yourself', emoji: '🚀' },
+    { id: 'others', text: 'Others', emoji: '✨' }
+  ];
+
   const roleOptions = [
-    { id: 'business-owner', text: 'Business Owner / Founder', emoji: '👔', description: 'I run my own business' },
-    { id: 'professional', text: 'Professional / Employee', emoji: '💼', description: 'I work for a company' },
-    { id: 'freelancer', text: 'Freelancer / Consultant', emoji: '🎯', description: 'I work independently' },
-    { id: 'student', text: 'Student / Learner', emoji: '📚', description: 'I\'m learning and exploring' }
+    { id: 'founder-owner', text: 'Founder / Owner', emoji: '👔' },
+    { id: 'sales-marketing', text: 'Sales / Marketing', emoji: '📈' },
+    { id: 'ops-admin', text: 'Ops / Admin', emoji: '⚙️' },
+    { id: 'finance-legal', text: 'Finance / Legal', emoji: '💼' },
+    { id: 'hr-recruiting', text: 'HR / Recruiting', emoji: '👥' },
+    { id: 'support-success', text: 'Support / Success', emoji: '🎧' },
+    { id: 'individual-student', text: 'Individual / Student', emoji: '📚' }
   ];
 
   const subDomains = {
@@ -429,6 +441,7 @@ const ChatBotNew = () => {
     }
 
     // Reset all state for new chat
+    setSelectedGoal(null);
     setSelectedDomain(null);
     setSelectedSubDomain(null);
     setUserRole(null);
@@ -446,17 +459,41 @@ const ChatBotNew = () => {
       solutionFor: null,
       salaryContext: null
     });
-    setFlowStage('domain');
+    setFlowStage('goal');
 
     // Start fresh with welcome message
     const welcomeMessage = {
       id: getNextMessageId(),
-      text: "✨ Welcome to Ikshan! 😊\n\nPick your domain - Select the area where you need AI tools:",
+      text: "✨ Welcome to Ikshan! 😊\n\nLet's find the perfect AI solution for you.",
       sender: 'bot',
       timestamp: new Date(),
-      showDomainOptions: true
+      showGoalOptions: true
     };
     setMessages([welcomeMessage]);
+  };
+
+  // Handle goal selection (Question 1)
+  const handleGoalClick = (goal) => {
+    setSelectedGoal(goal);
+
+    const userMessage = {
+      id: getNextMessageId(),
+      text: `${goal.emoji} ${goal.text}`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    const botMessage = {
+      id: getNextMessageId(),
+      text: `Great! You want to **${goal.text.toLowerCase()}**. 🎯\n\nNow let's see where you need these changes.`,
+      sender: 'bot',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage, botMessage]);
+    setFlowStage('domain');
+
+    saveToSheet(`Selected Goal: ${goal.text}`, '', '', '');
   };
 
   const toggleVoiceRecording = () => {
@@ -498,7 +535,7 @@ const ChatBotNew = () => {
       setFlowStage('subdomain');
       const botMessage = {
         id: getNextMessageId(),
-        text: `Great choice! What specifically in ${domain.name}?\n\nPick the area you want to focus on:`,
+        text: `Perfect! Let's scope it more. 🔍\n\nSelect which specific area needs these changes:`,
         sender: 'bot',
         timestamp: new Date(),
         showSubDomainOptions: true,
@@ -523,7 +560,7 @@ const ChatBotNew = () => {
 
     const botMessage = {
       id: getNextMessageId(),
-      text: `Quick question - this helps me find the best solution for you:\n\n**What best describes you?**`,
+      text: `Almost there! 🚀\n\n**How would you describe yourself?**`,
       sender: 'bot',
       timestamp: new Date(),
       showRoleOptions: true
@@ -946,6 +983,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
 
         setMessages(prev => [...prev, finalOutput]);
         setIsTyping(false);
+        setFlowStage('complete'); // Mark journey as complete
 
         saveToSheet('Final Analysis Generated', finalOutput.text, selectedDomain?.name, selectedSubDomain);
       } catch (error) {
@@ -961,6 +999,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
 
         setMessages(prev => [...prev, fallbackOutput]);
         setIsTyping(false);
+        setFlowStage('complete'); // Mark journey as complete
       }
     }, 2000);
   };
@@ -1336,12 +1375,41 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
         <main className="chatbot-new-chat-area">
           <div className="chat-main-content">
             {/* Typeform-style Full Screen Selection View */}
-            {['domain', 'subdomain', 'role'].includes(flowStage) ? (
+            {['goal', 'domain', 'subdomain', 'role'].includes(flowStage) ? (
               <div className="typeform-view">
-                {flowStage === 'domain' && (
+                {/* Question 1: What brings you here? */}
+                {flowStage === 'goal' && (
                   <div className="typeform-question-container">
                     <div className="typeform-greeting">✨ Welcome to Ikshan! 😊</div>
-                    <h1 className="typeform-question">Pick your domain</h1>
+                    <h1 className="typeform-question">What brings you here?</h1>
+                    <p className="typeform-subtitle">Select what you're looking to achieve:</p>
+                    <div className="typeform-options">
+                      {goalOptions.map((goal, index) => (
+                        <button
+                          key={goal.id}
+                          className="typeform-option-btn"
+                          onClick={() => handleGoalClick(goal)}
+                          style={{ animationDelay: `${index * 0.05}s` }}
+                        >
+                          <span className="option-emoji">{goal.emoji}</span>
+                          {goal.text}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Question 2: Where do you want to see changes? */}
+                {flowStage === 'domain' && (
+                  <div className="typeform-question-container">
+                    <button className="typeform-back-btn" onClick={() => {
+                      setSelectedGoal(null);
+                      setFlowStage('goal');
+                    }}>
+                      <ArrowLeft size={20} />
+                      Back
+                    </button>
+                    <h1 className="typeform-question">Where do you want to see these changes?</h1>
                     <p className="typeform-subtitle">Select the area where you need AI tools:</p>
                     <div className="typeform-options">
                       {domains.map((domain, index) => (
@@ -1351,6 +1419,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                           onClick={() => handleDomainClick(domain)}
                           style={{ animationDelay: `${index * 0.05}s` }}
                         >
+                          <span className="option-emoji">{domain.emoji}</span>
                           {domain.name}
                         </button>
                       ))}
@@ -1358,6 +1427,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                   </div>
                 )}
 
+                {/* Question 3: Scope more - specific area */}
                 {flowStage === 'subdomain' && selectedDomain && (
                   <div className="typeform-question-container">
                     <button className="typeform-back-btn" onClick={() => {
@@ -1367,8 +1437,8 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                       <ArrowLeft size={20} />
                       Back
                     </button>
-                    <h1 className="typeform-question">Great choice! 🎯</h1>
-                    <p className="typeform-subtitle">Now pick a specific area within <strong>{selectedDomain.name}</strong>:</p>
+                    <h1 className="typeform-question">Let's scope more 🔍</h1>
+                    <p className="typeform-subtitle">Select which specific area will need these changes:</p>
                     <div className="typeform-options">
                       {(subDomains[selectedDomain.id] || []).map((subDomain, index) => (
                         <button
@@ -1384,10 +1454,18 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                   </div>
                 )}
 
+                {/* Question 4: How would you describe yourself? */}
                 {flowStage === 'role' && (
                   <div className="typeform-question-container">
-                    <h1 className="typeform-question">Almost there! 🚀</h1>
-                    <p className="typeform-subtitle">What best describes you?</p>
+                    <button className="typeform-back-btn" onClick={() => {
+                      setSelectedSubDomain(null);
+                      setFlowStage('subdomain');
+                    }}>
+                      <ArrowLeft size={20} />
+                      Back
+                    </button>
+                    <h1 className="typeform-question">How would you describe yourself?</h1>
+                    <p className="typeform-subtitle">This helps us find the best solution for you:</p>
                     <div className="typeform-options">
                       {roleOptions.map((role, index) => (
                         <button
@@ -1396,6 +1474,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                           onClick={() => handleRoleClick(role)}
                           style={{ animationDelay: `${index * 0.05}s` }}
                         >
+                          <span className="option-emoji">{role.emoji}</span>
                           {role.text}
                         </button>
                       ))}
