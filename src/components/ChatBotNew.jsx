@@ -1,11 +1,253 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu } from 'lucide-react';
+import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu, Edit3 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import './ChatBotNew.css';
 import { formatCompaniesForDisplay, analyzeMarketGaps } from '../utils/csvParser';
 
 // Generate unique message IDs to prevent React key conflicts
 const generateUniqueId = () => `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+// Categories data structure based on CSV - Maps Goal + Role to Categories
+const CATEGORIES_DATA = {
+  'grow-revenue': {
+    'founder-owner': [
+      'Social media content (posts, ads, videos, product visuals)',
+      'Get more leads from Google & website (SEO)',
+      'Run Google and Meta ads + improve ROI',
+      'Google Business Profile visibility',
+      'Understanding why customers don\'t convert',
+      'Selling on WhatsApp/Instagram',
+      'Lead Qualification, Follow Up & Conversion',
+      'Ecommerce Listing SEO + upsell bundles'
+    ],
+    'sales-marketing': [
+      'Run Google and Meta ads + improve ROI',
+      'Social media content (posts, ads, videos, product visuals)',
+      'Get more leads from Google & website (SEO)',
+      'Qualify & route leads automatically (AI SDR)',
+      'Selling on WhatsApp/Instagram',
+      'Improve Google Business Profile leads',
+      'Write SEO Keyword, blogs and landing pages',
+      'Write product titles that rank SEO',
+      'Create ad creatives that convert',
+      'Create upsell/cross-sell messaging'
+    ],
+    'ops-admin': [
+      'Reduce missed leads with faster replies',
+      'Improve order experience to boost repeats',
+      'Call, Chat & Ticket Intelligence',
+      'Smart CCTV: revenue/footfall insights (advanced)'
+    ],
+    'finance-legal': [
+      'Spot profit leaks and improve margins',
+      'Prevent revenue leakage from contracts (renewals, pricing, penalties)',
+      'Speed up deal closure with faster contract review',
+      'Sales & revenue forecasting'
+    ],
+    'hr-recruiting': [
+      'Hire faster to support growth',
+      'Find candidates faster (multi-source)',
+      'Resume screening + shortlisting'
+    ],
+    'support-success': [
+      'Improve retention and reduce churn',
+      'Upsell/cross-sell recommendations',
+      'Improve reviews and response quality',
+      'Find why customers don\'t convert',
+      'Call, Chat & Ticket Intelligence'
+    ],
+    'individual-student': [
+      'Personal brand to get opportunities',
+      'Business Idea Generation',
+      'Trending Products'
+    ]
+  },
+  'save-time': {
+    'founder-owner': [
+      'Automate lead capture into Sheets/CRM',
+      'Draft proposals, quotes, and emails faster',
+      'Extract data from PDFs/images to Sheets',
+      'Automate procurement requests/approvals',
+      '24/7 support assistant + escalation',
+      'Automate order updates and tracking',
+      'Summarize meetings + action items',
+      'Automate HR or Finance'
+    ],
+    'sales-marketing': [
+      'Auto-capture leads from forms/ads',
+      'Mail + DM + influencer outreach automation',
+      'Repurpose long videos into shorts',
+      'Schedule posts + reuse content ideas',
+      'Bulk update product listings/catalog',
+      'Generate A+ store content at scale',
+      'Auto-create weekly content calendar',
+      'Auto-reply + follow-up sequences'
+    ],
+    'ops-admin': [
+      'Automate repetitive admin workflows',
+      'Excel and App script Automation',
+      'Extract invoice/order data from PDFs',
+      'Classify docs (invoice/contract/report)',
+      'Auto-tag and organize documents',
+      'Summarize meetings + send action items',
+      'Automate procurement approvals',
+      'Track orders + customer notifications',
+      'Support ticket routing automation',
+      'Smart CCTV: critical event alerts (advanced)'
+    ],
+    'finance-legal': [
+      'Bookkeeping assistance + auto categorization',
+      'Expense tracking + spend control automation',
+      'Extract invoices/receipts from PDFs into Sheets',
+      'Auto-generate client/vendor payment reminders',
+      'Draft finance emails, reports, and summaries faster',
+      'Extract key terms from contracts (payment, renewal, notice period)',
+      'Automate contract approvals, renewals, and deadline reminders'
+    ],
+    'hr-recruiting': [
+      'Automate interview scheduling',
+      'Automate candidate follow-ups',
+      'High-volume hiring coordination',
+      'Onboarding checklists + HR support',
+      'Draft job descriptions and outreach'
+    ],
+    'support-success': [
+      '24/7 support assistant + escalation',
+      'Auto-tag, route, and prioritize tickets',
+      'Draft replies in brand voice',
+      'Summarize calls/chats into CRM notes',
+      'Build a support knowledge base',
+      'WhatsApp/Instagram instant replies'
+    ],
+    'individual-student': [
+      'Draft emails, reports, and proposals',
+      'Summarize PDFs and long documents',
+      'Extract data from PDFs/images',
+      'Organize notes automatically'
+    ]
+  },
+  'better-decisions': {
+    'founder-owner': [
+      'Instant sales dashboard (daily/weekly)',
+      'Marketing performance dashboard (ROI)',
+      'Build a knowledge base from SOPs',
+      'Track competitors, pricing, and offers',
+      'Market & industry trend summaries',
+      'Predict demand & business outcomes',
+      'Review sentiment → improvement ideas',
+      'Churn & retention insights',
+      'Cashflow + spend control dashboard'
+    ],
+    'sales-marketing': [
+      'Campaign performance tracking dashboard',
+      'Track calls, clicks, and form fills',
+      'Call/chat/ticket insights from conversations',
+      'Review sentiment + competitor comparisons',
+      'Competitor monitoring & price alerts',
+      'Market & trend research summaries',
+      'Chat with past campaigns and assets'
+    ],
+    'ops-admin': [
+      'Ops dashboard (orders, backlog, SLA)',
+      'AI research summaries for decisions',
+      'Predict demand and stock needs',
+      'Supplier risk monitoring',
+      'Delivery/logistics performance reporting',
+      'Internal Q&A bot from SOPs/policies',
+      'Industry best practice',
+      'Customer Churn & Retention Insights'
+    ],
+    'finance-legal': [
+      'Instant finance dashboard (monthly/weekly)',
+      'Budget vs actual insights with variance alerts',
+      'Cashflow forecast (30/60/90 days)',
+      'Predict demand & business outcomes from past data',
+      'Spend control alerts and trend insights',
+      'Contract risk snapshot (high-risk clauses, obligations, renewals)',
+      'Supplier risk and exposure tracking'
+    ],
+    'hr-recruiting': [
+      'Hiring funnel dashboard',
+      'Improve hire quality insights',
+      'Interview feedback summaries',
+      'HR knowledge base from policies',
+      'Internal Q&A bot for HR queries',
+      'Organize resumes and candidate notes'
+    ],
+    'support-success': [
+      'Support SLA dashboard',
+      'Call/chat/ticket intelligence insights',
+      'Review sentiment + issue detection',
+      'Churn & retention insights',
+      'Brand monitoring & crisis alerts',
+      'Search/chat across help docs',
+      'Internal Q&A bot from SOPs'
+    ],
+    'individual-student': [
+      'Weekly goals + progress summary',
+      'Chat with your personal documents',
+      'Auto-tag and organize your files',
+      'Market & industry trend summaries'
+    ]
+  },
+  'personal-growth': {
+    'founder-owner': [
+      'Plan weekly priorities and tasks',
+      'Prep for pitches and presentations',
+      'Personal branding content plan',
+      'Create a learning plan + summaries',
+      'Contract drafting & review support',
+      'Team Spirit Action plan'
+    ],
+    'sales-marketing': [
+      'Plan weekly priorities and tasks',
+      'Prep for pitches and presentations',
+      'Personal branding content plan',
+      'Create a learning plan + summaries',
+      'Contract drafting & review support',
+      'Team Spirit Action plan'
+    ],
+    'ops-admin': [
+      'Plan weekly priorities and tasks',
+      'Prep for pitches and presentations',
+      'Personal branding content plan',
+      'Create a learning plan + summaries',
+      'Contract drafting & review support',
+      'Team Spirit Action plan'
+    ],
+    'finance-legal': [
+      'Plan weekly priorities and tasks',
+      'Prep for pitches and presentations',
+      'Personal branding content plan',
+      'Create a learning plan + summaries',
+      'Contract drafting & review support',
+      'Team Spirit Action plan'
+    ],
+    'hr-recruiting': [
+      'Plan weekly priorities and tasks',
+      'Interview prep + question practice',
+      'Personal branding content plan',
+      'Create a learning plan + summaries',
+      'Contract drafting & review support',
+      'Team Spirit Action plan'
+    ],
+    'support-success': [
+      'Plan weekly priorities and tasks',
+      'Prep for pitches and presentations',
+      'Personal branding content plan',
+      'Create a learning plan + summaries',
+      'Contract drafting & review support',
+      'Team Spirit Action plan'
+    ],
+    'individual-student': [
+      'Plan weekly priorities and tasks',
+      'Prep for pitches and presentations',
+      'Personal branding content plan',
+      'Create a learning plan + summaries',
+      'Contract drafting & review support'
+    ]
+  }
+};
 
 // LocalStorage keys
 const STORAGE_KEYS = {
@@ -180,8 +422,7 @@ const ChatBotNew = () => {
     { id: 'grow-revenue', text: 'Grow Revenue', emoji: '📈' },
     { id: 'save-time', text: 'Save Time', emoji: '⏱️' },
     { id: 'better-decisions', text: 'Make Better Decisions', emoji: '🎯' },
-    { id: 'improve-yourself', text: 'Improve Yourself', emoji: '🚀' },
-    { id: 'others', text: 'Others', emoji: '✨' }
+    { id: 'personal-growth', text: 'Personal Growth', emoji: '🚀' }
   ];
 
   const roleOptions = [
@@ -191,8 +432,21 @@ const ChatBotNew = () => {
     { id: 'finance-legal', text: 'Finance / Legal', emoji: '💼' },
     { id: 'hr-recruiting', text: 'HR / Recruiting', emoji: '👥' },
     { id: 'support-success', text: 'Support / Success', emoji: '🎧' },
-    { id: 'individual-student', text: 'Individual / Student', emoji: '📚' }
+    { id: 'individual-student', text: 'Individual / Student', emoji: '📚' },
+    { id: 'other-role', text: 'Other (Please type below)', emoji: '✏️' }
   ];
+
+  // State for custom role input
+  const [customRole, setCustomRole] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [customCategoryInput, setCustomCategoryInput] = useState('');
+
+  // Get categories based on selected goal and role
+  const getCategoriesForSelection = useCallback(() => {
+    if (!selectedGoal || !userRole) return [];
+    const roleKey = userRole === 'other-role' ? 'individual-student' : userRole;
+    return CATEGORIES_DATA[selectedGoal]?.[roleKey] || [];
+  }, [selectedGoal, userRole]);
 
   const subDomains = {
     marketing: [
@@ -425,7 +679,8 @@ const ChatBotNew = () => {
     // Save current chat to history if there are messages beyond the initial welcome
     if (messages.length > 1) {
       const userMessages = messages.filter(m => m.sender === 'user');
-      const chatTitle = selectedDomain?.name || userMessages[0]?.text?.slice(0, 30) || 'New Chat';
+      const goalLabel = goalOptions.find(g => g.id === selectedGoal)?.text || '';
+      const chatTitle = goalLabel || userMessages[0]?.text?.slice(0, 30) || 'New Chat';
       const lastUserMessage = userMessages[userMessages.length - 1]?.text || '';
       
       const newHistoryItem = {
@@ -433,7 +688,7 @@ const ChatBotNew = () => {
         title: chatTitle,
         preview: lastUserMessage.slice(0, 80) + (lastUserMessage.length > 80 ? '...' : ''),
         timestamp: new Date(),
-        domain: selectedDomain?.name || 'General',
+        domain: selectedCategory || 'General',
         messages: [...messages]
       };
       
@@ -448,6 +703,9 @@ const ChatBotNew = () => {
     setRequirement(null);
     setUserName(null);
     setUserEmail(null);
+    setCustomRole('');
+    setSelectedCategory(null);
+    setCustomCategoryInput('');
     setBusinessContext({
       businessType: null,
       industry: null,
@@ -474,7 +732,7 @@ const ChatBotNew = () => {
 
   // Handle goal selection (Question 1)
   const handleGoalClick = (goal) => {
-    setSelectedGoal(goal);
+    setSelectedGoal(goal.id);
 
     const userMessage = {
       id: getNextMessageId(),
@@ -485,15 +743,151 @@ const ChatBotNew = () => {
 
     const botMessage = {
       id: getNextMessageId(),
-      text: `Great! You want to **${goal.text.toLowerCase()}**. 🎯\n\nNow let's see where you need these changes.`,
+      text: `Great choice! You want to **${goal.text.toLowerCase()}**. 🎯\n\nNow, which best describes you?`,
+      sender: 'bot',
+      timestamp: new Date(),
+      showRoleOptions: true
+    };
+
+    setMessages(prev => [...prev, userMessage, botMessage]);
+    setFlowStage('role');
+
+    saveToSheet(`Selected Goal: ${goal.text}`, '', '', '');
+  };
+
+  // Handle role selection (Question 2)
+  const handleRoleClick = (role) => {
+    setUserRole(role.id);
+
+    const userMessage = {
+      id: getNextMessageId(),
+      text: `${role.emoji} ${role.text}`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    if (role.id === 'other-role') {
+      // Show input for custom role
+      setFlowStage('custom-role');
+      const botMessage = {
+        id: getNextMessageId(),
+        text: `No problem! Please tell us your role:\n\n**Type your role below:**`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage, botMessage]);
+    } else {
+      // Show categories based on goal + role
+      setFlowStage('category');
+      const categories = CATEGORIES_DATA[selectedGoal]?.[role.id] || [];
+      const botMessage = {
+        id: getNextMessageId(),
+        text: `Perfect! 🎯\n\nBased on your selection, here are the categories where your problems might fall:\n\n**Select one that best matches your need:**`,
+        sender: 'bot',
+        timestamp: new Date(),
+        showCategoryOptions: true,
+        categories: categories
+      };
+      setMessages(prev => [...prev, userMessage, botMessage]);
+    }
+
+    saveToSheet(`User Role: ${role.text}`, '', '', '');
+  };
+
+  // Handle custom role submission
+  const handleCustomRoleSubmit = (customRoleText) => {
+    setCustomRole(customRoleText);
+
+    const userMessage = {
+      id: getNextMessageId(),
+      text: customRoleText,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    // Use individual-student categories as fallback for custom roles
+    setFlowStage('category');
+    const categories = CATEGORIES_DATA[selectedGoal]?.['individual-student'] || [];
+    const botMessage = {
+      id: getNextMessageId(),
+      text: `Thanks! As a **${customRoleText}**, here are some categories that might help:\n\n**Select one that best matches your need:**`,
+      sender: 'bot',
+      timestamp: new Date(),
+      showCategoryOptions: true,
+      categories: categories
+    };
+
+    setMessages(prev => [...prev, userMessage, botMessage]);
+    saveToSheet(`Custom Role: ${customRoleText}`, '', '', '');
+  };
+
+  // Handle category selection (Question 3)
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(category);
+
+    const userMessage = {
+      id: getNextMessageId(),
+      text: `📌 ${category}`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    // Move to requirement/identity stage
+    setFlowStage('requirement');
+    const botMessage = {
+      id: getNextMessageId(),
+      text: `Excellent choice! 🚀\n\nYou're looking to work on: **${category}**\n\n**Please share more details about your specific problem or what you want to achieve:**\n\n_(Tell me in 2-3 lines so I can find the best solutions for you)_`,
       sender: 'bot',
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage, botMessage]);
-    setFlowStage('domain');
+    saveToSheet(`Selected Category: ${category}`, '', '', '');
+  };
 
-    saveToSheet(`Selected Goal: ${goal.text}`, '', '', '');
+  // Handle "Type here" button click - skip category selection
+  const handleTypeCustomProblem = () => {
+    const userMessage = {
+      id: getNextMessageId(),
+      text: `✏️ I'll describe my problem`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setFlowStage('requirement');
+    const botMessage = {
+      id: getNextMessageId(),
+      text: `No problem! 🚀\n\n**Please describe what you're trying to achieve or the problem you want to solve:**\n\n_(Tell me in 2-3 lines so I can find the best solutions for you)_`,
+      sender: 'bot',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage, botMessage]);
+    saveToSheet(`User chose to type custom problem`, '', '', '');
+  };
+
+  // Handle custom category input
+  const handleCustomCategorySubmit = (customText) => {
+    setSelectedCategory(customText);
+    setCustomCategoryInput('');
+
+    const userMessage = {
+      id: getNextMessageId(),
+      text: `📝 ${customText}`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setFlowStage('requirement');
+    const botMessage = {
+      id: getNextMessageId(),
+      text: `Got it! 🚀\n\nYou're looking to work on: **${customText}**\n\n**Please share more details about your specific problem:**\n\n_(Tell me in 2-3 lines so I can find the best solutions for you)_`,
+      sender: 'bot',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage, botMessage]);
+    saveToSheet(`Custom Category: ${customText}`, '', '', '');
   };
 
   const toggleVoiceRecording = () => {
@@ -512,116 +906,16 @@ const ChatBotNew = () => {
     }
   };
 
+  // Legacy domain/subdomain handlers - kept for backward compatibility but not used in new flow
   const handleDomainClick = (domain) => {
     setSelectedDomain(domain);
-
-    const userMessage = {
-      id: getNextMessageId(),
-      text: `${domain.emoji} ${domain.name}`,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
-    if (domain.id === 'other') {
-      setFlowStage('other-domain');
-      const botMessage = {
-        id: getNextMessageId(),
-        text: `No problem! Tell us about your domain.\n\n**What area or industry do you work in?**\n\n_(e.g., Education, Healthcare, Real Estate, Agriculture, Entertainment, etc.)_`,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, userMessage, botMessage]);
-    } else {
-      setFlowStage('subdomain');
-      const botMessage = {
-        id: getNextMessageId(),
-        text: `Perfect! Let's scope it more. 🔍\n\nSelect which specific area needs these changes:`,
-        sender: 'bot',
-        timestamp: new Date(),
-        showSubDomainOptions: true,
-        domainId: domain.id
-      };
-      setMessages(prev => [...prev, userMessage, botMessage]);
-    }
-
+    // Domain selection is no longer part of main flow, but kept for potential future use
     saveToSheet(`Selected Domain: ${domain.name}`, '', domain.name, '');
   };
 
   const handleSubDomainClick = (subDomain) => {
     setSelectedSubDomain(subDomain);
-    setFlowStage('role');
-
-    const userMessage = {
-      id: getNextMessageId(),
-      text: subDomain,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
-    const botMessage = {
-      id: getNextMessageId(),
-      text: `Almost there! 🚀\n\n**How would you describe yourself?**`,
-      sender: 'bot',
-      timestamp: new Date(),
-      showRoleOptions: true
-    };
-
-    setMessages(prev => [...prev, userMessage, botMessage]);
     saveToSheet(`Selected Sub-domain: ${subDomain}`, '', selectedDomain?.name, subDomain);
-  };
-
-  const handleRoleClick = (role) => {
-    setUserRole(role);
-
-    const userMessage = {
-      id: getNextMessageId(),
-      text: `${role.emoji} ${role.text}`,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
-    saveToSheet(`User Role: ${role.text}`, '', selectedDomain?.name, selectedSubDomain);
-
-    if (role.id === 'business-owner') {
-      setFlowStage('role-q1');
-      const botMessage = {
-        id: getNextMessageId(),
-        text: `Great! As a business owner, I'd love to understand your business better to find the perfect solution. 🏢\n\n**What kind of business do you run?**\n\n_(e.g., E-commerce store, Consulting firm, Restaurant, SaaS company, etc.)_`,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, userMessage, botMessage]);
-
-    } else if (role.id === 'professional') {
-      setFlowStage('role-q1');
-      const botMessage = {
-        id: getNextMessageId(),
-        text: `Thanks! Let me understand your professional context better. 💼\n\n**What is your role/job title and which industry are you in?**\n\n_(e.g., Marketing Manager in Healthcare, Software Developer in Fintech, HR Lead in Retail, etc.)_`,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, userMessage, botMessage]);
-
-    } else if (role.id === 'freelancer') {
-      setFlowStage('role-q1');
-      const botMessage = {
-        id: getNextMessageId(),
-        text: `Awesome! Freelancers often have unique needs. 🎯\n\n**What type of freelance work do you do and who are your typical clients?**\n\n_(e.g., Web design for small businesses, Content writing for startups, etc.)_`,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, userMessage, botMessage]);
-
-    } else {
-      setFlowStage('requirement');
-      const botMessage = {
-        id: getNextMessageId(),
-        text: `Great! Let me help you explore and learn. 📚\n\n**What specific problem or topic are you trying to learn about or solve?**\n\n_(Tell me in 2-3 lines what you're looking for)_`,
-        sender: 'bot',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, userMessage, botMessage]);
-    }
   };
 
   const handleRoleQuestion = (answer) => {
@@ -632,100 +926,16 @@ const ChatBotNew = () => {
       timestamp: new Date()
     };
 
-    if (userRole?.id === 'business-owner') {
-      if (flowStage === 'role-q1') {
-        setBusinessContext(prev => ({ ...prev, businessType: answer }));
-        setFlowStage('requirement');
-        const botMessage = {
-          id: getNextMessageId(),
-          text: `Got it! 👍\n\n**What specific problem are you trying to solve right now?**\n\n_(Tell me in 2-3 lines what challenge you're facing and what success would look like for you)_`,
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage, botMessage]);
-        saveToSheet(`Business Context: ${JSON.stringify({ ...businessContext, businessType: answer })}`, '', selectedDomain?.name, selectedSubDomain);
-      }
-
-    } else if (userRole?.id === 'professional') {
-      if (flowStage === 'role-q1') {
-        setProfessionalContext(prev => ({ ...prev, roleAndIndustry: answer }));
-        setFlowStage('role-q2');
-        const botMessage = {
-          id: getNextMessageId(),
-          text: `Thanks for sharing! 👍\n\n**Are you looking for a solution for yourself personally, or for the company/team you work for?**\n\n_(e.g., "For myself to be more productive" or "For my team/department" or "For the whole company")_`,
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage, botMessage]);
-
-      } else if (flowStage === 'role-q2') {
-        setProfessionalContext(prev => ({ ...prev, solutionFor: answer }));
-
-        const lowerAnswer = answer.toLowerCase();
-        const prevContext = (selectedSubDomain || '').toLowerCase() + ' ' + (selectedDomain?.name || '').toLowerCase();
-        const isSalaryRelated = ['salary', 'compensation', 'pay', 'payroll', 'wage', 'bonus'].some(term =>
-          lowerAnswer.includes(term) || prevContext.includes(term)
-        );
-
-        if (isSalaryRelated) {
-          setFlowStage('role-q3');
-          const botMessage = {
-            id: getNextMessageId(),
-            text: `I notice this might involve compensation. Let me clarify: 💰\n\n**Is this about your own salary/compensation, or about employee payroll/company compensation structure?**\n\n_(This helps me recommend the right type of solution)_`,
-            sender: 'bot',
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, userMessage, botMessage]);
-        } else {
-          setFlowStage('requirement');
-          const botMessage = {
-            id: getNextMessageId(),
-            text: `Great context! 🎉\n\n**What's the specific situation and goal you're trying to achieve?**\n\n_(Tell me in 2-3 lines what problem you're facing and what success would look like)_`,
-            sender: 'bot',
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, userMessage, botMessage]);
-          saveToSheet(`Professional Context: ${JSON.stringify({ ...professionalContext, solutionFor: answer })}`, '', selectedDomain?.name, selectedSubDomain);
-        }
-
-      } else if (flowStage === 'role-q3') {
-        setProfessionalContext(prev => ({ ...prev, salaryContext: answer }));
-        setFlowStage('requirement');
-        const botMessage = {
-          id: getNextMessageId(),
-          text: `Got it! Now I understand the context better. 🎉\n\n**What's the specific situation and goal you're trying to achieve?**\n\n_(Tell me in 2-3 lines what problem you're facing and what success would look like)_`,
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage, botMessage]);
-        saveToSheet(`Professional Context: ${JSON.stringify({ ...professionalContext, salaryContext: answer })}`, '', selectedDomain?.name, selectedSubDomain);
-      }
-
-    } else if (userRole?.id === 'freelancer') {
-      if (flowStage === 'role-q1') {
-        setBusinessContext(prev => ({ ...prev, businessType: answer }));
-        setFlowStage('role-q2');
-        const botMessage = {
-          id: getNextMessageId(),
-          text: `Nice! 🎯\n\n**What's your biggest challenge or bottleneck in your freelance work right now?**\n\n_(e.g., Finding clients, Managing projects, Invoicing, Time management, etc.)_`,
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage, botMessage]);
-
-      } else if (flowStage === 'role-q2') {
-        setBusinessContext(prev => ({ ...prev, targetAudience: answer }));
-        setFlowStage('requirement');
-        const botMessage = {
-          id: getNextMessageId(),
-          text: `I understand! 🎉\n\n**What specific problem are you trying to solve right now?**\n\n_(Tell me in 2-3 lines what you need help with and what would make your work easier)_`,
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage, botMessage]);
-        saveToSheet(`Freelancer Context: ${JSON.stringify(businessContext)}`, '', selectedDomain?.name, selectedSubDomain);
-      }
-    }
+    // Simplified role question handling for new flow
+    setFlowStage('requirement');
+    const botMessage = {
+      id: getNextMessageId(),
+      text: `Got it! 👍\n\n**What specific problem are you trying to solve right now?**\n\n_(Tell me in 2-3 lines what challenge you're facing and what success would look like for you)_`,
+      sender: 'bot',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage, botMessage]);
+    saveToSheet(`Role Question Answer: ${answer}`, '', '', '');
   };
 
   const saveToSheet = async (userMessage, botResponse, domain = '', subdomain = '') => {
@@ -1375,14 +1585,14 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
         <main className="chatbot-new-chat-area">
           <div className="chat-main-content">
             {/* Typeform-style Full Screen Selection View */}
-            {['goal', 'domain', 'subdomain', 'role'].includes(flowStage) ? (
+            {['goal', 'role', 'category', 'custom-role'].includes(flowStage) ? (
               <div className="typeform-view">
-                {/* Question 1: What brings you here? */}
+                {/* Question 1: What do you want to improve right now? */}
                 {flowStage === 'goal' && (
                   <div className="typeform-question-container">
                     <div className="typeform-greeting">✨ Welcome to Ikshan! 😊</div>
-                    <h1 className="typeform-question">What brings you here?</h1>
-                    <p className="typeform-subtitle">Select what you're looking to achieve:</p>
+                    <h1 className="typeform-question">What do you want to improve right now?</h1>
+                    <p className="typeform-subtitle">Select what matters most to you:</p>
                     <div className="typeform-options">
                       {goalOptions.map((goal, index) => (
                         <button
@@ -1399,8 +1609,8 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                   </div>
                 )}
 
-                {/* Question 2: Where do you want to see changes? */}
-                {flowStage === 'domain' && (
+                {/* Question 2: Which best describes you? */}
+                {flowStage === 'role' && (
                   <div className="typeform-question-container">
                     <button className="typeform-back-btn" onClick={() => {
                       setSelectedGoal(null);
@@ -1409,63 +1619,8 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                       <ArrowLeft size={20} />
                       Back
                     </button>
-                    <h1 className="typeform-question">Where do you want to see these changes?</h1>
-                    <p className="typeform-subtitle">Select the area where you need AI tools:</p>
-                    <div className="typeform-options">
-                      {domains.map((domain, index) => (
-                        <button
-                          key={domain.id}
-                          className="typeform-option-btn"
-                          onClick={() => handleDomainClick(domain)}
-                          style={{ animationDelay: `${index * 0.05}s` }}
-                        >
-                          <span className="option-emoji">{domain.emoji}</span>
-                          {domain.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Question 3: Scope more - specific area */}
-                {flowStage === 'subdomain' && selectedDomain && (
-                  <div className="typeform-question-container">
-                    <button className="typeform-back-btn" onClick={() => {
-                      setSelectedDomain(null);
-                      setFlowStage('domain');
-                    }}>
-                      <ArrowLeft size={20} />
-                      Back
-                    </button>
-                    <h1 className="typeform-question">Let's scope more 🔍</h1>
-                    <p className="typeform-subtitle">Select which specific area will need these changes:</p>
-                    <div className="typeform-options">
-                      {(subDomains[selectedDomain.id] || []).map((subDomain, index) => (
-                        <button
-                          key={index}
-                          className="typeform-option-btn"
-                          onClick={() => handleSubDomainClick(subDomain)}
-                          style={{ animationDelay: `${index * 0.05}s` }}
-                        >
-                          {subDomain}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Question 4: How would you describe yourself? */}
-                {flowStage === 'role' && (
-                  <div className="typeform-question-container">
-                    <button className="typeform-back-btn" onClick={() => {
-                      setSelectedSubDomain(null);
-                      setFlowStage('subdomain');
-                    }}>
-                      <ArrowLeft size={20} />
-                      Back
-                    </button>
-                    <h1 className="typeform-question">How would you describe yourself?</h1>
-                    <p className="typeform-subtitle">This helps us find the best solution for you:</p>
+                    <h1 className="typeform-question">Which best describes you?</h1>
+                    <p className="typeform-subtitle">This helps us find the most relevant solutions:</p>
                     <div className="typeform-options">
                       {roleOptions.map((role, index) => (
                         <button
@@ -1478,6 +1633,80 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                           {role.text}
                         </button>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Role Input (when user selects "Other") */}
+                {flowStage === 'custom-role' && (
+                  <div className="typeform-question-container">
+                    <button className="typeform-back-btn" onClick={() => {
+                      setUserRole(null);
+                      setFlowStage('role');
+                    }}>
+                      <ArrowLeft size={20} />
+                      Back
+                    </button>
+                    <h1 className="typeform-question">Tell us about your role</h1>
+                    <p className="typeform-subtitle">Please describe what you do:</p>
+                    <div className="typeform-input-container">
+                      <input
+                        type="text"
+                        className="typeform-text-input"
+                        placeholder="e.g., Content Creator, Consultant, Teacher..."
+                        value={customRole}
+                        onChange={(e) => setCustomRole(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && customRole.trim()) {
+                            handleCustomRoleSubmit(customRole.trim());
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <button 
+                        className="typeform-submit-btn"
+                        onClick={() => customRole.trim() && handleCustomRoleSubmit(customRole.trim())}
+                        disabled={!customRole.trim()}
+                      >
+                        Continue →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Question 3: In which category does your problem fall? */}
+                {flowStage === 'category' && (
+                  <div className="typeform-question-container">
+                    <button className="typeform-back-btn" onClick={() => {
+                      setUserRole(null);
+                      setCustomRole('');
+                      setFlowStage('role');
+                    }}>
+                      <ArrowLeft size={20} />
+                      Back
+                    </button>
+                    <h1 className="typeform-question">In which category does your problem fall?</h1>
+                    <p className="typeform-subtitle">Select the area where you need help:</p>
+                    <div className="typeform-options category-grid">
+                      {getCategoriesForSelection().map((category, index) => (
+                        <button
+                          key={index}
+                          className="typeform-option-btn category-btn"
+                          onClick={() => handleCategoryClick(category)}
+                          style={{ animationDelay: `${index * 0.02}s` }}
+                        >
+                          <span className="option-emoji">📌</span>
+                          {category}
+                        </button>
+                      ))}
+                      {/* Type here button */}
+                      <button
+                        className="typeform-option-btn category-btn type-custom"
+                        onClick={handleTypeCustomProblem}
+                      >
+                        <span className="option-emoji">✏️</span>
+                        Type here (describe your problem)
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1553,7 +1782,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
           </div>
 
           {/* Chat Input - Only show when user needs to type (not during selection-based questions) */}
-          {!['domain', 'subdomain', 'role'].includes(flowStage) && (
+          {!['goal', 'role', 'category', 'custom-role'].includes(flowStage) && (
             <div className="chat-input-area">
               {/* Speech Error Toast */}
               {speechError && (
