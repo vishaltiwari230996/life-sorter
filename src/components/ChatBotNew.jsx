@@ -580,6 +580,19 @@ const ChatBotNew = () => {
   const [speechError, setSpeechError] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
+  // Dashboard view state
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [dashboardData, setDashboardData] = useState({
+    goalLabel: '',
+    roleLabel: '',
+    category: '',
+    companies: [],
+    extensions: [],
+    customGPTs: [],
+    immediatePrompt: ''
+  });
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  
   // Load chat history from localStorage on mount
   const [chatHistory, setChatHistory] = useState(() => {
     const saved = getFromStorage(STORAGE_KEYS.CHAT_HISTORY, []);
@@ -918,6 +931,17 @@ const ChatBotNew = () => {
       salaryContext: null
     });
     setFlowStage('goal');
+    setShowDashboard(false);
+    setDashboardData({
+      goalLabel: '',
+      roleLabel: '',
+      category: '',
+      companies: [],
+      extensions: [],
+      customGPTs: [],
+      immediatePrompt: ''
+    });
+    setCopiedPrompt(false);
 
     // Start fresh with welcome message
     const welcomeMessage = {
@@ -1021,7 +1045,7 @@ const ChatBotNew = () => {
     saveToSheet(`Custom Role: ${customRoleText}`, '', '', '');
   };
 
-  // Handle category selection (Question 3)
+  // Handle category selection (Question 3) - Go directly to solution
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
 
@@ -1032,17 +1056,11 @@ const ChatBotNew = () => {
       timestamp: new Date()
     };
 
-    // Move to requirement/identity stage
-    setFlowStage('requirement');
-    const botMessage = {
-      id: getNextMessageId(),
-      text: `Excellent choice! 🚀\n\nYou're looking to work on: **${category}**\n\n**Please share more details about your specific problem or what you want to achieve:**\n\n_(Tell me in 2-3 lines so I can find the best solutions for you)_`,
-      sender: 'bot',
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage, botMessage]);
+    setMessages(prev => [...prev, userMessage]);
     saveToSheet(`Selected Category: ${category}`, '', '', '');
+    
+    // Directly show solution
+    showSolutionStack(category);
   };
 
   // Handle "Type here" button click - skip category selection
@@ -1054,6 +1072,7 @@ const ChatBotNew = () => {
       timestamp: new Date()
     };
 
+    // For custom problems, still ask for details
     setFlowStage('requirement');
     const botMessage = {
       id: getNextMessageId(),
@@ -1064,6 +1083,146 @@ const ChatBotNew = () => {
 
     setMessages(prev => [...prev, userMessage, botMessage]);
     saveToSheet(`User chose to type custom problem`, '', '', '');
+  };
+
+  // Show solution stack directly after category selection - DASHBOARD VERSION
+  const showSolutionStack = async (category) => {
+    setFlowStage('complete');
+    setIsTyping(true);
+
+    try {
+      // Get goal and role labels for display
+      const goalLabel = goalOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
+      const roleLabel = roleOptions.find(r => r.id === userRole)?.text || customRole || userRole;
+      
+      // Search for relevant companies from CSV
+      let relevantCompanies = [];
+      try {
+        const searchResponse = await fetch('/api/search-companies', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            domain: category,
+            subdomain: category,
+            requirement: category,
+            goal: selectedGoal,
+            role: userRole,
+            userContext: {
+              goal: selectedGoal,
+              role: userRole,
+              category: category
+            }
+          })
+        });
+        const searchData = await searchResponse.json();
+        relevantCompanies = (searchData.companies || []).slice(0, 4);
+      } catch (e) {
+        console.log('Company search failed, using fallback');
+        // Fallback companies
+        relevantCompanies = [
+          { name: 'Bardeen', problem: 'Automate any browser workflow with AI', differentiator: 'No-code browser automation' },
+          { name: 'Zapier', problem: 'Connect 5000+ apps without code', differentiator: 'Largest integration library' },
+          { name: 'Make (Integromat)', problem: 'Visual automation builder', differentiator: 'Complex workflow scenarios' }
+        ];
+      }
+      
+      // Get relevant Chrome extensions and GPTs
+      const extensions = getRelevantExtensions(category, selectedGoal);
+      const customGPTs = getRelevantGPTs(category, selectedGoal, userRole);
+      
+      // Generate the immediate action prompt
+      const immediatePrompt = generateImmediatePrompt(selectedGoal, roleLabel, category, category);
+
+      // Set dashboard data and show dashboard
+      setDashboardData({
+        goalLabel,
+        roleLabel,
+        category,
+        companies: relevantCompanies.length > 0 ? relevantCompanies : [
+          { name: 'Bardeen', problem: 'Automate any browser workflow with AI', differentiator: 'No-code browser automation' },
+          { name: 'Zapier', problem: 'Connect 5000+ apps without code', differentiator: 'Largest integration library' },
+          { name: 'Make (Integromat)', problem: 'Visual automation builder', differentiator: 'Complex workflow scenarios' }
+        ],
+        extensions: extensions.length > 0 ? extensions : [
+          { name: 'Bardeen', description: 'Automate browser tasks with AI', free: true },
+          { name: 'Notion Web Clipper', description: 'Save anything instantly', free: true },
+          { name: 'Grammarly', description: 'Write better emails & docs', free: true }
+        ],
+        customGPTs: customGPTs.length > 0 ? customGPTs : [
+          { name: 'Task Prioritizer GPT', description: 'Organize your to-dos efficiently', rating: '4.7' },
+          { name: 'Data Analyst GPT', description: 'Analyze data & create charts', rating: '4.9' },
+          { name: 'Automation Expert GPT', description: 'Design smart workflows', rating: '4.7' }
+        ],
+        immediatePrompt
+      });
+      
+      setShowDashboard(true);
+      setIsTyping(false);
+
+      saveToSheet('Solution Stack Generated', `Goal: ${goalLabel}, Role: ${roleLabel}, Category: ${category}`, category, category);
+    } catch (error) {
+      console.error('Error generating solution stack:', error);
+
+      // Fallback dashboard data
+      const goalLabel = goalOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
+      const roleLabel = roleOptions.find(r => r.id === userRole)?.text || customRole || userRole;
+      const fallbackPrompt = generateImmediatePrompt(selectedGoal, roleLabel, category, category);
+      
+      setDashboardData({
+        goalLabel,
+        roleLabel,
+        category,
+        companies: [
+          { name: 'Bardeen', problem: 'Automate any browser task with AI', differentiator: 'No-code automation' },
+          { name: 'Notion', problem: 'Organize everything in one place', differentiator: 'All-in-one workspace' },
+          { name: 'Zapier', problem: 'Connect your favorite apps', differentiator: '5000+ integrations' }
+        ],
+        extensions: [
+          { name: 'Bardeen', description: 'Automate browser tasks with AI', free: true },
+          { name: 'Notion Web Clipper', description: 'Save anything instantly', free: true },
+          { name: 'Grammarly', description: 'Write better emails & docs', free: true }
+        ],
+        customGPTs: [
+          { name: 'Data Analyst GPT', description: 'Analyze your data', rating: '4.9' },
+          { name: 'Task Prioritizer GPT', description: 'Plan your work', rating: '4.7' }
+        ],
+        immediatePrompt: fallbackPrompt
+      });
+      
+      setShowDashboard(true);
+      setIsTyping(false);
+    }
+  };
+
+  // Handle explore implementation - switch to chat mode
+  const handleExploreImplementation = () => {
+    setShowDashboard(false);
+    
+    // Add context message to chat
+    const contextMessage = {
+      id: getNextMessageId(),
+      text: `Great! Let's explore how to implement solutions for **${dashboardData.category}**.\n\nI can help you with:\n- Setting up the recommended tools\n- Step-by-step implementation guides\n- Integration tips and best practices\n\n**What would you like to learn more about?**`,
+      sender: 'bot',
+      timestamp: new Date(),
+      showFinalActions: true,
+      companies: dashboardData.companies,
+      userRequirement: dashboardData.category
+    };
+
+    setMessages(prev => [...prev, contextMessage]);
+  };
+
+  // Copy prompt to clipboard
+  const handleCopyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(dashboardData.immediatePrompt);
+      setCopiedPrompt(true);
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
   // Handle custom category input
@@ -1981,6 +2140,128 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                   </div>
                 )}
               </div>
+            ) : showDashboard ? (
+              /* Dashboard View for Solution Stack */
+              <div className="solution-dashboard">
+                {/* Dashboard Header */}
+                <div className="dashboard-header">
+                  <div className="dashboard-header-top">
+                    <h1 className="dashboard-title">🎯 Your Personalized Solution Stack</h1>
+                    <button 
+                      className={`header-copy-btn ${copiedPrompt ? 'copied' : ''}`}
+                      onClick={handleCopyPrompt}
+                    >
+                      {copiedPrompt ? '✓ Copied!' : '📋 Copy Prompt'}
+                    </button>
+                  </div>
+                  <div className="dashboard-context">
+                    <span className="context-tag goal-tag">
+                      <strong>Goal:</strong> {dashboardData.goalLabel}
+                    </span>
+                    <span className="context-tag role-tag">
+                      <strong>Role:</strong> {dashboardData.roleLabel}
+                    </span>
+                    <span className="context-tag category-tag">
+                      <strong>Focus:</strong> {dashboardData.category}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Scrollable Content */}
+                <div className="dashboard-scroll-content">
+                  {/* Instant Prompt Section - Prominent */}
+                  <div className="dashboard-prompt-section">
+                  <div className="prompt-header">
+                    <span className="prompt-icon">⚡</span>
+                    <h3>Instant Solution - Copy & Paste to ChatGPT/Claude</h3>
+                  </div>
+                  <div className="prompt-box-large">
+                    <pre>{dashboardData.immediatePrompt}</pre>
+                  </div>
+                  <div className="prompt-actions">
+                    <button 
+                      className={`copy-prompt-btn-large ${copiedPrompt ? 'copied' : ''}`}
+                      onClick={handleCopyPrompt}
+                    >
+                      {copiedPrompt ? '✓ Copied to Clipboard!' : '📋 Copy This Prompt'}
+                    </button>
+                    <span className="prompt-tip-inline">💡 Get actionable steps in under 2 minutes!</span>
+                  </div>
+                </div>
+
+                {/* Dashboard Cards Grid */}
+                <div className="dashboard-grid">
+                  {/* AI Tools Card */}
+                  <div className="dashboard-card ai-tools-card">
+                    <div className="card-header">
+                      <span className="card-icon">🚀</span>
+                      <h2>AI Tools & Startups</h2>
+                    </div>
+                    <div className="card-content">
+                      {dashboardData.companies.map((company, i) => (
+                        <div key={i} className="tool-item">
+                          <div className="tool-name">{company.name}</div>
+                          <div className="tool-description">{company.problem || company.description}</div>
+                          {company.differentiator && (
+                            <div className="tool-differentiator">✨ {company.differentiator}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Chrome Extensions Card */}
+                  <div className="dashboard-card extensions-card">
+                    <div className="card-header">
+                      <span className="card-icon">🔌</span>
+                      <h2>Chrome Extensions</h2>
+                    </div>
+                    <div className="card-content">
+                      {dashboardData.extensions.map((ext, i) => (
+                        <div key={i} className="extension-item">
+                          <div className="extension-name">
+                            {ext.name}
+                            <span className={`extension-badge ${ext.free ? 'free' : 'paid'}`}>
+                              {ext.free ? '🆓 Free' : '💰 Paid'}
+                            </span>
+                          </div>
+                          <div className="extension-description">{ext.description}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Custom GPTs Card */}
+                  <div className="dashboard-card gpts-card">
+                    <div className="card-header">
+                      <span className="card-icon">🤖</span>
+                      <h2>Custom GPTs</h2>
+                    </div>
+                    <div className="card-content">
+                      {dashboardData.customGPTs.map((gpt, i) => (
+                        <div key={i} className="gpt-item">
+                          <div className="gpt-name">
+                            {gpt.name}
+                            <span className="gpt-rating">⭐{gpt.rating}</span>
+                          </div>
+                          <div className="gpt-description">{gpt.description}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div> {/* End dashboard-grid */}
+              </div> {/* End dashboard-scroll-content */}
+
+                {/* Dashboard Actions - Fixed at bottom */}
+                <div className="dashboard-actions">
+                  <button className="dashboard-btn primary" onClick={handleExploreImplementation}>
+                    🔍 Explore Implementation
+                  </button>
+                  <button className="dashboard-btn secondary" onClick={handleStartNewIdea}>
+                    🚀 Check Another Idea
+                  </button>
+                </div>
+              </div>
             ) : (
               /* Regular Chat View for typing stages */
               <div className="chat-messages-container" ref={messagesContainerRef}>
@@ -2051,8 +2332,8 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
             )}
           </div>
 
-          {/* Chat Input - Only show when user needs to type (not during selection-based questions) */}
-          {!['goal', 'role', 'category', 'custom-role'].includes(flowStage) && (
+          {/* Chat Input - Only show when user needs to type (not during selection or dashboard) */}
+          {!['goal', 'role', 'category', 'custom-role'].includes(flowStage) && !showDashboard && (
             <div className="chat-input-area">
               {/* Speech Error Toast */}
               {speechError && (

@@ -1021,7 +1021,7 @@ const ChatBotNew = () => {
     saveToSheet(`Custom Role: ${customRoleText}`, '', '', '');
   };
 
-  // Handle category selection (Question 3)
+  // Handle category selection (Question 3) - Go directly to solution
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
 
@@ -1032,17 +1032,11 @@ const ChatBotNew = () => {
       timestamp: new Date()
     };
 
-    // Move to requirement/identity stage
-    setFlowStage('requirement');
-    const botMessage = {
-      id: getNextMessageId(),
-      text: `Excellent choice! 🚀\n\nYou're looking to work on: **${category}**\n\n**Please share more details about your specific problem or what you want to achieve:**\n\n_(Tell me in 2-3 lines so I can find the best solutions for you)_`,
-      sender: 'bot',
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage, botMessage]);
+    setMessages(prev => [...prev, userMessage]);
     saveToSheet(`Selected Category: ${category}`, '', '', '');
+    
+    // Directly show solution
+    showSolutionStack(category);
   };
 
   // Handle "Type here" button click - skip category selection
@@ -1054,6 +1048,7 @@ const ChatBotNew = () => {
       timestamp: new Date()
     };
 
+    // For custom problems, still ask for details
     setFlowStage('requirement');
     const botMessage = {
       id: getNextMessageId(),
@@ -1064,6 +1059,185 @@ const ChatBotNew = () => {
 
     setMessages(prev => [...prev, userMessage, botMessage]);
     saveToSheet(`User chose to type custom problem`, '', '', '');
+  };
+
+  // Show solution stack directly after category selection
+  const showSolutionStack = async (category) => {
+    setFlowStage('complete');
+    
+    const loadingMessage = {
+      id: getNextMessageId(),
+      text: `🎯 Finding the best solutions for you...`,
+      sender: 'bot',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, loadingMessage]);
+    setIsTyping(true);
+
+    setTimeout(async () => {
+      try {
+        // Get goal and role labels for display
+        const goalLabel = goalOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
+        const roleLabel = roleOptions.find(r => r.id === userRole)?.text || customRole || userRole;
+        
+        // Search for relevant companies from CSV
+        let relevantCompanies = [];
+        try {
+          const searchResponse = await fetch('/api/search-companies', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              domain: category,
+              subdomain: category,
+              requirement: category,
+              goal: selectedGoal,
+              role: userRole,
+              userContext: {
+                goal: selectedGoal,
+                role: userRole,
+                category: category
+              }
+            })
+          });
+          const searchData = await searchResponse.json();
+          relevantCompanies = (searchData.companies || []).slice(0, 4);
+        } catch (e) {
+          console.log('Company search failed, using fallback');
+        }
+        
+        // Get relevant Chrome extensions and GPTs
+        const extensions = getRelevantExtensions(category, selectedGoal);
+        const customGPTs = getRelevantGPTs(category, selectedGoal, userRole);
+        
+        // Generate the immediate action prompt
+        const immediatePrompt = generateImmediatePrompt(selectedGoal, roleLabel, category, category);
+
+        // Build comprehensive solution response
+        let solutionResponse = `# 🎯 Your Personalized Solution Stack\n\n`;
+        solutionResponse += `> **Goal:** ${goalLabel} | **Role:** ${roleLabel}\n`;
+        solutionResponse += `> **Focus Area:** ${category}\n\n`;
+        solutionResponse += `---\n\n`;
+
+        // Section 1: AI-Powered Startups/Companies
+        solutionResponse += `## 🚀 Recommended AI Tools & Startups\n\n`;
+        if (relevantCompanies.length > 0) {
+          relevantCompanies.forEach((company, i) => {
+            solutionResponse += `### ${i + 1}. ${company.name}\n`;
+            solutionResponse += `${company.problem || company.description || 'AI-powered solution for your needs'}\n\n`;
+            if (company.differentiator) {
+              solutionResponse += `**Why it's different:** ${company.differentiator}\n\n`;
+            }
+          });
+        } else {
+          solutionResponse += `Based on your selection, here are tools that can help with **${category}**:\n\n`;
+          solutionResponse += `- **Bardeen** - Automate any browser workflow with AI\n`;
+          solutionResponse += `- **Zapier** - Connect 5000+ apps without code\n`;
+          solutionResponse += `- **Make (Integromat)** - Visual automation builder\n\n`;
+        }
+
+        solutionResponse += `---\n\n`;
+
+        // Section 2: Chrome Extensions
+        solutionResponse += `## 🔌 Chrome Extensions (Install Now)\n\n`;
+        if (extensions.length > 0) {
+          extensions.forEach((ext, i) => {
+            const freeTag = ext.free ? '🆓 Free' : '💰 Paid';
+            solutionResponse += `**${i + 1}. ${ext.name}** - ${ext.description} (${freeTag})\n\n`;
+          });
+        } else {
+          solutionResponse += `- **Bardeen** - Automate browser tasks with AI 🆓\n`;
+          solutionResponse += `- **Notion Web Clipper** - Save anything instantly 🆓\n`;
+          solutionResponse += `- **Grammarly** - Write better emails & docs 🆓\n\n`;
+        }
+
+        solutionResponse += `---\n\n`;
+
+        // Section 3: Custom GPTs
+        solutionResponse += `## 🤖 Custom GPTs (Use in ChatGPT)\n\n`;
+        if (customGPTs.length > 0) {
+          customGPTs.forEach((gpt, i) => {
+            solutionResponse += `**${i + 1}. ${gpt.name}** ⭐${gpt.rating}\n`;
+            solutionResponse += `${gpt.description}\n\n`;
+          });
+        } else {
+          solutionResponse += `- **Task Prioritizer GPT** - Organize your to-dos ⭐4.7\n`;
+          solutionResponse += `- **Data Analyst GPT** - Analyze data & create charts ⭐4.9\n`;
+          solutionResponse += `- **Automation Expert GPT** - Design workflows ⭐4.7\n\n`;
+        }
+
+        solutionResponse += `---\n\n`;
+
+        // Section 4: Immediate Action Prompt
+        solutionResponse += `## ⚡ Instant Solution - Copy This Prompt\n\n`;
+        solutionResponse += `**Use this prompt in ChatGPT/Claude RIGHT NOW to get immediate help:**\n\n`;
+        solutionResponse += `\`\`\`\n${immediatePrompt}\n\`\`\`\n\n`;
+        solutionResponse += `> 💡 **Pro Tip:** Copy the prompt above, paste it into ChatGPT, and get actionable steps in under 2 minutes!\n\n`;
+
+        solutionResponse += `---\n\n`;
+        solutionResponse += `### What would you like to do next?`;
+
+        // Remove loading message and show solution
+        setMessages(prev => prev.filter(m => m.id !== loadingMessage.id));
+        
+        const finalOutput = {
+          id: getNextMessageId(),
+          text: solutionResponse,
+          sender: 'bot',
+          timestamp: new Date(),
+          showFinalActions: true,
+          showCopyPrompt: true,
+          immediatePrompt: immediatePrompt,
+          companies: relevantCompanies,
+          extensions: extensions,
+          customGPTs: customGPTs,
+          userRequirement: category
+        };
+
+        setMessages(prev => [...prev, finalOutput]);
+        setIsTyping(false);
+
+        saveToSheet('Solution Stack Generated', `Goal: ${goalLabel}, Role: ${roleLabel}, Category: ${category}`, category, category);
+      } catch (error) {
+        console.error('Error generating solution stack:', error);
+
+        // Fallback response
+        const goalLabel = goalOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
+        const roleLabel = roleOptions.find(r => r.id === userRole)?.text || customRole || userRole;
+        const fallbackPrompt = generateImmediatePrompt(selectedGoal, roleLabel, category, category);
+        
+        let fallbackResponse = `# 🎯 Your Solution Stack\n\n`;
+        fallbackResponse += `> **Goal:** ${goalLabel} | **Role:** ${roleLabel}\n\n`;
+        fallbackResponse += `---\n\n`;
+        fallbackResponse += `## 🔌 Quick Start Tools\n\n`;
+        fallbackResponse += `- **Bardeen** - Automate any browser task with AI 🆓\n`;
+        fallbackResponse += `- **Notion** - Organize everything in one place 🆓\n`;
+        fallbackResponse += `- **Grammarly** - Write better emails & docs 🆓\n\n`;
+        fallbackResponse += `## 🤖 Recommended GPTs\n\n`;
+        fallbackResponse += `- **Data Analyst GPT** - Analyze your data ⭐4.9\n`;
+        fallbackResponse += `- **Task Prioritizer GPT** - Plan your work ⭐4.7\n\n`;
+        fallbackResponse += `---\n\n`;
+        fallbackResponse += `## ⚡ Copy This Prompt for Instant Help\n\n`;
+        fallbackResponse += `\`\`\`\n${fallbackPrompt}\n\`\`\`\n\n`;
+        fallbackResponse += `---\n\n### What would you like to do next?`;
+
+        setMessages(prev => prev.filter(m => m.id !== loadingMessage.id));
+        
+        const fallbackOutput = {
+          id: getNextMessageId(),
+          text: fallbackResponse,
+          sender: 'bot',
+          timestamp: new Date(),
+          showFinalActions: true,
+          showCopyPrompt: true,
+          immediatePrompt: fallbackPrompt
+        };
+
+        setMessages(prev => [...prev, fallbackOutput]);
+        setIsTyping(false);
+      }
+    }, 1500);
   };
 
   // Handle custom category input
