@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu, Edit3, Chrome, Zap, Brain, Copy } from 'lucide-react';
+import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu, Edit3, Chrome, Zap, Brain, Copy, PanelLeftClose, PanelLeftOpen, ExternalLink, Star, Settings, FileText, BarChart3, ScanLine, Video, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import './ChatBotNew.css';
 import { formatCompaniesForDisplay, analyzeMarketGaps } from '../utils/csvParser';
@@ -579,6 +579,17 @@ const ChatBotNew = () => {
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [speechError, setSpeechError] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
+  
+  // Products data for sidebar
+  const productsData = [
+    { id: 1, name: 'Ecom Optimizer', icon: BarChart3, status: 'active' },
+    { id: 2, name: 'Legal Docs', icon: FileText, status: 'active' },
+    { id: 3, name: 'Sales Bot', icon: MessageSquare, status: 'active' },
+    { id: 4, name: 'AnyOCR', icon: ScanLine, status: 'active' },
+    { id: 5, name: 'Tube Helper', icon: Video, status: 'coming-soon' },
+    { id: 6, name: 'Scheduler', icon: Calendar, status: 'coming-soon' }
+  ];
   
   // Dashboard view state
   const [showDashboard, setShowDashboard] = useState(false);
@@ -2010,26 +2021,61 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
     <div className="chatbot-container">
       {/* Header */}
       <header className="chatbot-header">
-        <div className="logo-container">
-            <img src="/logo iskan 5.svg" alt="Ikshan" className="logo-img" />
-            <h2>Ikshan</h2>
-        </div>
-
-        <div className="header-products">
-            <div className="products-scroll">
-                 <div className="product-chip"><ShoppingCart size={14}/> <span>Ecom Optimizer</span></div>
-                 <div className="product-chip"><Scale size={14}/> <span>Legal Docs</span></div>
-                 <div className="product-chip"><Users size={14}/> <span>Sales Bot</span></div>
-                 <div className="product-chip"><Sparkles size={14}/> <span>AnyOCR</span></div>
-                 <div className="product-chip"><Youtube size={14}/> <span>Tube Helper</span></div>
-            </div>
+        <div className="header-left">
+          <button 
+            onClick={() => setLeftSidebarOpen(!leftSidebarOpen)} 
+            title={leftSidebarOpen ? "Close Products" : "Our Products"}
+            className={`sidebar-toggle ${leftSidebarOpen ? 'active' : ''}`}
+          >
+            {leftSidebarOpen ? <PanelLeftClose size={20}/> : <PanelLeftOpen size={20}/>}
+          </button>
+          <button onClick={handleStartNewIdea} title="New Chat"><Plus size={20}/></button>
+          <button onClick={() => setShowChatHistory(true)} title="History"><History size={20}/></button>
         </div>
         
-        <div className="header-actions">
-           <button onClick={() => setShowChatHistory(true)} title="History"><History size={20}/></button>
-           <button onClick={handleStartNewIdea} title="New Chat"><Plus size={20}/></button>
+        <div className="header-right">
+          <div className="logo-container">
+              <img src="/logo iskan 5.svg" alt="Ikshan" className="logo-img" />
+              <h2>Ikshan</h2>
+          </div>
         </div>
       </header>
+
+      {/* Left Sidebar - Products Panel */}
+      <div className={`left-sidebar ${leftSidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h3>Products</h3>
+          <button className="sidebar-close" onClick={() => setLeftSidebarOpen(false)}>
+            <X size={18} />
+          </button>
+        </div>
+        <div className="sidebar-content">
+          <div className="products-list">
+            {productsData.map((product) => {
+              const IconComponent = product.icon;
+              return (
+                <div key={product.id} className={`product-card ${product.status}`}>
+                  <IconComponent size={18} className="product-icon-simple" />
+                  <span className="product-name">{product.name}</span>
+                  {product.status === 'coming-soon' && (
+                    <span className="coming-soon-badge">Soon</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="sidebar-footer">
+            <button className="settings-btn">
+              <Settings size={18} /> Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar Overlay */}
+      {leftSidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setLeftSidebarOpen(false)} />
+      )}
       
       {/* Main Content */}
       <div className="chat-window">
