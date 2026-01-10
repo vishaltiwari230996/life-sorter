@@ -20,7 +20,8 @@
 .chatbot-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100vh; /* Fallback */
+  height: 100dvh; /* Mobile friendly */
   width: 100%;
   background-color: var(--ikshan-bg);
   font-family: var(--font-sans);
@@ -29,35 +30,36 @@
   overflow: hidden;
 }
 
-/* Header - Minimalist & Clean */
+/* Header - Mobile Optimized */
 .chatbot-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
+  padding: 0.5rem 1rem;
   background-color: var(--ikshan-surface);
   border-bottom: 1px solid var(--ikshan-border);
   box-shadow: var(--ikshan-shadow-sm);
   z-index: 10;
-  height: 80px;
-  gap: 2rem;
+  height: auto;
+  min-height: 60px;
+  gap: 0.5rem;
 }
 
 .chatbot-header .logo-container {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .chatbot-header .logo-img {
-  height: 3rem; /* Bigger logo as requested */
-  width: 3rem;  /* Ensure it is valid square */
-  border-radius: 50%; /* Rounded frame */
+  height: 2.5rem; /* Slightly smaller for mobile */
+  width: 2.5rem;
+  border-radius: 50%;
   object-fit: cover;
 }
 
 .chatbot-header h2 {
-  font-size: 1.5rem;
+  font-size: 1.1rem; /* Smaller font */
   font-weight: 700;
   color: var(--ikshan-text-primary);
   margin: 0;
@@ -69,28 +71,29 @@
 .header-products {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   overflow: hidden;
-  /* max-width removed to utilize more width */
+  min-width: 0; /* Crucial for scrolling inside flex */
 }
 
 .products-scroll {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   overflow-x: auto;
   padding: 0.25rem;
-  scrollbar-width: none; /* Hide scrollbar Firefox */
+  scrollbar-width: none; 
+  -webkit-overflow-scrolling: touch;
 }
 .products-scroll::-webkit-scrollbar { display: none; }
 
 .product-chip {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.8rem;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
   background-color: #f3f4f6;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--ikshan-text-secondary);
   white-space: nowrap;
@@ -124,20 +127,20 @@
   color: var(--ikshan-purple);
 }
 
-/* Main Chat Area - Centered column */
+/* Main Chat Area - Mobile Optimized */
 .chat-window {
   flex: 1;
   overflow-y: auto;
-  padding: 2rem 1rem;
+  padding: 1rem 0.5rem; /* Less padding */
   display: flex;
   flex-direction: column;
-  align-items: center; /* Centers the message thread */
+  align-items: center;
   scroll-behavior: smooth;
 }
 
 /* Scrollbar styling */
 .chat-window::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 .chat-window::-webkit-scrollbar-track {
   background: transparent;
@@ -147,21 +150,21 @@
   border-radius: 20px;
 }
 
-/* Message Wrapper - Limits width for readability (Claude/GPT style) */
+/* Message Wrapper - Full width for mobile */
 .messages-wrapper {
   width: 100%;
-  max-width: 64rem; /* approx 1024px - WIDER as requested */
+  max-width: 100%; 
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 /* Individual Message Styles */
 .message {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
   animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 0 1rem;
+  padding: 0 0.25rem;
 }
 
 .message.user {
@@ -192,16 +195,16 @@
 }
 
 .message-content {
-  max-width: 85%;
-  line-height: 1.6;
-  font-size: 0.95rem;
+  max-width: 90%;
+  line-height: 1.5;
+  font-size: 0.9rem;
 }
 
 .message.user .message-content {
   background-color: var(--ikshan-chat-bubble-user);
-  padding: 0.75rem 1.25rem;
-  border-radius: var(--radius-lg);
-  border-bottom-right-radius: 4px; /* Uniquely shape the bubble */
+  padding: 0.6rem 0.9rem;
+  border-radius: 1rem;
+  border-bottom-right-radius: 2px; /* Uniquely shape the bubble */
   color: var(--ikshan-text-primary);
 }
 
@@ -257,10 +260,11 @@
   padding: 0;
 }
 
-/* Input Area - Floating & Elevated */
+/* Input Area - Mobile Optimized */
 .input-area {
-  padding: 1.5rem;
-  background: linear-gradient(to top, var(--ikshan-bg) 80%, rgba(249, 250, 251, 0));
+  padding: 0.5rem;
+  background: var(--ikshan-surface);
+  border-top: 1px solid var(--ikshan-border);
   display: flex;
   justify-content: center;
   position: relative;
@@ -269,16 +273,16 @@
 
 .input-container {
   width: 100%;
-  max-width: 64rem; /* Match messages-wrapper width */
-  background-color: var(--ikshan-surface);
-  border: 1px solid var(--ikshan-border);
+  max-width: 100%;
+  background-color: #f3f4f6;
+  border: 1px solid transparent;
   border-radius: 1.5rem; /* Pill shapeish / rounded rect */
-  padding: 0.75rem 1rem;
-  box-shadow: var(--ikshan-shadow-md);
+  padding: 0.5rem 0.75rem;
+  box-shadow: none;
   display: flex;
   align-items: flex-end; /* Align vertically for multiline */
-  gap: 0.75rem;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
 }
 
 .input-container:focus-within {
