@@ -542,7 +542,7 @@ const ChatBotNew = () => {
   const [messages, setMessages] = useState([
     {
       id: 'welcome-msg',
-      text: "✨ Welcome to Ikshan! 😊\n\nLet's find the perfect AI solution for you.",
+      text: "Welcome to Ikshan!\n\nLet's find the perfect AI solution for you.",
       sender: 'bot',
       timestamp: new Date(),
       showGoalOptions: true
@@ -619,34 +619,34 @@ const ChatBotNew = () => {
   const recognitionRef = useRef(null);
 
   const domains = [
-    { id: 'marketing', name: 'Marketing', emoji: '📢' },
-    { id: 'sales-support', name: 'Sales and Customer Support', emoji: '📈' },
-    { id: 'social-media', name: 'Social Media', emoji: '📱' },
-    { id: 'legal', name: 'Legal', emoji: '⚖️' },
-    { id: 'hr-hiring', name: 'HR and talent Hiring', emoji: '👥' },
-    { id: 'finance', name: 'Finance', emoji: '💰' },
-    { id: 'supply-chain', name: 'Supply chain', emoji: '🚚' },
-    { id: 'research', name: 'Research', emoji: '🔬' },
-    { id: 'data-analysis', name: 'Data Analysis', emoji: '📊' },
-    { id: 'other', name: 'Other', emoji: '✨' }
+    { id: 'marketing', name: 'Marketing', emoji: '' },
+    { id: 'sales-support', name: 'Sales and Customer Support', emoji: '' },
+    { id: 'social-media', name: 'Social Media', emoji: '' },
+    { id: 'legal', name: 'Legal', emoji: '' },
+    { id: 'hr-hiring', name: 'HR and talent Hiring', emoji: '' },
+    { id: 'finance', name: 'Finance', emoji: '' },
+    { id: 'supply-chain', name: 'Supply chain', emoji: '' },
+    { id: 'research', name: 'Research', emoji: '' },
+    { id: 'data-analysis', name: 'Data Analysis', emoji: '' },
+    { id: 'other', name: 'Other', emoji: '' }
   ];
 
   const goalOptions = [
-    { id: 'grow-revenue', text: 'Grow Revenue', emoji: '📈' },
-    { id: 'save-time', text: 'Save Time', emoji: '⏱️' },
-    { id: 'better-decisions', text: 'Make Better Decisions', emoji: '🎯' },
-    { id: 'personal-growth', text: 'Personal Growth', emoji: '🚀' }
+    { id: 'grow-revenue', text: 'Grow Revenue', emoji: '' },
+    { id: 'save-time', text: 'Save Time', emoji: '' },
+    { id: 'better-decisions', text: 'Make Better Decisions', emoji: '' },
+    { id: 'personal-growth', text: 'Personal Growth', emoji: '' }
   ];
 
   const roleOptions = [
-    { id: 'founder-owner', text: 'Founder / Owner', emoji: '👔' },
-    { id: 'sales-marketing', text: 'Sales / Marketing', emoji: '📈' },
-    { id: 'ops-admin', text: 'Ops / Admin', emoji: '⚙️' },
-    { id: 'finance-legal', text: 'Finance / Legal', emoji: '💼' },
-    { id: 'hr-recruiting', text: 'HR / Recruiting', emoji: '👥' },
-    { id: 'support-success', text: 'Support / Success', emoji: '🎧' },
-    { id: 'individual-student', text: 'Individual / Student', emoji: '📚' },
-    { id: 'other-role', text: 'Other (Please type below)', emoji: '✏️' }
+    { id: 'founder-owner', text: 'Founder / Owner', emoji: '' },
+    { id: 'sales-marketing', text: 'Sales / Marketing', emoji: '' },
+    { id: 'ops-admin', text: 'Ops / Admin', emoji: '' },
+    { id: 'finance-legal', text: 'Finance / Legal', emoji: '' },
+    { id: 'hr-recruiting', text: 'HR / Recruiting', emoji: '' },
+    { id: 'support-success', text: 'Support / Success', emoji: '' },
+    { id: 'individual-student', text: 'Individual / Student', emoji: '' },
+    { id: 'other-role', text: 'Other (Please type below)', emoji: '' }
   ];
 
   // State for custom role input
@@ -946,7 +946,7 @@ const ChatBotNew = () => {
     // Start fresh with welcome message
     const welcomeMessage = {
       id: getNextMessageId(),
-      text: "✨ Welcome to Ikshan! 😊\n\nLet's find the perfect AI solution for you.",
+      text: "Welcome to Ikshan!\n\nLet's find the perfect AI solution for you.",
       sender: 'bot',
       timestamp: new Date(),
       showGoalOptions: true
@@ -960,14 +960,14 @@ const ChatBotNew = () => {
 
     const userMessage = {
       id: getNextMessageId(),
-      text: `${goal.emoji} ${goal.text}`,
+      text: `${goal.text}`,
       sender: 'user',
       timestamp: new Date()
     };
 
     const botMessage = {
       id: getNextMessageId(),
-      text: `Great choice! You want to **${goal.text.toLowerCase()}**. 🎯\n\nNow, which best describes you?`,
+      text: `Great choice! You want to **${goal.text.toLowerCase()}**.\n\nNow, which best describes you?`,
       sender: 'bot',
       timestamp: new Date(),
       showRoleOptions: true
@@ -985,7 +985,7 @@ const ChatBotNew = () => {
 
     const userMessage = {
       id: getNextMessageId(),
-      text: `${role.emoji} ${role.text}`,
+      text: `${role.text}`,
       sender: 'user',
       timestamp: new Date()
     };
@@ -1006,7 +1006,7 @@ const ChatBotNew = () => {
       const categories = CATEGORIES_DATA[selectedGoal]?.[role.id] || [];
       const botMessage = {
         id: getNextMessageId(),
-        text: `Perfect! 🎯\n\nBased on your selection, here are the categories where your problems might fall:\n\n**Select one that best matches your need:**`,
+        text: `Perfect!\n\nBased on your selection, here are the categories where your problems might fall:\n\n**Select one that best matches your need:**`,
         sender: 'bot',
         timestamp: new Date(),
         showCategoryOptions: true,
@@ -1051,7 +1051,7 @@ const ChatBotNew = () => {
 
     const userMessage = {
       id: getNextMessageId(),
-      text: `📌 ${category}`,
+      text: `${category}`,
       sender: 'user',
       timestamp: new Date()
     };
@@ -1067,7 +1067,7 @@ const ChatBotNew = () => {
   const handleTypeCustomProblem = () => {
     const userMessage = {
       id: getNextMessageId(),
-      text: `✏️ I'll describe my problem`,
+      text: `I'll describe my problem`,
       sender: 'user',
       timestamp: new Date()
     };
@@ -1076,7 +1076,7 @@ const ChatBotNew = () => {
     setFlowStage('requirement');
     const botMessage = {
       id: getNextMessageId(),
-      text: `No problem! 🚀\n\n**Please describe what you're trying to achieve or the problem you want to solve:**\n\n_(Tell me in 2-3 lines so I can find the best solutions for you)_`,
+      text: `No problem!\n\n**Please describe what you're trying to achieve or the problem you want to solve:**\n\n_(Tell me in 2-3 lines so I can find the best solutions for you)_`,
       sender: 'bot',
       timestamp: new Date()
     };
@@ -1160,18 +1160,18 @@ const ChatBotNew = () => {
       const immediatePrompt = generateImmediatePrompt(selectedGoal, roleLabel, category, category);
 
       // Build Stage 1 Desired Output Format - Chat Response
-      let solutionResponse = `## 🎯 Recommended Solution Pathways (Immediate Action)\n\n`;
+      let solutionResponse = `## Recommended Solution Pathways (Immediate Action)\n\n`;
       solutionResponse += `I recommend the following solution pathways that you can start implementing immediately, based on your current setup and goals.\n\n`;
       solutionResponse += `---\n\n`;
 
       // Section 1: Tools & Extensions (If Google Workspace Is Your Main Stack)
-      solutionResponse += `## 🔌 If Google Tools / Google Workspace Is Your Main Stack\n\n`;
+      solutionResponse += `## If Google Tools / Google Workspace Is Your Main Stack\n\n`;
       solutionResponse += `If Google Workspace is your primary tool stack, here are some tools and extensions that integrate well and can be implemented quickly.\n\n`;
       solutionResponse += `### Tools & Extensions\n\n`;
       
       extensions.slice(0, 3).forEach((ext) => {
-        const freeTag = ext.free ? '🆓 Free' : '💰 Paid';
-        solutionResponse += `**🔧 ${ext.name}** ${freeTag}\n`;
+        const freeTag = ext.free ? 'Free' : 'Paid';
+        solutionResponse += `**${ext.name}** ${freeTag}\n`;
         solutionResponse += `> **Where this helps:** ${ext.description}\n`;
         solutionResponse += `> **Where to find:** ${ext.source || 'Chrome Web Store / Official Website'}\n\n`;
       });
@@ -1179,31 +1179,31 @@ const ChatBotNew = () => {
       solutionResponse += `---\n\n`;
 
       // Section 2: Custom GPTs
-      solutionResponse += `## 🤖 Using Custom GPTs for Task Automation & Decision Support\n\n`;
+      solutionResponse += `## Using Custom GPTs for Task Automation & Decision Support\n\n`;
       solutionResponse += `You can also leverage Custom GPTs to automate repetitive thinking tasks, research, analysis, and execution support.\n\n`;
       solutionResponse += `### Custom GPTs\n\n`;
       
       customGPTs.slice(0, 3).forEach((gpt) => {
-        solutionResponse += `**🧠 ${gpt.name}** ⭐${gpt.rating}\n`;
+        solutionResponse += `**${gpt.name}** ⭐${gpt.rating}\n`;
         solutionResponse += `> **What this GPT does:** ${gpt.description}\n\n`;
       });
 
       solutionResponse += `---\n\n`;
 
       // Section 3: AI Companies
-      solutionResponse += `## 🚀 AI Companies Offering Ready-Made Solutions\n\n`;
+      solutionResponse += `## AI Companies Offering Ready-Made Solutions\n\n`;
       solutionResponse += `If you are looking for AI-powered tools and well-structured, ready-made solutions, here are companies whose products align with your needs.\n\n`;
       solutionResponse += `### AI Solution Providers\n\n`;
       
       relevantCompanies.slice(0, 3).forEach((company) => {
-        solutionResponse += `**🏢 ${company.name}**\n`;
+        solutionResponse += `**${company.name}**\n`;
         solutionResponse += `> **What they do:** ${company.problem || company.description || 'AI-powered solution for your needs'}\n\n`;
       });
 
       solutionResponse += `---\n\n`;
 
       // Section 4: How to Use This Framework
-      solutionResponse += `### 📋 How to Use This Framework\n\n`;
+      solutionResponse += `### How to Use This Framework\n\n`;
       solutionResponse += `1. **Start with Google Workspace tools** for quick wins\n`;
       solutionResponse += `2. **Add Custom GPTs** for intelligence and automation\n`;
       solutionResponse += `3. **Scale using specialized AI companies** when workflows mature\n\n`;
@@ -1328,7 +1328,7 @@ const ChatBotNew = () => {
 
     const userMessage = {
       id: getNextMessageId(),
-      text: `📝 ${customText}`,
+      text: `${customText}`,
       sender: 'user',
       timestamp: new Date()
     };
@@ -1336,7 +1336,7 @@ const ChatBotNew = () => {
     setFlowStage('requirement');
     const botMessage = {
       id: getNextMessageId(),
-      text: `Got it! 🚀\n\nYou're looking to work on: **${customText}**\n\n**Please share more details about your specific problem:**\n\n_(Tell me in 2-3 lines so I can find the best solutions for you)_`,
+      text: `Got it!\n\nYou're looking to work on: **${customText}**\n\n**Please share more details about your specific problem:**\n\n_(Tell me in 2-3 lines so I can find the best solutions for you)_`,
       sender: 'bot',
       timestamp: new Date()
     };
@@ -1449,13 +1449,13 @@ const ChatBotNew = () => {
     const starterPrompts = `
 ---
 
-## 🎯 START RIGHT NOW - Copy-Paste These Prompts into ChatGPT/Claude
+## START RIGHT NOW - Copy-Paste These Prompts into ChatGPT/Claude
 
 **These prompts are pre-filled with YOUR context. Copy, paste, and get instant results!**
 
 ---
 
-### 📋 Prompt 1: Clarify Your Problem (Decision-Ready Spec)
+### Prompt 1: Clarify Your Problem (Decision-Ready Spec)
 
 \`\`\`
 You are my senior operations analyst. Convert my situation into a decision-ready one-page spec with zero fluff.
@@ -1487,19 +1487,19 @@ Ask ONLY 3 clarifying questions if required. If not required, proceed with reaso
 
 ---
 
-💡 **Pro tip:** Run Prompt 1 first to clarify your problem. You'll have real, usable outputs within 30 minutes!
+**Pro tip:** Run Prompt 1 first to clarify your problem. You'll have real, usable outputs within 30 minutes!
 `;
 
     try {
       const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
-      const guideHeader = `## 🚀 Your Implementation Guide for ${topTool?.name || 'Your Solution'}
+      const guideHeader = `## Your Implementation Guide for ${topTool?.name || 'Your Solution'}
 
-### 1️⃣ Where This Fits in Your Workflow
+### 1. Where This Fits in Your Workflow
 
 This solution helps at the **${subDomainName}** stage of your ${domainName} operations.
 
-### 2️⃣ What to Prepare Before You Start (Checklist)
+### 2. What to Prepare Before You Start (Checklist)
 
 - ☐ **3-5 example documents/data** you currently work with
 - ☐ **Current workflow steps** written out
@@ -1722,40 +1722,40 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
         const roleLabel = roleOptions.find(r => r.id === userRole)?.text || customRole || userRole;
         const fallbackPrompt = generateImmediatePrompt(selectedGoal, roleLabel, selectedCategory, requirement);
         
-        let fallbackResponse = `## 🎯 Recommended Solution Pathways (Immediate Action)\n\n`;
+        let fallbackResponse = `## Recommended Solution Pathways (Immediate Action)\n\n`;
         fallbackResponse += `I recommend the following solution pathways that you can start implementing immediately.\n\n`;
         fallbackResponse += `---\n\n`;
         
-        fallbackResponse += `## 🔌 If Google Tools / Google Workspace Is Your Main Stack\n\n`;
+        fallbackResponse += `## If Google Tools / Google Workspace Is Your Main Stack\n\n`;
         fallbackResponse += `### Tools & Extensions\n\n`;
-        fallbackResponse += `**🔧 Bardeen** 🆓 Free\n`;
+        fallbackResponse += `**Bardeen** Free\n`;
         fallbackResponse += `> **Where this helps:** Automate browser tasks with AI\n`;
         fallbackResponse += `> **Where to find:** Chrome Web Store\n\n`;
-        fallbackResponse += `**🔧 Notion Web Clipper** 🆓 Free\n`;
+        fallbackResponse += `**Notion Web Clipper** Free\n`;
         fallbackResponse += `> **Where this helps:** Save anything instantly\n`;
         fallbackResponse += `> **Where to find:** Chrome Web Store\n\n`;
-        fallbackResponse += `**🔧 Grammarly** 🆓 Free\n`;
+        fallbackResponse += `**Grammarly** Free\n`;
         fallbackResponse += `> **Where this helps:** Write better emails & docs\n`;
         fallbackResponse += `> **Where to find:** Chrome Web Store\n\n`;
         
         fallbackResponse += `---\n\n`;
-        fallbackResponse += `## 🤖 Using Custom GPTs for Task Automation & Decision Support\n\n`;
+        fallbackResponse += `## Using Custom GPTs for Task Automation & Decision Support\n\n`;
         fallbackResponse += `### Custom GPTs\n\n`;
-        fallbackResponse += `**🧠 Data Analyst GPT** ⭐4.9\n`;
+        fallbackResponse += `**Data Analyst GPT** ⭐4.9\n`;
         fallbackResponse += `> **What this GPT does:** Analyze your data & create charts\n\n`;
-        fallbackResponse += `**🧠 Task Prioritizer GPT** ⭐4.7\n`;
+        fallbackResponse += `**Task Prioritizer GPT** ⭐4.7\n`;
         fallbackResponse += `> **What this GPT does:** Plan and organize your work\n\n`;
         
         fallbackResponse += `---\n\n`;
-        fallbackResponse += `## 🚀 AI Companies Offering Ready-Made Solutions\n\n`;
+        fallbackResponse += `## AI Companies Offering Ready-Made Solutions\n\n`;
         fallbackResponse += `### AI Solution Providers\n\n`;
-        fallbackResponse += `**🏢 Bardeen**\n`;
+        fallbackResponse += `**Bardeen**\n`;
         fallbackResponse += `> **What they do:** Automate any browser workflow with AI\n\n`;
-        fallbackResponse += `**🏢 Zapier**\n`;
+        fallbackResponse += `**Zapier**\n`;
         fallbackResponse += `> **What they do:** Connect 5000+ apps without code\n\n`;
         
         fallbackResponse += `---\n\n`;
-        fallbackResponse += `### 📋 How to Use This Framework\n\n`;
+        fallbackResponse += `### How to Use This Framework\n\n`;
         fallbackResponse += `1. **Start with Google Workspace tools** for quick wins\n`;
         fallbackResponse += `2. **Add Custom GPTs** for intelligence and automation\n`;
         fallbackResponse += `3. **Scale using specialized AI companies** when workflows mature\n\n`;
@@ -2038,7 +2038,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
             <div className="empty-state">
               {flowStage === 'goal' && (
                  <>
-                    <div className="empty-state-logo">✨</div>
+                    {/* Icon removed */}
                     <h1>What do you want to improve?</h1>
                     <p>Select what matters most to you right now</p>
                     <div className="suggestions-grid">
@@ -2049,7 +2049,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                             onClick={() => handleGoalClick(goal)}
                             style={{ animationDelay: `${index * 0.1}s`, animation: 'fadeIn 0.5s ease-out forwards' }}
                         >
-                           <h3>{goal.emoji} {goal.text}</h3>
+                           <h3>{goal.text}</h3>
                         </div>
                       ))}
                     </div>
@@ -2058,7 +2058,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
 
               {flowStage === 'role' && (
                  <>
-                    <div className="empty-state-logo">👤</div>
+                    {/* Icon removed */}
                     <h1>Which best describes you?</h1>
                     <p>This helps us tailor the solution</p>
                     <div className="suggestions-grid">
@@ -2068,7 +2068,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                             className="suggestion-card" 
                             onClick={() => handleRoleClick(role)}
                         >
-                           <h3>{role.emoji} {role.text}</h3>
+                           <h3>{role.text}</h3>
                         </div>
                       ))}
                     </div>
@@ -2120,7 +2120,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
 
               {flowStage === 'category' && (
                  <>
-                    <div className="empty-state-logo">📌</div>
+                    {/* Icon removed */}
                     <h1>In which category does your problem fall?</h1>
                     <div className="suggestions-grid">
                       {getCategoriesForSelection().map((category, index) => (
@@ -2136,7 +2136,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                             className="suggestion-card" 
                             onClick={handleTypeCustomProblem}
                        >
-                           <h3>✏️ Type my own problem...</h3>
+                           <h3>Type my own problem...</h3>
                        </div>
                     </div>
                  </>
@@ -2169,23 +2169,16 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                             <div style={{marginTop: '1.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap'}}>
                                 <button 
                                     onClick={handleStartNewIdea}
-                                    style={{
-                                        padding: '0.6rem 1.2rem', background: '#6d28d9', color:'white', 
-                                        borderRadius: '0.5rem', border:'none', cursor:'pointer', fontWeight: 500,
-                                        display: 'flex', alignItems: 'center', gap: '8px'
-                                    }}
+                                    className="action-btn primary"
                                 >
                                     <Sparkles size={16}/> Check Another Idea
                                 </button>
                                 {message.companies && message.companies.length > 0 && (
                                    <button
                                      onClick={() => handleLearnImplementation(message.companies, message.userRequirement)}
-                                     style={{
-                                        padding: '0.6rem 1.2rem', background: 'white', color:'#111827', 
-                                        borderRadius: '0.5rem', border:'1px solid #d1d5db', cursor:'pointer', fontWeight: 500
-                                     }}
+                                     className="action-btn secondary"
                                    >
-                                     📚 Learn Implementation
+                                     Learn Implementation
                                    </button>
                                 )}
                             </div>
