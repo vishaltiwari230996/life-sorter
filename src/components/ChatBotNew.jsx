@@ -503,9 +503,9 @@ const IdentityForm = ({ onSubmit }) => {
   };
 
   return (
-    <div className="chat-identity-form">
+    <div style={{width: '100%'}}>
       <form onSubmit={handleSubmit}>
-        <div className="chat-form-group">
+        <div className="form-group">
           <input
             type="text"
             placeholder="Your Name"
@@ -514,10 +514,10 @@ const IdentityForm = ({ onSubmit }) => {
               setName(e.target.value);
               setError('');
             }}
-            className="chat-identity-input"
+            style={{width: '100%', padding:'0.75rem', border:'1px solid #e5e7eb', borderRadius:'0.5rem', marginBottom:'0.5rem'}}
           />
         </div>
-        <div className="chat-form-group">
+        <div className="form-group">
           <input
             type="email"
             placeholder="Your Email"
@@ -526,11 +526,11 @@ const IdentityForm = ({ onSubmit }) => {
               setEmail(e.target.value);
               setError('');
             }}
-            className="chat-identity-input"
+             style={{width: '100%', padding:'0.75rem', border:'1px solid #e5e7eb', borderRadius:'0.5rem'}}
           />
         </div>
-        {error && <div className="chat-form-error">{error}</div>}
-        <button type="submit" className="chat-action-btn primary">
+        {error && <div style={{color:'#ef4444', fontSize:'0.85rem', marginBottom:'1rem'}}>{error}</div>}
+        <button type="submit" style={{width:'100%', padding:'0.75rem', background:'var(--ikshan-purple)', color:'white', border:'none', borderRadius:'0.5rem', fontWeight:600, cursor:'pointer'}}>
           Continue →
         </button>
       </form>
@@ -2007,528 +2007,270 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
   };
 
   return (
-    <div className="chatbot-new-layout">
-      {/* Mobile Header */}
-      <header className="mobile-header">
-        <button 
-          className="mobile-menu-btn" 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-        <div className="mobile-header-logo">
-          <img src="/logo iskan 5.svg" alt="Ikshan Logo" className="mobile-logo-icon" />
-          <span className="mobile-logo-title">Ikshan</span>
+    <div className="chatbot-container">
+      {/* Header */}
+      <header className="chatbot-header">
+        <div className="logo-container">
+            <img src="/logo iskan 5.svg" alt="Ikshan" className="logo-img" />
+            <h2>Ikshan</h2>
         </div>
-        <button 
-          className="mobile-history-btn" 
-          onClick={() => setShowChatHistory(!showChatHistory)}
-          aria-label="Chat history"
-        >
-          <History size={22} />
-        </button>
-      </header>
 
-      {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div className="mobile-menu-overlay" onClick={() => setMobileMenuOpen(false)} />
-      )}
-
-      {/* Desktop Header */}
-      <header className="chatbot-new-header">
-        <div className="header-logo-container">
-          <img src="/logo iskan 5.svg" alt="Ikshan Logo" className="header-logo-icon" />
-          <span className="header-logo-title">Ikshan</span>
-        </div>
-        <div className="header-nav-container">
-          <h1 className="header-nav-title">Products Of Ikshan</h1>
-          <div className="header-nav-marquee">
-            <div className="header-nav-icons">
-              <button className="nav-product-btn" aria-label="Ecom Listing Optimizer">
-                <ShoppingCart size={20} />
-                <span>Ecom Listing Optimizer</span>
-              </button>
-              <button className="nav-product-btn" aria-label="Legal Doc Classifier">
-                <Scale size={20} />
-                <span>Legal Doc Classifier</span>
-              </button>
-              <button className="nav-product-btn" aria-label="Sales & Support Bot">
-                <Users size={20} />
-                <span>Sales & Support Bot</span>
-              </button>
-              <button className="nav-product-btn" aria-label="AnyOCR">
-                <Sparkles size={20} />
-                <span>AnyOCR</span>
-              </button>
-              <button className="nav-product-btn" aria-label="Tube Helper">
-                <Youtube size={20} />
-                <span>Tube Helper</span>
-              </button>
-              {/* Duplicate for seamless loop */}
-              <button className="nav-product-btn" aria-label="Ecom Listing Optimizer">
-                <ShoppingCart size={20} />
-                <span>Ecom Listing Optimizer</span>
-              </button>
-              <button className="nav-product-btn" aria-label="Legal Doc Classifier">
-                <Scale size={20} />
-                <span>Legal Doc Classifier</span>
-              </button>
-              <button className="nav-product-btn" aria-label="Sales & Support Bot">
-                <Users size={20} />
-                <span>Sales & Support Bot</span>
-              </button>
-              <button className="nav-product-btn" aria-label="AnyOCR">
-                <Sparkles size={20} />
-                <span>AnyOCR</span>
-              </button>
-              <button className="nav-product-btn" aria-label="Tube Helper">
-                <Youtube size={20} />
-                <span>Tube Helper</span>
-              </button>
+        <div className="header-products">
+            <div className="products-scroll">
+                 <div className="product-chip"><ShoppingCart size={14}/> <span>Ecom Optimizer</span></div>
+                 <div className="product-chip"><Scale size={14}/> <span>Legal Docs</span></div>
+                 <div className="product-chip"><Users size={14}/> <span>Sales Bot</span></div>
+                 <div className="product-chip"><Sparkles size={14}/> <span>AnyOCR</span></div>
+                 <div className="product-chip"><Youtube size={14}/> <span>Tube Helper</span></div>
             </div>
-          </div>
+        </div>
+        
+        <div className="header-actions">
+           <button onClick={() => setShowChatHistory(true)} title="History"><History size={20}/></button>
+           <button onClick={handleStartNewIdea} title="New Chat"><Plus size={20}/></button>
         </div>
       </header>
-
-      {/* Main Content Area */}
-      <div className="chatbot-new-main">
-        {/* Sidebar */}
-        <aside className={`chatbot-new-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-          <div className="sidebar-top-buttons">
-            <button className="sidebar-new-chat-btn" onClick={() => { handleStartNewIdea(); setMobileMenuOpen(false); }}>
-              <Plus size={18} />
-              New Chat
-            </button>
-            <button className="sidebar-history-btn" onClick={() => { setShowChatHistory(true); setMobileMenuOpen(false); }}>
-              <History size={18} />
-              Chat History
-            </button>
-          </div>
-          
-          <div className="sidebar-user-profile">
-            <span className="sidebar-user-name">{userName || 'user name'}</span>
-            <div className="sidebar-user-avatar">
-              <User size={40} />
-            </div>
-          </div>
-        </aside>
-
-        {/* Chat History Panel */}
-        {showChatHistory && (
-          <div className="chat-history-overlay" onClick={() => setShowChatHistory(false)}>
-            <div className="chat-history-panel" onClick={(e) => e.stopPropagation()}>
-              <div className="chat-history-header">
-                <h2>Chat History</h2>
-                <button className="chat-history-close" onClick={() => setShowChatHistory(false)}>
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="chat-history-list">
-                {chatHistory.map((chat) => (
-                  <div 
-                    key={chat.id} 
-                    className="chat-history-item"
-                    onClick={() => handleLoadChat(chat)}
-                  >
-                    <div className="chat-history-item-icon">
-                      <MessageSquare size={20} />
-                    </div>
-                    <div className="chat-history-item-content">
-                      <div className="chat-history-item-title">{chat.title}</div>
-                      <div className="chat-history-item-preview">{chat.preview}</div>
-                      <div className="chat-history-item-time">{formatHistoryTime(chat.timestamp)}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Chat Area */}
-        <main className="chatbot-new-chat-area">
-          <div className="chat-main-content">
-            {/* Typeform-style Full Screen Selection View */}
-            {['goal', 'role', 'category', 'custom-role'].includes(flowStage) ? (
-              <div className="typeform-view">
-                {/* Question 1: What do you want to improve right now? */}
-                {flowStage === 'goal' && (
-                  <div className="typeform-question-container">
-                    <div className="typeform-greeting">✨ Welcome to Ikshan! 😊</div>
-                    <h1 className="typeform-question">What do you want to improve right now?</h1>
-                    <p className="typeform-subtitle">Select what matters most to you:</p>
-                    <div className="typeform-options">
+      
+      {/* Main Content */}
+      <div className="chat-window">
+        {/* Typeform / Flow Stages */}
+        {['goal', 'role', 'category', 'custom-role'].includes(flowStage) ? (
+            <div className="empty-state">
+              {flowStage === 'goal' && (
+                 <>
+                    <div className="empty-state-logo">✨</div>
+                    <h1>What do you want to improve?</h1>
+                    <p>Select what matters most to you right now</p>
+                    <div className="suggestions-grid">
                       {goalOptions.map((goal, index) => (
-                        <button
-                          key={goal.id}
-                          className="typeform-option-btn"
-                          onClick={() => handleGoalClick(goal)}
-                          style={{ animationDelay: `${index * 0.05}s` }}
+                        <div 
+                            key={goal.id} 
+                            className="suggestion-card" 
+                            onClick={() => handleGoalClick(goal)}
+                            style={{ animationDelay: `${index * 0.1}s`, animation: 'fadeIn 0.5s ease-out forwards' }}
                         >
-                          <span className="option-emoji">{goal.emoji}</span>
-                          {goal.text}
-                        </button>
+                           <h3>{goal.emoji} {goal.text}</h3>
+                        </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                 </>
+              )}
 
-                {/* Question 2: Which best describes you? */}
-                {flowStage === 'role' && (
-                  <div className="typeform-question-container">
-                    <button className="typeform-back-btn" onClick={() => {
-                      setSelectedGoal(null);
-                      setFlowStage('goal');
-                    }}>
-                      <ArrowLeft size={20} />
-                      Back
-                    </button>
-                    <h1 className="typeform-question">Which best describes you?</h1>
-                    <p className="typeform-subtitle">This helps us find the most relevant solutions:</p>
-                    <div className="typeform-options">
+              {flowStage === 'role' && (
+                 <>
+                    <div className="empty-state-logo">👤</div>
+                    <h1>Which best describes you?</h1>
+                    <p>This helps us tailor the solution</p>
+                    <div className="suggestions-grid">
                       {roleOptions.map((role, index) => (
-                        <button
-                          key={role.id}
-                          className="typeform-option-btn"
-                          onClick={() => handleRoleClick(role)}
-                          style={{ animationDelay: `${index * 0.05}s` }}
+                        <div 
+                            key={role.id} 
+                            className="suggestion-card" 
+                            onClick={() => handleRoleClick(role)}
                         >
-                          <span className="option-emoji">{role.emoji}</span>
-                          {role.text}
-                        </button>
+                           <h3>{role.emoji} {role.text}</h3>
+                        </div>
                       ))}
                     </div>
-                  </div>
-                )}
-
-                {/* Custom Role Input (when user selects "Other") */}
-                {flowStage === 'custom-role' && (
-                  <div className="typeform-question-container">
-                    <button className="typeform-back-btn" onClick={() => {
-                      setUserRole(null);
-                      setFlowStage('role');
-                    }}>
-                      <ArrowLeft size={20} />
-                      Back
+                    <button 
+                        style={{marginTop: '2rem', background: 'transparent', border:'none', color:'#6b7280', cursor:'pointer'}}
+                        onClick={() => { setSelectedGoal(null); setFlowStage('goal'); }}
+                    >
+                        ← Back
                     </button>
-                    <h1 className="typeform-question">Tell us about your role</h1>
-                    <p className="typeform-subtitle">Please describe what you do:</p>
-                    <div className="typeform-input-container">
-                      <input
-                        type="text"
-                        className="typeform-text-input"
-                        placeholder="e.g., Content Creator, Consultant, Teacher..."
-                        value={customRole}
-                        onChange={(e) => setCustomRole(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && customRole.trim()) {
-                            handleCustomRoleSubmit(customRole.trim());
-                          }
-                        }}
-                        autoFocus
-                      />
-                      <button 
-                        className="typeform-submit-btn"
-                        onClick={() => customRole.trim() && handleCustomRoleSubmit(customRole.trim())}
-                        disabled={!customRole.trim()}
-                      >
-                        Continue →
-                      </button>
+                 </>
+              )}
+
+               {flowStage === 'custom-role' && (
+                 <>
+                    <h1>Tell us about your role</h1>
+                    <div style={{width: '100%', maxWidth: '400px', marginTop: '1rem'}}>
+                         <input
+                            type="text"
+                            placeholder="e.g., Content Creator..."
+                            value={customRole}
+                            onChange={(e) => setCustomRole(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter' && customRole.trim()) handleCustomRoleSubmit(customRole.trim());
+                            }}
+                            style={{
+                                width: '100%', padding:'1rem', borderRadius: '12px', border: '1px solid #e5e7eb',
+                                fontSize: '1rem', outline: 'none'
+                             }}
+                            autoFocus
+                         />
+                         <button 
+                            onClick={() => customRole.trim() && handleCustomRoleSubmit(customRole.trim())}
+                            style={{
+                                width: '100%', marginTop: '1rem', padding: '1rem', background: '#6d28d9', 
+                                color: 'white', border: 'none', borderRadius: '12px', fontWeight: 600, cursor: 'pointer'
+                            }}
+                         >
+                            Continue
+                         </button>
+                         <button 
+                            onClick={() => { setUserRole(null); setFlowStage('role'); }}
+                            style={{marginTop: '1rem', background: 'transparent', border:'none', color:'#6b7280', cursor:'pointer'}}
+                         >
+                            Back
+                         </button>
                     </div>
-                  </div>
-                )}
+                 </>
+              )}
 
-                {/* Question 3: In which category does your problem fall? */}
-                {flowStage === 'category' && (
-                  <div className="typeform-question-container">
-                    <button className="typeform-back-btn" onClick={() => {
-                      setUserRole(null);
-                      setCustomRole('');
-                      setFlowStage('role');
-                    }}>
-                      <ArrowLeft size={20} />
-                      Back
-                    </button>
-                    <h1 className="typeform-question">In which category does your problem fall?</h1>
-                    <p className="typeform-subtitle">Select the area where you need help:</p>
-                    <div className="typeform-options category-grid">
+              {flowStage === 'category' && (
+                 <>
+                    <div className="empty-state-logo">📌</div>
+                    <h1>In which category does your problem fall?</h1>
+                    <div className="suggestions-grid">
                       {getCategoriesForSelection().map((category, index) => (
-                        <button
-                          key={index}
-                          className="typeform-option-btn category-btn"
-                          onClick={() => handleCategoryClick(category)}
-                          style={{ animationDelay: `${index * 0.02}s` }}
-                        >
-                          <span className="option-emoji">📌</span>
-                          {category}
-                        </button>
-                      ))}
-                      {/* Type here button */}
-                      <button
-                        className="typeform-option-btn category-btn type-custom"
-                        onClick={handleTypeCustomProblem}
-                      >
-                        <span className="option-emoji">✏️</span>
-                        Type here (describe your problem)
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : showDashboard ? (
-              /* Dashboard View for Solution Stack */
-              <div className="solution-dashboard">
-                {/* Dashboard Header */}
-                <div className="dashboard-header">
-                  <div className="dashboard-header-top">
-                    <h1 className="dashboard-title">🎯 Your Personalized Solution Stack</h1>
-                    <button 
-                      className={`header-copy-btn ${copiedPrompt ? 'copied' : ''}`}
-                      onClick={handleCopyPrompt}
-                    >
-                      {copiedPrompt ? '✓ Copied!' : '📋 Copy Prompt'}
-                    </button>
-                  </div>
-                  <div className="dashboard-context">
-                    <span className="context-tag goal-tag">
-                      <strong>Goal:</strong> {dashboardData.goalLabel}
-                    </span>
-                    <span className="context-tag role-tag">
-                      <strong>Role:</strong> {dashboardData.roleLabel}
-                    </span>
-                    <span className="context-tag category-tag">
-                      <strong>Focus:</strong> {dashboardData.category}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Scrollable Content */}
-                <div className="dashboard-scroll-content">
-                  {/* Instant Prompt Section - Prominent */}
-                  <div className="dashboard-prompt-section">
-                  <div className="prompt-header">
-                    <span className="prompt-icon">⚡</span>
-                    <h3>Instant Solution - Copy & Paste to ChatGPT/Claude</h3>
-                  </div>
-                  <div className="prompt-box-large">
-                    <pre>{dashboardData.immediatePrompt}</pre>
-                  </div>
-                  <div className="prompt-actions">
-                    <button 
-                      className={`copy-prompt-btn-large ${copiedPrompt ? 'copied' : ''}`}
-                      onClick={handleCopyPrompt}
-                    >
-                      {copiedPrompt ? '✓ Copied to Clipboard!' : '📋 Copy This Prompt'}
-                    </button>
-                    <span className="prompt-tip-inline">💡 Get actionable steps in under 2 minutes!</span>
-                  </div>
-                </div>
-
-                {/* Dashboard Cards Grid */}
-                <div className="dashboard-grid">
-                  {/* AI Tools Card */}
-                  <div className="dashboard-card ai-tools-card">
-                    <div className="card-header">
-                      <span className="card-icon">🚀</span>
-                      <h2>AI Tools & Startups</h2>
-                    </div>
-                    <div className="card-content">
-                      {dashboardData.companies.map((company, i) => (
-                        <div key={i} className="tool-item">
-                          <div className="tool-name">{company.name}</div>
-                          <div className="tool-description">{company.problem || company.description}</div>
-                          {company.differentiator && (
-                            <div className="tool-differentiator">✨ {company.differentiator}</div>
-                          )}
+                        <div 
+                            key={index} 
+                            className="suggestion-card" 
+                            onClick={() => handleCategoryClick(category)}
+                         >
+                           <h3>{category}</h3>
                         </div>
                       ))}
+                       <div 
+                            className="suggestion-card" 
+                            onClick={handleTypeCustomProblem}
+                       >
+                           <h3>✏️ Type my own problem...</h3>
+                       </div>
                     </div>
-                  </div>
-
-                  {/* Chrome Extensions Card */}
-                  <div className="dashboard-card extensions-card">
-                    <div className="card-header">
-                      <span className="card-icon">🔌</span>
-                      <h2>Chrome Extensions</h2>
-                    </div>
-                    <div className="card-content">
-                      {dashboardData.extensions.map((ext, i) => (
-                        <div key={i} className="extension-item">
-                          <div className="extension-name">
-                            {ext.name}
-                            <span className={`extension-badge ${ext.free ? 'free' : 'paid'}`}>
-                              {ext.free ? '🆓 Free' : '💰 Paid'}
-                            </span>
-                          </div>
-                          <div className="extension-description">{ext.description}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Custom GPTs Card */}
-                  <div className="dashboard-card gpts-card">
-                    <div className="card-header">
-                      <span className="card-icon">🤖</span>
-                      <h2>Custom GPTs</h2>
-                    </div>
-                    <div className="card-content">
-                      {dashboardData.customGPTs.map((gpt, i) => (
-                        <div key={i} className="gpt-item">
-                          <div className="gpt-name">
-                            {gpt.name}
-                            <span className="gpt-rating">⭐{gpt.rating}</span>
-                          </div>
-                          <div className="gpt-description">{gpt.description}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div> {/* End dashboard-grid */}
-              </div> {/* End dashboard-scroll-content */}
-
-                {/* Dashboard Actions - Fixed at bottom */}
-                <div className="dashboard-actions">
-                  <button className="dashboard-btn primary" onClick={handleExploreImplementation}>
-                    🔍 Explore Implementation
-                  </button>
-                  <button className="dashboard-btn secondary" onClick={handleStartNewIdea}>
-                    🚀 Check Another Idea
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* Regular Chat View for typing stages */
-              <div className="chat-messages-container" ref={messagesContainerRef}>
+                 </>
+              )}
+            </div>
+        ) : (
+             /* Chat Message List */
+             <div className="messages-wrapper">
                 {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`chat-message ${message.sender === 'user' ? 'user-msg' : 'bot-msg'}`}
-                  >
-                    <div className="chat-message-avatar">
-                      {message.sender === 'user' ? (
-                        <User size={20} />
-                      ) : (
-                        <Bot size={20} />
-                      )}
-                    </div>
-                    <div className="chat-message-content">
-                      <div className="chat-message-text">
+                  <div key={message.id} className={`message ${message.sender === 'user' ? 'user' : 'bot'}`}>
+                     <div className="avatar">
+                        {message.sender === 'user' ? <User size={18} /> : <Bot size={18} />}
+                     </div>
+                     <div className="message-content">
                         {message.sender === 'bot' ? (
                           <ReactMarkdown>{message.text}</ReactMarkdown>
                         ) : (
                           message.text
                         )}
-                      </div>
-                      
-                      {/* Identity Form */}
-                      {message.showIdentityForm && (
-                        <IdentityForm onSubmit={handleIdentitySubmit} />
-                      )}
-                      
-                      {/* Final Actions */}
-                      {message.showFinalActions && (
-                        <div className="chat-action-buttons">
-                          <button className="chat-action-btn primary" onClick={handleStartNewIdea}>
-                            🚀 Check Another Idea
-                          </button>
-                          {message.companies && message.companies.length > 0 && (
-                            <button
-                                className="chat-action-btn secondary"
-                                onClick={() => handleLearnImplementation(message.companies, message.userRequirement)}
-                              >
-                                📚 Learn How to Implement
-                              </button>
-                            )}
-                          </div>
+                        
+                        {/* Identity Form Injection - Keep simplified logic */}
+                        {message.showIdentityForm && (
+                           <div className="identity-form" style={{ marginTop: '1rem', position: 'relative', animation: 'none', boxShadow: 'none', padding: '1.5rem', border: '1px solid #e5e7eb' }}>
+                                <IdentityForm onSubmit={handleIdentitySubmit} />
+                           </div>
                         )}
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Typing Indicator */}
+                        
+                        {/* Actions */}
+                        {message.showFinalActions && (
+                            <div style={{marginTop: '1.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap'}}>
+                                <button 
+                                    onClick={handleStartNewIdea}
+                                    style={{
+                                        padding: '0.6rem 1.2rem', background: '#6d28d9', color:'white', 
+                                        borderRadius: '0.5rem', border:'none', cursor:'pointer', fontWeight: 500,
+                                        display: 'flex', alignItems: 'center', gap: '8px'
+                                    }}
+                                >
+                                    <Sparkles size={16}/> Check Another Idea
+                                </button>
+                                {message.companies && message.companies.length > 0 && (
+                                   <button
+                                     onClick={() => handleLearnImplementation(message.companies, message.userRequirement)}
+                                     style={{
+                                        padding: '0.6rem 1.2rem', background: 'white', color:'#111827', 
+                                        borderRadius: '0.5rem', border:'1px solid #d1d5db', cursor:'pointer', fontWeight: 500
+                                     }}
+                                   >
+                                     📚 Learn Implementation
+                                   </button>
+                                )}
+                            </div>
+                        )}
+                     </div>
+                  </div>
+                ))}
+                
                 {isTyping && (
-                  <div className="chat-message bot-msg">
-                    <div className="chat-message-avatar">
-                      <Bot size={20} />
-                    </div>
-                    <div className="chat-message-content">
-                      <div className="typing-indicator-new">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
+                  <div className="message bot">
+                     <div className="avatar"><Bot size={18}/></div>
+                     <div className="message-content">
+                        <div className="typing-indicator" style={{marginLeft: 0, padding: 0, boxShadow: 'none', background: 'transparent'}}>
+                            <div className="typing-dot"></div>
+                            <div className="typing-dot"></div>
+                            <div className="typing-dot"></div>
+                        </div>
+                     </div>
                   </div>
                 )}
-
+                
                 <div ref={messagesEndRef} />
-              </div>
-            )}
-          </div>
+             </div>
+        )}
+      </div>
 
-          {/* Chat Input - Only show when user needs to type (not during selection or dashboard) */}
-          {!['goal', 'role', 'category', 'custom-role'].includes(flowStage) && !showDashboard && (
-            <div className="chat-input-area">
-              {/* Speech Error Toast */}
-              {speechError && (
-                <div className="speech-error-toast">
-                  {speechError}
-                </div>
-              )}
-              <div className="chat-input-wrapper">
-                <textarea
+      {/* Input Area */}
+      {!['goal', 'role', 'category', 'custom-role'].includes(flowStage) && (
+          <div className="input-area">
+            {speechError && <div style={{position:'absolute', top:'-40px', background:'#fee2e2', color:'#b91c1c', padding:'0.5rem 1rem', borderRadius:'8px', fontSize:'0.9rem'}}>{speechError}</div>}
+            <div className="input-container">
+               <textarea 
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={isRecording ? "Listening..." : "Type your message here..."}
-                  className="chat-text-input"
-                  rows="1"
-                />
-                <button
-                  onClick={voiceSupported ? toggleVoiceRecording : handleSend}
-                  className={`chat-mic-btn ${isRecording ? 'recording' : ''}`}
-                  aria-label={isRecording ? "Stop recording" : "Start voice input"}
-                  title={isRecording ? "Stop recording" : "Click to speak"}
-                >
-                  {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
-                </button>
-              </div>
+                  placeholder={isRecording ? "Listening..." : "Message Ikshan..."}
+                  rows={1}
+               />
+               <button onClick={voiceSupported ? toggleVoiceRecording : handleSend} title={isRecording ? "Stop" : "Send"}>
+                  {isRecording ? <MicOff size={20} /> : (inputValue.trim() ? <Send size={20}/> : <Mic size={20}/>)}
+               </button>
             </div>
-          )}
-        </main>
-      </div>
+          </div>
+      )}
 
-      {/* Google Auth Modal */}
+       {showChatHistory && (
+          <div className="identity-overlay" onClick={() => setShowChatHistory(false)}>
+             <div className="identity-form" onClick={(e) => e.stopPropagation()}>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem'}}>
+                    <h2>Chat History</h2>
+                    <button onClick={() => setShowChatHistory(false)} style={{background:'transparent', color:'#6b7280', width:'auto', padding:0}}><X size={24}/></button>
+                </div>
+                 <div className="chat-history-list" style={{maxHeight:'300px', overflowY:'auto', textAlign:'left'}}>
+                    {chatHistory.length === 0 ? <p style={{color:'#6b7280'}}>No history yet</p> : 
+                        chatHistory.map((chat) => (
+                           <div 
+                             key={chat.id} 
+                             onClick={() => handleLoadChat(chat)}
+                             style={{padding:'1rem', borderBottom:'1px solid #f3f4f6', cursor:'pointer'}}
+                           >
+                             <div style={{fontWeight:500, marginBottom:'0.25rem'}}>{chat.title}</div>
+                             <div style={{fontSize:'0.8rem', color:'#6b7280'}}>{formatHistoryTime(chat.timestamp)}</div>
+                           </div>
+                        ))
+                    }
+                </div>
+             </div>
+          </div>
+       )}
+       
+      {/* Auth Modal Reused if exists */}
       {showAuthModal && (
-        <div className="chat-auth-modal-overlay" onClick={() => setShowAuthModal(false)}>
-          <div className="chat-auth-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="chat-auth-modal-close" onClick={() => setShowAuthModal(false)}>
-              ✕
-            </button>
-            <div className="chat-auth-modal-content">
-              <h2>Start Fresh</h2>
-              <p>Sign in to save your progress and preferences</p>
-
-              <button className="chat-google-signin-btn" onClick={handleGoogleSignIn}>
-                <svg viewBox="0 0 24 24" width="20" height="20">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Continue with Google
-              </button>
-
-              <div className="chat-auth-divider">
-                <span>or</span>
-              </div>
-
-              <button className="chat-skip-auth-btn" onClick={() => window.location.reload()}>
+        <div className="identity-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="identity-form" onClick={(e) => e.stopPropagation()}>
+             <h2>Start Fresh</h2>
+             <p style={{marginBottom:'2rem', color:'#6b7280'}}>Sign in to save your progress</p>
+             <button onClick={handleGoogleSignIn} style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'10px', background:'white', border:'1px solid #d1d5db', color:'#374151'}}>
+                <span style={{fontWeight:600}}>Continue with Google</span>
+             </button>
+             <button 
+                onClick={() => window.location.reload()}
+                style={{marginTop:'1rem', background:'transparent', color:'#6b7280', fontWeight:400}}
+             >
                 Continue without signing in
-              </button>
-            </div>
+             </button>
           </div>
         </div>
       )}
