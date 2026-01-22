@@ -2928,22 +2928,6 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                            <h3>{role.text}</h3>
                         </div>
                       ))}
-                      {/* Inline chat input for Other option */}
-                      <div className="suggestion-card other-input-card">
-                        <input
-                          type="text"
-                          placeholder="Other? Type here..."
-                          value={customRole}
-                          onChange={(e) => setCustomRole(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter' && customRole.trim()) {
-                              handleCustomRoleSubmit(customRole.trim());
-                            }
-                          }}
-                          className="inline-role-input"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </div>
                     </div>
                     <button 
                         style={{marginTop: '2rem', background: 'transparent', border:'none', color:'#6b7280', cursor:'pointer'}}
@@ -3194,19 +3178,37 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
       </div>
 
       {/* Input Area */}
-      {!['goal', 'role', 'category', 'rca'].includes(flowStage) && (
+      {!['goal', 'category', 'rca'].includes(flowStage) && (
           <div className="input-area">
             {speechError && <div style={{position:'absolute', top:'-40px', background:'#fee2e2', color:'#b91c1c', padding:'0.5rem 1rem', borderRadius:'8px', fontSize:'0.9rem'}}>{speechError}</div>}
             <div className="input-container">
                <textarea 
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder={isRecording ? "Listening..." : "Message Ikshan..."}
+                  value={flowStage === 'role' ? customRole : inputValue}
+                  onChange={(e) => flowStage === 'role' ? setCustomRole(e.target.value) : setInputValue(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (flowStage === 'role' && customRole.trim()) {
+                        handleCustomRoleSubmit(customRole.trim());
+                      } else {
+                        handleSend();
+                      }
+                    }
+                  }}
+                  placeholder={flowStage === 'role' ? "Other? Type your role here..." : (isRecording ? "Listening..." : "Message Ikshan...")}
                   rows={1}
                />
-               <button onClick={voiceSupported ? toggleVoiceRecording : handleSend} title={isRecording ? "Stop" : "Send"}>
-                  {isRecording ? <MicOff size={20} /> : (inputValue.trim() ? <Send size={20}/> : <Mic size={20}/>)}
+               <button 
+                  onClick={() => {
+                    if (flowStage === 'role' && customRole.trim()) {
+                      handleCustomRoleSubmit(customRole.trim());
+                    } else if (flowStage !== 'role') {
+                      voiceSupported ? toggleVoiceRecording() : handleSend();
+                    }
+                  }} 
+                  title={flowStage === 'role' ? "Submit" : (isRecording ? "Stop" : "Send")}
+               >
+                  {flowStage === 'role' ? <Send size={20}/> : (isRecording ? <MicOff size={20} /> : (inputValue.trim() ? <Send size={20}/> : <Mic size={20}/>))}
                </button>
             </div>
           </div>
