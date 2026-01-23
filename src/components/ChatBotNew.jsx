@@ -1642,6 +1642,7 @@ const ChatBotNew = () => {
   // Handle custom role submission
   const handleCustomRoleSubmit = (customRoleText) => {
     setCustomRole(customRoleText);
+    setUserRole('other-role'); // Set userRole so getCategoriesForSelection() works
 
     const userMessage = {
       id: getNextMessageId(),
