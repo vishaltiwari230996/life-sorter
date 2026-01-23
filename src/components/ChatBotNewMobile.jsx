@@ -1051,26 +1051,23 @@ const ChatBotNewMobile = () => {
     showSolutionStack(category);
   };
 
-  // Handle "Type here" button click - skip category selection
-  const handleTypeCustomProblem = () => {
+  // Handle custom problem submission from inline input
+  const handleCustomProblemSubmit = (problemText) => {
+    setCustomCategoryInput('');
+    setSelectedCategory(problemText);
+
     const userMessage = {
       id: getNextMessageId(),
-      text: `I'll describe my problem`,
+      text: problemText,
       sender: 'user',
       timestamp: new Date()
     };
 
-    // For custom problems, still ask for details
-    setFlowStage('requirement');
-    const botMessage = {
-      id: getNextMessageId(),
-      text: `No problem!\n\n**Please describe what you're trying to achieve or the problem you want to solve:**\n\n_(Tell me in 2-3 lines so I can find the best solutions for you)_`,
-      sender: 'bot',
-      timestamp: new Date()
-    };
+    setMessages(prev => [...prev, userMessage]);
+    saveToSheet(`Custom Problem: ${problemText}`, '', '', '');
 
-    setMessages(prev => [...prev, userMessage, botMessage]);
-    saveToSheet(`User chose to type custom problem`, '', '', '');
+    // Directly show solution with the custom problem as category
+    showSolutionStack(problemText);
   };
 
   // Show solution stack directly after category selection - CHAT VERSION (Stage 1 Format)
@@ -2076,20 +2073,14 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                     <h1>In which category does your problem fall?</h1>
                     <div className="suggestions-grid">
                       {getCategoriesForSelection().map((category, index) => (
-                        <div 
-                            key={index} 
-                            className="suggestion-card" 
+                        <div
+                            key={index}
+                            className="suggestion-card"
                             onClick={() => handleCategoryClick(category)}
                          >
                            <h3>{category}</h3>
                         </div>
                       ))}
-                       <div 
-                            className="suggestion-card" 
-                            onClick={handleTypeCustomProblem}
-                       >
-                           <h3>Type my own problem...</h3>
-                       </div>
                     </div>
                  </>
               )}
@@ -2158,37 +2149,41 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
       </div>
 
       {/* Input Area */}
-      {!['goal', 'category'].includes(flowStage) && (
+      {!['goal'].includes(flowStage) && (
           <div className="input-area">
             {speechError && <div style={{position:'absolute', top:'-40px', background:'#fee2e2', color:'#b91c1c', padding:'0.5rem 1rem', borderRadius:'8px', fontSize:'0.9rem'}}>{speechError}</div>}
             <div className="input-container">
-               <textarea 
-                  value={flowStage === 'role' ? customRole : inputValue}
-                  onChange={(e) => flowStage === 'role' ? setCustomRole(e.target.value) : setInputValue(e.target.value)}
+               <textarea
+                  value={flowStage === 'role' ? customRole : (flowStage === 'category' ? customCategoryInput : inputValue)}
+                  onChange={(e) => flowStage === 'role' ? setCustomRole(e.target.value) : (flowStage === 'category' ? setCustomCategoryInput(e.target.value) : setInputValue(e.target.value))}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       if (flowStage === 'role' && customRole.trim()) {
                         handleCustomRoleSubmit(customRole.trim());
+                      } else if (flowStage === 'category' && customCategoryInput.trim()) {
+                        handleCustomProblemSubmit(customCategoryInput.trim());
                       } else {
                         handleSend();
                       }
                     }
                   }}
-                  placeholder={flowStage === 'role' ? "Other? Type your role here..." : (isRecording ? "Listening..." : "Message Ikshan...")}
+                  placeholder={flowStage === 'role' ? "Other? Type your role here..." : (flowStage === 'category' ? "Type my own problem..." : (isRecording ? "Listening..." : "Message Ikshan..."))}
                   rows={1}
                />
-               <button 
+               <button
                   onClick={() => {
                     if (flowStage === 'role' && customRole.trim()) {
                       handleCustomRoleSubmit(customRole.trim());
-                    } else if (flowStage !== 'role') {
+                    } else if (flowStage === 'category' && customCategoryInput.trim()) {
+                      handleCustomProblemSubmit(customCategoryInput.trim());
+                    } else if (flowStage !== 'role' && flowStage !== 'category') {
                       voiceSupported ? toggleVoiceRecording() : handleSend();
                     }
-                  }} 
-                  title={flowStage === 'role' ? "Submit" : (isRecording ? "Stop" : "Send")}
+                  }}
+                  title={flowStage === 'role' || flowStage === 'category' ? "Submit" : (isRecording ? "Stop" : "Send")}
                >
-                  {flowStage === 'role' ? <Send size={20}/> : (isRecording ? <MicOff size={20} /> : (inputValue.trim() ? <Send size={20}/> : <Mic size={20}/>))}
+                  {flowStage === 'role' || flowStage === 'category' ? <Send size={20}/> : (isRecording ? <MicOff size={20} /> : (inputValue.trim() ? <Send size={20}/> : <Mic size={20}/>))}
                </button>
             </div>
           </div>
