@@ -263,7 +263,7 @@
 /* Input Area - Mobile Optimized */
 .input-area {
   padding: 0.5rem;
-  padding-bottom: 50px;
+  padding-bottom: 70px;
   background: var(--ikshan-surface);
   border-top: 1px solid var(--ikshan-border);
   display: flex;
@@ -408,10 +408,10 @@
 .suggestions-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 1rem 1.5rem;
   max-width: 600px;
   width: 100%;
-  padding: 0 1rem;
+  padding: 0 1.25rem;
 }
 
 .suggestion-card {

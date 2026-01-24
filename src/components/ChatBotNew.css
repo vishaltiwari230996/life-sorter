@@ -258,7 +258,7 @@
 /* Input Area - Floating & Elevated */
 .input-area {
   padding: 1.5rem;
-  padding-bottom: 50px;
+  padding-bottom: 80px;
   background: linear-gradient(to top, var(--ikshan-bg) 80%, transparent);
   display: flex;
   justify-content: center;
@@ -403,10 +403,10 @@
 .suggestions-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  max-width: 500px;
+  gap: 1.25rem 2rem;
+  max-width: 620px;
   width: 100%;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
 }
 
 .suggestion-card {
