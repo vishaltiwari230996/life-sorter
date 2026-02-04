@@ -1193,12 +1193,12 @@ const ChatBotNew = () => {
   
   // Products data for sidebar
   const productsData = [
-    { id: 1, name: 'Ecom Optimizer', icon: BarChart3, status: 'active' },
-    { id: 2, name: 'Legal Docs', icon: FileText, status: 'active' },
-    { id: 3, name: 'Sales Bot', icon: MessageSquare, status: 'active' },
-    { id: 4, name: 'AnyOCR', icon: ScanLine, status: 'active' },
-    { id: 5, name: 'Tube Helper', icon: Video, status: 'coming-soon' },
-    { id: 6, name: 'Scheduler', icon: Calendar, status: 'coming-soon' }
+    { id: 1, name: 'Ecom Listing SEO', subtitle: 'Improve 30-40% Revenue', icon: BarChart3, status: 'active' },
+    { id: 2, name: 'Learn from Competitors', subtitle: 'Best Growth Hacks', icon: TrendingUp, status: 'active' },
+    { id: 3, name: 'B2B Lead Gen', subtitle: 'Reddit and LinkedIn Hot Leads', icon: MessageSquare, status: 'active' },
+    { id: 4, name: 'Youtube Helper', subtitle: 'Script + Thumbnail + Keyword Analysis', icon: Video, status: 'active' },
+    { id: 5, name: 'AI Team Professionals', subtitle: 'Marketing / Ops / HR etc', icon: Users, status: 'active' },
+    { id: 6, name: 'Content Creator', subtitle: 'SEO / Insta / Blogs / LinkedIn', icon: FileText, status: 'active' }
   ];
   
   // Dashboard view state
@@ -2883,7 +2883,10 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
               return (
                 <div key={product.id} className={`product-card ${product.status}`}>
                   <IconComponent size={18} className="product-icon-simple" />
-                  <span className="product-name">{product.name}</span>
+                  <div className="product-text">
+                    <span className="product-name">{product.name}</span>
+                    <span className="product-subtitle">{product.subtitle}</span>
+                  </div>
                   {product.status === 'coming-soon' && (
                     <span className="coming-soon-badge">Soon</span>
                   )}

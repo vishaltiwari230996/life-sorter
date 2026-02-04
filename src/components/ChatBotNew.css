@@ -966,11 +966,25 @@
   color: var(--ikshan-purple);
 }
 
+.product-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
 .product-name {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--ikshan-text-primary);
-  flex: 1;
+}
+
+.product-subtitle {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--ikshan-text-secondary);
+  opacity: 0.8;
 }
 
 .coming-soon-badge {

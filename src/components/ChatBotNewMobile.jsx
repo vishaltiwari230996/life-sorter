@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu, Edit3, Chrome, Zap, Brain, Copy } from 'lucide-react';
+import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu, Edit3, Chrome, Zap, Brain, Copy, TrendingUp, FileText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import './ChatBotNewMobile.css';
 import { formatCompaniesForDisplay, analyzeMarketGaps } from '../utils/csvParser';
@@ -2005,11 +2005,12 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
 
         <div className="header-products">
             <div className="products-scroll">
-                 <div className="product-chip"><ShoppingCart size={14}/> <span>Ecom Optimizer</span></div>
-                 <div className="product-chip"><Scale size={14}/> <span>Legal Docs</span></div>
-                 <div className="product-chip"><Users size={14}/> <span>Sales Bot</span></div>
-                 <div className="product-chip"><Sparkles size={14}/> <span>AnyOCR</span></div>
-                 <div className="product-chip"><Youtube size={14}/> <span>Tube Helper</span></div>
+                 <div className="product-chip"><ShoppingCart size={14}/> <span>Ecom Listing SEO</span></div>
+                 <div className="product-chip"><TrendingUp size={14}/> <span>Learn from Competitors</span></div>
+                 <div className="product-chip"><Users size={14}/> <span>B2B Lead Gen</span></div>
+                 <div className="product-chip"><Youtube size={14}/> <span>Youtube Helper</span></div>
+                 <div className="product-chip"><Sparkles size={14}/> <span>AI Team</span></div>
+                 <div className="product-chip"><FileText size={14}/> <span>Content Creator</span></div>
             </div>
         </div>
         
