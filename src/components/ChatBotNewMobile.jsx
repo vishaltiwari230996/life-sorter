@@ -1999,7 +1999,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
       {/* Header */}
       <header className="chatbot-header">
         <div className="logo-container">
-            <img src="/logo iskan 5.svg" alt="Ikshan" className="logo-img" />
+            <img src="/android-chrome-192x192.png" alt="Ikshan" className="logo-img" />
             <h2>Ikshan</h2>
         </div>
 
