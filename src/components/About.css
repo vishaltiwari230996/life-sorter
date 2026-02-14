@@ -241,14 +241,20 @@
   margin-bottom: 0.625rem;
 }
 
-.about-how-card h3 {
+.about-how-text {
+  min-width: 0;
+}
+
+.about-how-card h3,
+.about-how-text h3 {
   font-size: 0.825rem;
   font-weight: 600;
   color: var(--ikshan-text-primary);
   margin-bottom: 0.25rem;
 }
 
-.about-how-card p {
+.about-how-card p,
+.about-how-text p {
   font-size: 0.75rem;
   line-height: 1.55;
   color: var(--ikshan-text-secondary);
@@ -437,35 +443,254 @@
 }
 
 /* ========================================
-   RESPONSIVE
+   RESPONSIVE — Tablet (769px–1024px)
    ======================================== */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .about-hero {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    padding: 1.5rem 1rem;
+    gap: 1.5rem;
+    padding: 1.5rem 1.25rem;
   }
 
   .about-hero-title {
-    font-size: 1.35rem;
+    font-size: 1.5rem;
   }
 
   .about-section {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1.25rem;
   }
 
+  .about-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .about-pillars {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .about-products {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .about-divider {
+    margin: 0 1.25rem;
+  }
+}
+
+/* ========================================
+   RESPONSIVE — Mobile (≤768px)
+   ======================================== */
+@media (max-width: 768px) {
+  .about-header-bar {
+    padding: 0.625rem 1rem;
+  }
+
+  .about-hero {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1.25rem 1rem;
+  }
+
+  .about-hero-left {
+    position: static;
+  }
+
+  .about-hero-title {
+    font-size: 1.3rem;
+  }
+
+  .about-hero-desc {
+    font-size: 0.825rem;
+    line-height: 1.6;
+  }
+
+  .about-section {
+    padding: 1.25rem 1rem;
+  }
+
+  .about-section-title {
+    font-size: 1.05rem;
+  }
+
+  .about-section-desc {
+    max-width: none;
+    font-size: 0.825rem;
+  }
+
+  .about-section-subtitle {
+    font-size: 0.775rem;
+  }
+
+  .about-divider {
+    margin: 0 1rem;
+  }
+
+  /* Problem cards: 2 columns on mobile */
+  .about-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .about-card {
+    padding: 0.875rem;
+  }
+
+  .about-card h3 {
+    font-size: 0.775rem;
+  }
+
+  .about-card p {
+    font-size: 0.75rem;
+  }
+
+  /* How it works: stack on mobile */
+  .about-how-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .about-how-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto;
+    gap: 0 0.75rem;
+    padding: 0.875rem;
+  }
+
+  .about-how-card .about-how-icon {
+    grid-row: 1 / 2;
+    grid-column: 1 / 2;
+    flex-shrink: 0;
+    margin-bottom: 0;
+    align-self: start;
+  }
+
+  .about-how-card .about-how-text {
+    grid-row: 1 / 2;
+    grid-column: 2 / 3;
+  }
+
+  .about-how-card h3,
+  .about-how-text h3 {
+    font-size: 0.8rem;
+  }
+
+  .about-how-card p,
+  .about-how-text p {
+    font-size: 0.75rem;
+  }
+
+  .about-how-num {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+
+  /* Pillars: 2 columns on mobile */
+  .about-pillars {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .about-pillar {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .about-pillar h3 {
+    font-size: 0.75rem;
+  }
+
+  .about-pillar p {
+    font-size: 0.7rem;
+  }
+
+  /* Products: 2 columns on mobile */
+  .about-products {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .about-product-card {
+    padding: 0.875rem;
+  }
+
+  .about-product-card h3 {
+    font-size: 0.775rem;
+  }
+
+  .about-product-card p {
+    font-size: 0.725rem;
+  }
+
+  /* Callout */
+  .about-callout {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .about-callout p {
+    font-size: 0.75rem;
+  }
+
+  /* Founder: row layout, left-aligned */
+  .about-founder-card {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .about-founder-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 0.8rem;
+  }
+
+  .about-founder-bio {
+    font-size: 0.75rem;
+  }
+
+  .about-founder {
+    padding-bottom: 2rem;
+  }
+}
+
+/* ========================================
+   RESPONSIVE — Small phones (≤480px)
+   ======================================== */
+@media (max-width: 480px) {
+  .about-hero {
+    padding: 1rem 0.875rem;
+  }
+
+  .about-hero-title {
+    font-size: 1.15rem;
+  }
+
+  .about-hero-desc {
+    font-size: 0.8rem;
+  }
+
+  .about-section {
+    padding: 1rem 0.875rem;
+  }
+
+  .about-section-title {
+    font-size: 0.95rem;
+  }
+
+  .about-divider {
+    margin: 0 0.875rem;
+  }
+
+  /* Problem cards: single column on tiny screens */
   .about-grid {
     grid-template-columns: 1fr;
   }
 
-  .about-how-grid {
-    grid-template-columns: 1fr;
-  }
-
+  /* Pillars: single column on tiny screens */
   .about-pillars {
     grid-template-columns: 1fr;
   }
 
+  /* Products: single column on tiny screens */
   .about-products {
     grid-template-columns: 1fr;
   }
@@ -474,19 +699,5 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .about-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .about-pillars {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .about-products {
-    grid-template-columns: repeat(2, 1fr);
   }
 }

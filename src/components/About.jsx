@@ -101,8 +101,10 @@ const About = ({ onBack }) => {
                   <div className="about-how-icon">
                     <Icon size={22} />
                   </div>
-                  <h3>{item.title}</h3>
-                  <p>{item.desc}</p>
+                  <div className="about-how-text">
+                    <h3>{item.title}</h3>
+                    <p>{item.desc}</p>
+                  </div>
                 </div>
               );
             })}
