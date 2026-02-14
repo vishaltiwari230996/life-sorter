@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu, Edit3, Chrome, Zap, Brain, Copy, TrendingUp, FileText } from 'lucide-react';
+import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu, Edit3, Chrome, Zap, Brain, Copy, TrendingUp, FileText, Info } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import './ChatBotNewMobile.css';
 import { formatCompaniesForDisplay, analyzeMarketGaps } from '../utils/csvParser';
+import About from './About';
 
 // Generate unique message IDs to prevent React key conflicts
 const generateUniqueId = () => `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -580,6 +581,8 @@ const ChatBotNewMobile = () => {
   const [speechError, setSpeechError] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
+  const [showAbout, setShowAbout] = useState(false);
+
   // Dashboard view state
   const [showDashboard, setShowDashboard] = useState(false);
   const [dashboardData, setDashboardData] = useState({
@@ -2015,12 +2018,21 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
         </div>
         
         <div className="header-actions">
+           <button onClick={() => setShowAbout(!showAbout)} title="About Us" className={showAbout ? 'active' : ''}><Info size={20}/></button>
            <button onClick={() => setShowChatHistory(true)} title="History"><History size={20}/></button>
            <button onClick={handleStartNewIdea} title="New Chat"><Plus size={20}/></button>
         </div>
       </header>
       
+      {/* About View */}
+      {showAbout && (
+        <div className="chat-window">
+          <About onBack={() => setShowAbout(false)} />
+        </div>
+      )}
+
       {/* Main Content */}
+      {!showAbout && (
       <div className="chat-window">
         {/* Typeform / Flow Stages */}
         {['goal', 'role', 'category'].includes(flowStage) ? (
@@ -2194,6 +2206,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                </button>
             </div>
           </div>
+      )}
       )}
 
        {showChatHistory && (

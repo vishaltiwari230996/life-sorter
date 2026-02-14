@@ -94,6 +94,11 @@
   color: var(--ikshan-purple);
 }
 
+.header-left button.active {
+  background-color: rgba(109, 40, 217, 0.1);
+  color: var(--ikshan-purple);
+}
+
 /* Header right section with logo */
 .header-right {
   display: flex;

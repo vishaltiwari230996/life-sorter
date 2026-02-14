@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu, Edit3, Chrome, Zap, Brain, Copy, PanelLeftClose, PanelLeftOpen, ExternalLink, Star, Settings, FileText, BarChart3, ScanLine, Video, Calendar, Sun, Moon, Type, Globe, TrendingUp } from 'lucide-react';
+import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu, Edit3, Chrome, Zap, Brain, Copy, PanelLeftClose, PanelLeftOpen, ExternalLink, Star, Settings, FileText, BarChart3, ScanLine, Video, Calendar, Sun, Moon, Type, Globe, TrendingUp, Info } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import './ChatBotNew.css';
 import { formatCompaniesForDisplay, analyzeMarketGaps } from '../utils/csvParser';
 import MarketIntelligencePanel from './MarketIntelligencePanel';
 import MarketIntelligenceView from './MarketIntelligenceView';
+import About from './About';
 
 // Generate unique message IDs to prevent React key conflicts
 const generateUniqueId = () => `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -1153,7 +1154,7 @@ const ChatBotNew = () => {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarTab, setSidebarTab] = useState('products'); // 'products' | 'market-intel'
-  const [activeMainView, setActiveMainView] = useState('chat'); // 'chat' | 'market-intel'
+  const [activeMainView, setActiveMainView] = useState('chat'); // 'chat' | 'market-intel' | 'about'
   
   // User preferences state
   const [userPreferences, setUserPreferences] = useState(() => {
@@ -2845,8 +2846,9 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
           </button>
           <button onClick={handleStartNewIdea} title="New Chat"><Plus size={20}/></button>
           <button onClick={() => setShowChatHistory(true)} title="History"><History size={20}/></button>
+          <button onClick={() => setActiveMainView(activeMainView === 'about' ? 'chat' : 'about')} title="About Us" className={activeMainView === 'about' ? 'active' : ''}><Info size={20}/></button>
         </div>
-        
+
         <div className="header-right">
           <div className="logo-container">
               <img src="/android-chrome-192x192.png" alt="Ikshan" className="logo-img" />
@@ -2913,7 +2915,14 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
           <MarketIntelligenceView />
         </div>
       )}
-      
+
+      {/* Main Content - About View */}
+      {activeMainView === 'about' && (
+        <div className="chat-window">
+          <About onBack={() => setActiveMainView('chat')} />
+        </div>
+      )}
+
       {/* Main Content - Chat View */}
       {activeMainView === 'chat' && (
       <div className="chat-window">
