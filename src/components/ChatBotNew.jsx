@@ -1971,8 +1971,9 @@ const ChatBotNew = () => {
 
         matchedTools.slice(0, 5).forEach((tool, i) => {
           const appName = tool.appName || tool.subdomain || tool.primaryDomain;
+          const showSubdomain = tool.subdomain && tool.subdomain !== appName;
           solutionResponse += `**${i + 1}. ${appName}**\n`;
-          solutionResponse += `> **Platform:** ${tool.primaryDomain} — ${tool.subdomain}\n`;
+          solutionResponse += `> **Category:** ${tool.primaryDomain}${showSubdomain ? ` — ${tool.subdomain}` : ''}\n`;
           if (tool.topTasks && tool.topTasks.length > 0) {
             solutionResponse += `> **What it does:** ${tool.topTasks[0]}\n`;
             if (tool.topTasks.length > 1) {

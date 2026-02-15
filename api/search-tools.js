@@ -62,12 +62,23 @@ const APP_NAME_OVERRIDES = {
 };
 
 // Extract clean app name from tool_id
-function extractAppName(toolId) {
+// For gpt:: IDs (hashes like gpt::2fc4eecb351a), returns null so we use subdomain instead
+function extractAppName(toolId, subdomain) {
   // Check overrides first
   if (APP_NAME_OVERRIDES[toolId]) return APP_NAME_OVERRIDES[toolId];
 
+  // gpt:: IDs are hashes with no meaningful name — use subdomain as the display name
+  if (toolId.startsWith('gpt::')) {
+    return subdomain || 'AI Tool';
+  }
+
   // Strip "play::com." prefix
   let name = toolId.replace(/^play::com\./, '');
+
+  // If still has :: prefix (unknown format), use subdomain
+  if (name.includes('::')) {
+    return subdomain || name;
+  }
 
   // Take the meaningful parts (skip generic android/app suffixes)
   const skipParts = new Set(['android', 'app', 'mobile', 'id', 'full', 'lite', 'free', 'pro', 'sdk', 'touch']);
@@ -76,7 +87,7 @@ function extractAppName(toolId) {
   // Capitalize each part
   const capitalized = parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
 
-  return capitalized || toolId;
+  return capitalized || subdomain || toolId;
 }
 
 // Cache parsed CSV data
@@ -118,9 +129,10 @@ function loadToolsData() {
     }
 
     const rawId = (row['tool_id'] || '').trim();
+    const subdomainVal = (row['subdomain'] || '').trim();
     // Extract clean app name from tool_id like "play::com.ubercab" -> "Ubercab"
-    // or "play::com.microsoft.office.word" -> "Microsoft Office Word"
-    const appName = extractAppName(rawId);
+    // For gpt:: hashes, uses subdomain as the display name
+    const appName = extractAppName(rawId, subdomainVal);
 
     return {
       toolId: rawId,
