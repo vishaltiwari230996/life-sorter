@@ -657,6 +657,13 @@ const ChatBotNewMobile = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [customCategoryInput, setCustomCategoryInput] = useState('');
 
+  // Q4-Q5 taxonomy state
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+  const [subcategories, setSubcategories] = useState([]);
+  const [taxonomyTasks, setTaxonomyTasks] = useState([]);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [taxonomyLoading, setTaxonomyLoading] = useState(false);
+
   // Get categories based on selected goal and role
   const getCategoriesForSelection = useCallback(() => {
     if (!selectedGoal || !userRole) return [];
@@ -922,6 +929,11 @@ const ChatBotNewMobile = () => {
     setCustomRole('');
     setSelectedCategory(null);
     setCustomCategoryInput('');
+    setSelectedSubcategory(null);
+    setSubcategories([]);
+    setTaxonomyTasks([]);
+    setSelectedTask(null);
+    setTaxonomyLoading(false);
     setBusinessContext({
       businessType: null,
       industry: null,
@@ -1036,8 +1048,8 @@ const ChatBotNewMobile = () => {
     saveToSheet(`Custom Role: ${customRoleText}`, '', '', '');
   };
 
-  // Handle category selection (Question 3) - Go directly to solution
-  const handleCategoryClick = (category) => {
+  // Handle category selection (Question 3) - Now goes to Q4 subcategory
+  const handleCategoryClick = async (category) => {
     setSelectedCategory(category);
 
     const userMessage = {
@@ -1049,9 +1061,103 @@ const ChatBotNewMobile = () => {
 
     setMessages(prev => [...prev, userMessage]);
     saveToSheet(`Selected Category: ${category}`, '', '', '');
-    
-    // Directly show solution
-    showSolutionStack(category);
+
+    // Fetch subcategories from taxonomy CSV
+    setTaxonomyLoading(true);
+    setFlowStage('subcategory');
+
+    try {
+      const goalToBucket = {
+        'grow-revenue': ['Lead Generation', 'Sales & Retention'],
+        'save-time': ['Save Time'],
+        'better-decisions': ['Business Strategy'],
+        'personal-growth': ['Business Strategy']
+      };
+
+      const bucketTerms = goalToBucket[selectedGoal] || ['Lead Generation'];
+      let allSubcategories = [];
+
+      for (const term of bucketTerms) {
+        const response = await fetch(`/api/categories?growthBucket=${encodeURIComponent(term)}`);
+        const data = await response.json();
+        if (data.success && data.subCategories) {
+          allSubcategories = [...allSubcategories, ...data.subCategories];
+        }
+      }
+
+      allSubcategories = [...new Set(allSubcategories)];
+      setSubcategories(allSubcategories);
+    } catch (e) {
+      console.error('Failed to fetch subcategories:', e);
+      showSolutionStack(category);
+      return;
+    }
+
+    setTaxonomyLoading(false);
+  };
+
+  // Handle subcategory selection (Question 4) - Fetch tasks
+  const handleSubcategoryClick = async (subcategory) => {
+    setSelectedSubcategory(subcategory);
+
+    const userMessage = {
+      id: getNextMessageId(),
+      text: `${subcategory}`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    saveToSheet(`Selected Subcategory: ${subcategory}`, '', '', '');
+
+    setTaxonomyLoading(true);
+    setFlowStage('task');
+
+    try {
+      const goalToBucket = {
+        'grow-revenue': ['Lead Generation', 'Sales & Retention'],
+        'save-time': ['Save Time'],
+        'better-decisions': ['Business Strategy'],
+        'personal-growth': ['Business Strategy']
+      };
+
+      const bucketTerms = goalToBucket[selectedGoal] || ['Lead Generation'];
+      let allTasks = [];
+
+      for (const term of bucketTerms) {
+        const response = await fetch(`/api/categories?growthBucket=${encodeURIComponent(term)}&subCategory=${encodeURIComponent(subcategory)}`);
+        const data = await response.json();
+        if (data.success && data.tasks) {
+          allTasks = [...allTasks, ...data.tasks];
+        }
+      }
+
+      allTasks = [...new Set(allTasks)];
+      setTaxonomyTasks(allTasks);
+    } catch (e) {
+      console.error('Failed to fetch tasks:', e);
+      showSolutionStack(selectedCategory);
+      return;
+    }
+
+    setTaxonomyLoading(false);
+  };
+
+  // Handle task selection (Question 5) - Final step, show solutions
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
+
+    const userMessage = {
+      id: getNextMessageId(),
+      text: `${task}`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    saveToSheet(`Selected Task: ${task}`, '', '', '');
+
+    showSolutionStack(selectedCategory, selectedSubcategory, task);
   };
 
   // Handle "Type here" button click - skip category selection
@@ -1077,7 +1183,7 @@ const ChatBotNewMobile = () => {
   };
 
   // Show solution stack directly after category selection - CHAT VERSION (Stage 1 Format)
-  const showSolutionStack = async (category) => {
+  const showSolutionStack = async (category, subcategory = null, task = null) => {
     setFlowStage('complete');
     setIsTyping(true);
 
@@ -1117,7 +1223,32 @@ const ChatBotNewMobile = () => {
           { name: 'Make (Integromat)', problem: 'Visual automation builder', differentiator: 'Complex workflow scenarios' }
         ];
       }
-      
+
+      // Search unified tools list using AI (Q4-Q5 enhanced matching)
+      let matchedTools = [];
+      if (subcategory || task) {
+        try {
+          const toolSearchResponse = await fetch('/api/search-tools', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              goal: selectedGoal,
+              role: userRole,
+              category: category,
+              subCategory: subcategory,
+              task: task,
+              userContext: { goal: selectedGoal, role: userRole, category, subcategory, task }
+            })
+          });
+          const toolData = await toolSearchResponse.json();
+          if (toolData.success && toolData.tools) {
+            matchedTools = toolData.tools.slice(0, 5);
+          }
+        } catch (e) {
+          console.log('Tool search failed, continuing with other recommendations');
+        }
+      }
+
       // Get relevant Chrome extensions and GPTs
       let extensions = getRelevantExtensions(category, selectedGoal);
       let customGPTs = getRelevantGPTs(category, selectedGoal, userRole);
@@ -1193,7 +1324,26 @@ const ChatBotNewMobile = () => {
 
       solutionResponse += `---\n\n`;
 
-      // Section 4: How to Use This Framework
+      // Section 4: AI-Matched Tools from 4,000+ apps (if available)
+      if (matchedTools.length > 0) {
+        solutionResponse += `## Best Matching Apps & Tools (AI-Powered Match)\n\n`;
+        solutionResponse += `Based on your specific need${task ? ` — "${task}"` : ''}, here are the top matches from our database of 4,000+ tools:\n\n`;
+
+        matchedTools.slice(0, 5).forEach((tool, i) => {
+          const displayName = tool.subdomain || tool.primaryDomain;
+          solutionResponse += `**${i + 1}. ${displayName}** (${tool.primaryDomain})\n`;
+          solutionResponse += `> **Match Score:** ${tool.matchScore}/10\n`;
+          if (tool.matchReason) solutionResponse += `> **Why:** ${tool.matchReason}\n`;
+          if (tool.topTasks && tool.topTasks.length > 0) {
+            solutionResponse += `> **Key capabilities:** ${tool.topTasks.slice(0, 3).join(' • ')}\n`;
+          }
+          solutionResponse += `\n`;
+        });
+
+        solutionResponse += `---\n\n`;
+      }
+
+      // Section 5: How to Use This Framework
       solutionResponse += `### How to Use This Framework\n\n`;
       solutionResponse += `1. **Start with Google Workspace tools** for quick wins\n`;
       solutionResponse += `2. **Add Custom GPTs** for intelligence and automation\n`;
@@ -2026,7 +2176,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
       <>
       <div className="chat-window">
         {/* Typeform / Flow Stages */}
-        {['goal', 'role', 'category'].includes(flowStage) ? (
+        {['goal', 'role', 'category', 'subcategory', 'task'].includes(flowStage) ? (
             <div className="empty-state">
               {flowStage === 'goal' && (
                  <>
@@ -2096,6 +2246,70 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                            <h3>Type my own problem...</h3>
                        </div>
                     </div>
+                 </>
+              )}
+
+              {flowStage === 'subcategory' && (
+                 <>
+                    <h1>Narrow it down — which area?</h1>
+                    <p>Select the subcategory that best fits your need</p>
+                    {taxonomyLoading ? (
+                      <div className="taxonomy-loading">
+                        <div className="loading-spinner"></div>
+                        <p>Loading subcategories...</p>
+                      </div>
+                    ) : (
+                      <div className="suggestions-grid">
+                        {subcategories.map((sub, index) => (
+                          <div
+                              key={index}
+                              className="suggestion-card"
+                              onClick={() => handleSubcategoryClick(sub)}
+                              style={{ animationDelay: `${index * 0.08}s`, animation: 'fadeIn 0.4s ease-out forwards' }}
+                          >
+                             <h3>{sub}</h3>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                        style={{marginTop: '2rem', background: 'transparent', border:'none', color:'#6b7280', cursor:'pointer'}}
+                        onClick={() => { setFlowStage('category'); setSubcategories([]); }}
+                    >
+                        ← Back
+                    </button>
+                 </>
+              )}
+
+              {flowStage === 'task' && (
+                 <>
+                    <h1>What exactly do you want to do?</h1>
+                    <p>Pick the task that matches your need</p>
+                    {taxonomyLoading ? (
+                      <div className="taxonomy-loading">
+                        <div className="loading-spinner"></div>
+                        <p>Loading tasks...</p>
+                      </div>
+                    ) : (
+                      <div className="suggestions-grid">
+                        {taxonomyTasks.map((taskItem, index) => (
+                          <div
+                              key={index}
+                              className="suggestion-card"
+                              onClick={() => handleTaskClick(taskItem)}
+                              style={{ animationDelay: `${index * 0.06}s`, animation: 'fadeIn 0.3s ease-out forwards' }}
+                          >
+                             <h3>{taskItem}</h3>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                        style={{marginTop: '2rem', background: 'transparent', border:'none', color:'#6b7280', cursor:'pointer'}}
+                        onClick={() => { setFlowStage('subcategory'); setTaxonomyTasks([]); }}
+                    >
+                        ← Back
+                    </button>
                  </>
               )}
             </div>
