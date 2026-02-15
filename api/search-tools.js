@@ -12,6 +12,73 @@ const OPENROUTER_KEYS = [
 const OPENROUTER_MODEL = 'anthropic/claude-opus-4.6';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
+// Well-known app name overrides (tool_id -> display name)
+const APP_NAME_OVERRIDES = {
+  'play::com.ubercab': 'Uber',
+  'play::com.whatsapp': 'WhatsApp',
+  'play::com.instagram.android': 'Instagram',
+  'play::com.facebook.katana': 'Facebook',
+  'play::com.twitter.android': 'Twitter / X',
+  'play::com.linkedin.android': 'LinkedIn',
+  'play::com.google.android.youtube': 'YouTube',
+  'play::com.spotify.music': 'Spotify',
+  'play::com.slack': 'Slack',
+  'play::com.Slack': 'Slack',
+  'play::com.microsoft.teams': 'Microsoft Teams',
+  'play::com.google.android.apps.docs': 'Google Docs',
+  'play::com.google.android.apps.sheets': 'Google Sheets',
+  'play::com.google.android.gm': 'Gmail',
+  'play::com.canva.editor': 'Canva',
+  'play::com.shopify.mobile': 'Shopify',
+  'play::com.notion.id': 'Notion',
+  'play::com.trello': 'Trello',
+  'play::com.asana.app': 'Asana',
+  'play::com.hubspot.android': 'HubSpot',
+  'play::com.mailchimp.mailchimp': 'Mailchimp',
+  'play::com.stripe.android.dashboard': 'Stripe',
+  'play::com.salesforce.chatter': 'Salesforce',
+  'play::com.zapier.android': 'Zapier',
+  'play::com.calendly.app': 'Calendly',
+  'play::com.grammarly.android.keyboard': 'Grammarly',
+  'play::com.freshdesk.helpdesk': 'Freshdesk',
+  'play::com.zendesk.android': 'Zendesk',
+  'play::com.intercom.intercomsdk': 'Intercom',
+  'play::com.hootsuite.droid.full': 'Hootsuite',
+  'play::com.buffer.android': 'Buffer',
+  'play::com.semrush.app': 'Semrush',
+  'play::com.ahrefs.com': 'Ahrefs',
+  'play::com.figma.mirror': 'Figma',
+  'play::com.adobe.creativeapps.gather': 'Adobe Creative Cloud',
+  'play::com.zoom.videomeetings': 'Zoom',
+  'play::com.loom.android': 'Loom',
+  'play::com.monday.monday': 'Monday.com',
+  'play::com.clickup.app': 'ClickUp',
+  'play::com.todoist': 'Todoist',
+  'play::com.evernote': 'Evernote',
+  'play::com.xero.touch': 'Xero',
+  'play::com.intuit.quickbooks': 'QuickBooks',
+  'play::com.freshbooks.andromeda': 'FreshBooks',
+  'play::com.wave.personal': 'Wave Accounting'
+};
+
+// Extract clean app name from tool_id
+function extractAppName(toolId) {
+  // Check overrides first
+  if (APP_NAME_OVERRIDES[toolId]) return APP_NAME_OVERRIDES[toolId];
+
+  // Strip "play::com." prefix
+  let name = toolId.replace(/^play::com\./, '');
+
+  // Take the meaningful parts (skip generic android/app suffixes)
+  const skipParts = new Set(['android', 'app', 'mobile', 'id', 'full', 'lite', 'free', 'pro', 'sdk', 'touch']);
+  const parts = name.split('.').filter(p => !skipParts.has(p.toLowerCase()) && p.length > 1);
+
+  // Capitalize each part
+  const capitalized = parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+
+  return capitalized || toolId;
+}
+
 // Cache parsed CSV data
 let cachedTools = null;
 
@@ -50,8 +117,14 @@ function loadToolsData() {
       tasks = rawTasks.replace(/[\[\]']/g, '').split(',').map(t => t.trim()).filter(Boolean);
     }
 
+    const rawId = (row['tool_id'] || '').trim();
+    // Extract clean app name from tool_id like "play::com.ubercab" -> "Ubercab"
+    // or "play::com.microsoft.office.word" -> "Microsoft Office Word"
+    const appName = extractAppName(rawId);
+
     return {
-      toolId: (row['tool_id'] || '').trim(),
+      toolId: rawId,
+      appName: appName,
       primaryDomain: (row['primary_domain'] || '').trim(),
       subdomain: (row['subdomain'] || '').trim(),
       topTasks: tasks,
@@ -215,7 +288,7 @@ export default async function handler(req, res) {
 
     // Build tool summaries for Claude
     const toolSummaries = candidates.map((t, i) =>
-      `[${i}] ${t.toolId} | Domain: ${t.primaryDomain} | Subdomain: ${t.subdomain}\n   Tasks: ${t.topTasks.slice(0, 5).join('; ')}`
+      `[${i}] ${t.appName} (${t.toolId}) | Domain: ${t.primaryDomain} | Subdomain: ${t.subdomain}\n   Tasks: ${t.topTasks.slice(0, 5).join('; ')}`
     ).join('\n\n');
 
     // Build the AI matching prompt
@@ -288,6 +361,7 @@ Find the TOP 5 most relevant tools. Always return at least 3 top matches.`;
         success: true,
         tools: candidates.slice(0, 5).map(t => ({
           toolId: t.toolId,
+          appName: t.appName,
           primaryDomain: t.primaryDomain,
           subdomain: t.subdomain,
           topTasks: t.topTasks,
@@ -316,6 +390,7 @@ Find the TOP 5 most relevant tools. Always return at least 3 top matches.`;
         success: true,
         tools: candidates.slice(0, 5).map(t => ({
           toolId: t.toolId,
+          appName: t.appName,
           primaryDomain: t.primaryDomain,
           subdomain: t.subdomain,
           topTasks: t.topTasks,
@@ -333,6 +408,7 @@ Find the TOP 5 most relevant tools. Always return at least 3 top matches.`;
       .slice(0, 5)
       .map(m => ({
         toolId: candidates[m.index].toolId,
+        appName: candidates[m.index].appName,
         primaryDomain: candidates[m.index].primaryDomain,
         subdomain: candidates[m.index].subdomain,
         topTasks: candidates[m.index].topTasks,
@@ -345,6 +421,7 @@ Find the TOP 5 most relevant tools. Always return at least 3 top matches.`;
       .slice(0, 3)
       .map(m => ({
         toolId: candidates[m.index].toolId,
+        appName: candidates[m.index].appName,
         primaryDomain: candidates[m.index].primaryDomain,
         subdomain: candidates[m.index].subdomain,
         topTasks: candidates[m.index].topTasks,
@@ -356,6 +433,7 @@ Find the TOP 5 most relevant tools. Always return at least 3 top matches.`;
       candidates.slice(0, 5).forEach(t => {
         topMatches.push({
           toolId: t.toolId,
+          appName: t.appName,
           primaryDomain: t.primaryDomain,
           subdomain: t.subdomain,
           topTasks: t.topTasks,
@@ -371,7 +449,7 @@ Find the TOP 5 most relevant tools. Always return at least 3 top matches.`;
 User needs: ${userIntent}
 
 TOP MATCHED TOOLS:
-${topMatches.map((t, i) => `${i + 1}. ${t.toolId.replace('play::', '')} (${t.primaryDomain} > ${t.subdomain})
+${topMatches.map((t, i) => `${i + 1}. ${t.appName} (${t.primaryDomain} > ${t.subdomain})
    Score: ${t.matchScore}/10 — ${t.matchReason}
    What it does: ${t.topTasks.slice(0, 3).join('; ')}`).join('\n\n')}
 

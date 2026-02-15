@@ -1294,7 +1294,7 @@ const ChatBotNewMobile = () => {
       extensions.slice(0, 3).forEach((ext) => {
         const freeTag = ext.free ? 'Free' : 'Paid';
         solutionResponse += `**${ext.name}** ${freeTag}\n`;
-        solutionResponse += `> **Where this helps:** ${ext.description}\n`;
+        solutionResponse += `> **What it does:** ${ext.description}\n`;
         solutionResponse += `> **Where to find:** ${ext.source || 'Chrome Web Store / Official Website'}\n\n`;
       });
 
@@ -1324,19 +1324,22 @@ const ChatBotNewMobile = () => {
 
       solutionResponse += `---\n\n`;
 
-      // Section 4: AI-Matched Tools from 4,000+ apps (if available)
+      // Section 4: Recommended Apps & Tools (if available)
       if (matchedTools.length > 0) {
-        solutionResponse += `## Best Matching Apps & Tools (AI-Powered Match)\n\n`;
-        solutionResponse += `Based on your specific need${task ? ` — "${task}"` : ''}, here are the top matches from our database of 4,000+ tools:\n\n`;
+        solutionResponse += `## Recommended Apps & Tools\n\n`;
+        solutionResponse += `Based on your specific need${task ? ` — "${task}"` : ''}, here are the apps that can help:\n\n`;
 
         matchedTools.slice(0, 5).forEach((tool, i) => {
-          const displayName = tool.subdomain || tool.primaryDomain;
-          solutionResponse += `**${i + 1}. ${displayName}** (${tool.primaryDomain})\n`;
-          solutionResponse += `> **Match Score:** ${tool.matchScore}/10\n`;
-          if (tool.matchReason) solutionResponse += `> **Why:** ${tool.matchReason}\n`;
+          const appName = tool.appName || tool.subdomain || tool.primaryDomain;
+          solutionResponse += `**${i + 1}. ${appName}**\n`;
+          solutionResponse += `> **Platform:** ${tool.primaryDomain} — ${tool.subdomain}\n`;
           if (tool.topTasks && tool.topTasks.length > 0) {
-            solutionResponse += `> **Key capabilities:** ${tool.topTasks.slice(0, 3).join(' • ')}\n`;
+            solutionResponse += `> **What it does:** ${tool.topTasks[0]}\n`;
+            if (tool.topTasks.length > 1) {
+              solutionResponse += `> **Also helps with:** ${tool.topTasks.slice(1, 3).join(' • ')}\n`;
+            }
           }
+          if (tool.matchReason) solutionResponse += `> **Why this fits you:** ${tool.matchReason}\n`;
           solutionResponse += `\n`;
         });
 
