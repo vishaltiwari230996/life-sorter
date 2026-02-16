@@ -1735,11 +1735,13 @@ const ChatBotNew = () => {
         setRcaProblems(data.problems || []);
         setRcaOpportunities(data.opportunities || []);
       } else {
+        setTaxonomyLoading(false);
         showSolutionStack(selectedSubcategory, task, null);
         return;
       }
     } catch (e) {
       console.error('Failed to fetch RCA questions:', e);
+      setTaxonomyLoading(false);
       showSolutionStack(selectedSubcategory, task, null);
       return;
     }
@@ -1805,15 +1807,15 @@ const ChatBotNew = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            domain: category,
-            subdomain: category,
-            requirement: category,
+            domain: domain,
+            subdomain: domain,
+            requirement: domain,
             goal: selectedGoal,
             role: userRole,
             userContext: {
               goal: selectedGoal,
               role: userRole,
-              category: category
+              category: domain
             }
           })
         });
@@ -1873,8 +1875,8 @@ const ChatBotNew = () => {
       }
 
       // Get relevant Chrome extensions and GPTs
-      let extensions = getRelevantExtensions(category, selectedGoal);
-      let customGPTs = getRelevantGPTs(category, selectedGoal, userRole);
+      let extensions = getRelevantExtensions(domain, selectedGoal);
+      let customGPTs = getRelevantGPTs(domain, selectedGoal, userRole);
       
       // Use fallbacks if empty
       if (extensions.length === 0) {
@@ -1902,7 +1904,7 @@ const ChatBotNew = () => {
       }
       
       // Generate the immediate action prompt
-      const immediatePrompt = generateImmediatePrompt(selectedGoal, roleLabel, category, category);
+      const immediatePrompt = generateImmediatePrompt(selectedGoal, roleLabel, domain, domain);
 
       // Build Stage 1 Desired Output Format - Chat Response
       let solutionResponse = `## Recommended Solution Pathways (Immediate Action)\n\n`;
@@ -1999,20 +2001,20 @@ const ChatBotNew = () => {
         companies: relevantCompanies,
         extensions: extensions,
         customGPTs: customGPTs,
-        userRequirement: category
+        userRequirement: domain
       };
 
       setMessages(prev => [...prev, finalOutput]);
       setIsTyping(false);
 
-      saveToSheet('Solution Stack Generated', `Goal: ${goalLabel}, Role: ${roleLabel}, Category: ${category}`, category, category);
+      saveToSheet('Solution Stack Generated', `Goal: ${goalLabel}, Role: ${roleLabel}, Category: ${domain}`, domain, domain);
     } catch (error) {
       console.error('Error generating solution stack:', error);
 
       // Fallback response with Stage 1 format
       const goalLabel = goalOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
       const roleLabel = roleOptions.find(r => r.id === userRole)?.text || customRole || userRole;
-      const fallbackPrompt = generateImmediatePrompt(selectedGoal, roleLabel, category, category);
+      const fallbackPrompt = generateImmediatePrompt(selectedGoal, roleLabel, domain, domain);
       
       let fallbackResponse = `## 🎯 Recommended Solution Pathways (Immediate Action)\n\n`;
       fallbackResponse += `I recommend the following solution pathways that you can start implementing immediately.\n\n`;
@@ -2061,7 +2063,7 @@ const ChatBotNew = () => {
         showFinalActions: true,
         showCopyPrompt: true,
         immediatePrompt: fallbackPrompt,
-        userRequirement: category
+        userRequirement: domain
       };
 
       setMessages(prev => [...prev, fallbackOutput]);
