@@ -1290,6 +1290,11 @@ const ChatBotNew = () => {
   const [taxonomyTasks, setTaxonomyTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [taxonomyLoading, setTaxonomyLoading] = useState(false);
+  // RCA Stage 1 state
+  const [rcaStage1Questions, setRcaStage1Questions] = useState([]);
+  const [selectedRcaAnswer, setSelectedRcaAnswer] = useState(null);
+  const [rcaProblems, setRcaProblems] = useState([]);
+  const [rcaOpportunities, setRcaOpportunities] = useState([]);
 
   // Get categories based on selected goal and role
   const getCategoriesForSelection = useCallback(() => {
@@ -1561,6 +1566,10 @@ const ChatBotNew = () => {
     setTaxonomyTasks([]);
     setSelectedTask(null);
     setTaxonomyLoading(false);
+    setRcaStage1Questions([]);
+    setSelectedRcaAnswer(null);
+    setRcaProblems([]);
+    setRcaOpportunities([]);
     setBusinessContext({
       businessType: null,
       industry: null,
@@ -1604,8 +1613,8 @@ const ChatBotNew = () => {
     setMessages([welcomeMessage]);
   };
 
-  // Handle goal selection (Question 1)
-  const handleGoalClick = (goal) => {
+  // Handle goal/outcome selection (Q1) — fetch domains from CSV
+  const handleGoalClick = async (goal) => {
     setSelectedGoal(goal.id);
 
     const userMessage = {
@@ -1615,94 +1624,12 @@ const ChatBotNew = () => {
       timestamp: new Date()
     };
 
-    const botMessage = {
-      id: getNextMessageId(),
-      text: `Great choice! You want to **${goal.text.toLowerCase()}**.\n\nNow, which best describes you?`,
-      sender: 'bot',
-      timestamp: new Date(),
-      showRoleOptions: true
-    };
-
-    setMessages(prev => [...prev, userMessage, botMessage]);
-    setFlowStage('role');
-
-    saveToSheet(`Selected Goal: ${goal.text}`, '', '', '');
-  };
-
-  // Handle role selection (Question 2)
-  const handleRoleClick = (role) => {
-    setUserRole(role.id);
-
-    const userMessage = {
-      id: getNextMessageId(),
-      text: `${role.text}`,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
-    // Show categories based on goal + role
-    setFlowStage('category');
-    const categories = CATEGORIES_DATA[selectedGoal]?.[role.id] || [];
-    const botMessage = {
-      id: getNextMessageId(),
-      text: `Perfect!\n\nBased on your selection, here are the categories where your problems might fall:\n\n**Select one that best matches your need:**`,
-      sender: 'bot',
-      timestamp: new Date(),
-      showCategoryOptions: true,
-      categories: categories
-    };
-    setMessages(prev => [...prev, userMessage, botMessage]);
-
-    saveToSheet(`User Role: ${role.text}`, '', '', '');
-  };
-
-  // Handle custom role submission
-  const handleCustomRoleSubmit = (customRoleText) => {
-    setCustomRole(customRoleText);
-
-    const userMessage = {
-      id: getNextMessageId(),
-      text: customRoleText,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
-    // Use individual-student categories as fallback for custom roles
-    setFlowStage('category');
-    const categories = CATEGORIES_DATA[selectedGoal]?.['individual-student'] || [];
-    const botMessage = {
-      id: getNextMessageId(),
-      text: `Thanks! As a **${customRoleText}**, here are some categories that might help:\n\n**Select one that best matches your need:**`,
-      sender: 'bot',
-      timestamp: new Date(),
-      showCategoryOptions: true,
-      categories: categories
-    };
-
-    setMessages(prev => [...prev, userMessage, botMessage]);
-    saveToSheet(`Custom Role: ${customRoleText}`, '', '', '');
-  };
-
-  // Handle category selection (Question 3) - Now goes to Q4 subcategory
-  const handleCategoryClick = async (category) => {
-    setSelectedCategory(category);
-
-    const userMessage = {
-      id: getNextMessageId(),
-      text: `${category}`,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
     setMessages(prev => [...prev, userMessage]);
-    saveToSheet(`Selected Category: ${category}`, '', '', '');
-
-    // Fetch subcategories from taxonomy CSV
+    setFlowStage('domain');
     setTaxonomyLoading(true);
-    setFlowStage('subcategory');
+    saveToSheet(`Selected Outcome: ${goal.text}`, '', '', '');
 
     try {
-      // Map goal ID to growth bucket search term
       const goalToBucket = {
         'grow-revenue': ['Lead Generation', 'Sales & Retention'],
         'save-time': ['Save Time'],
@@ -1710,45 +1637,40 @@ const ChatBotNew = () => {
         'personal-growth': ['Business Strategy']
       };
 
-      const bucketTerms = goalToBucket[selectedGoal] || ['Lead Generation'];
-      let allSubcategories = [];
+      const bucketTerms = goalToBucket[goal.id] || ['Lead Generation'];
+      let allDomains = [];
 
       for (const term of bucketTerms) {
         const response = await fetch(`/api/categories?growthBucket=${encodeURIComponent(term)}`);
         const data = await response.json();
         if (data.success && data.subCategories) {
-          allSubcategories = [...allSubcategories, ...data.subCategories];
+          allDomains = [...allDomains, ...data.subCategories];
         }
       }
 
-      // Deduplicate
-      allSubcategories = [...new Set(allSubcategories)];
-      setSubcategories(allSubcategories);
+      allDomains = [...new Set(allDomains)];
+      setSubcategories(allDomains);
     } catch (e) {
-      console.error('Failed to fetch subcategories:', e);
-      // Fallback - go directly to solution
-      showSolutionStack(category);
-      return;
+      console.error('Failed to fetch domains:', e);
     }
 
     setTaxonomyLoading(false);
   };
 
-  // Handle subcategory selection (Question 4) - Fetch tasks
-  const handleSubcategoryClick = async (subcategory) => {
-    setSelectedSubcategory(subcategory);
+  // Handle domain selection (Q2) — fetch tasks for this domain
+  const handleDomainClick = async (domain) => {
+    setSelectedSubcategory(domain);
 
     const userMessage = {
       id: getNextMessageId(),
-      text: `${subcategory}`,
+      text: `${domain}`,
       sender: 'user',
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage]);
-    saveToSheet(`Selected Subcategory: ${subcategory}`, '', '', '');
+    saveToSheet(`Selected Domain: ${domain}`, '', '', '');
 
-    // Fetch tasks for this subcategory
     setTaxonomyLoading(true);
     setFlowStage('task');
 
@@ -1764,7 +1686,7 @@ const ChatBotNew = () => {
       let allTasks = [];
 
       for (const term of bucketTerms) {
-        const response = await fetch(`/api/categories?growthBucket=${encodeURIComponent(term)}&subCategory=${encodeURIComponent(subcategory)}`);
+        const response = await fetch(`/api/categories?growthBucket=${encodeURIComponent(term)}&subCategory=${encodeURIComponent(domain)}`);
         const data = await response.json();
         if (data.success && data.tasks) {
           allTasks = [...allTasks, ...data.tasks];
@@ -1775,15 +1697,13 @@ const ChatBotNew = () => {
       setTaxonomyTasks(allTasks);
     } catch (e) {
       console.error('Failed to fetch tasks:', e);
-      showSolutionStack(selectedCategory);
-      return;
     }
 
     setTaxonomyLoading(false);
   };
 
-  // Handle task selection (Question 5) - Final step, show solutions
-  const handleTaskClick = (task) => {
+  // Handle task selection (Q3) — fetch RCA questions from .docx
+  const handleTaskClick = async (task) => {
     setSelectedTask(task);
 
     const userMessage = {
@@ -1796,8 +1716,52 @@ const ChatBotNew = () => {
     setMessages(prev => [...prev, userMessage]);
     saveToSheet(`Selected Task: ${task}`, '', '', '');
 
-    // Now show solution stack with full context
-    showSolutionStack(selectedCategory, selectedSubcategory, task);
+    setTaxonomyLoading(true);
+    setFlowStage('rca-stage1');
+
+    try {
+      const response = await fetch('/api/rca-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          domain: selectedSubcategory,
+          task: task
+        })
+      });
+      const data = await response.json();
+
+      if (data.success && data.rcaQuestions && data.rcaQuestions.length > 0) {
+        setRcaStage1Questions(data.rcaQuestions);
+        setRcaProblems(data.problems || []);
+        setRcaOpportunities(data.opportunities || []);
+      } else {
+        showSolutionStack(selectedSubcategory, task, null);
+        return;
+      }
+    } catch (e) {
+      console.error('Failed to fetch RCA questions:', e);
+      showSolutionStack(selectedSubcategory, task, null);
+      return;
+    }
+
+    setTaxonomyLoading(false);
+  };
+
+  // Handle RCA answer selection (Q4) — trigger solution
+  const handleRcaStage1Click = (rcaItem) => {
+    setSelectedRcaAnswer(rcaItem.complaint);
+
+    const userMessage = {
+      id: getNextMessageId(),
+      text: `${rcaItem.complaint}`,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    saveToSheet(`RCA Answer: ${rcaItem.complaint}`, `Metric: ${rcaItem.metric}`, `Category: ${rcaItem.category}`, '');
+
+    showSolutionStack(selectedSubcategory, selectedTask, rcaItem.complaint);
   };
 
   // Handle "Type here" button click - skip category selection
@@ -1823,7 +1787,7 @@ const ChatBotNew = () => {
   };
 
   // Show solution stack directly after category selection - CHAT VERSION (Stage 1 Format)
-  const showSolutionStack = async (category, subcategory = null, task = null) => {
+  const showSolutionStack = async (domain, task = null, rcaAnswer = null) => {
     setFlowStage('complete');
     setIsTyping(true);
 
@@ -1864,29 +1828,48 @@ const ChatBotNew = () => {
         ];
       }
 
-      // Search unified tools list using AI (Q4-Q5 enhanced matching)
+      // Search unified tools list using AI
       let matchedTools = [];
-      if (subcategory || task) {
-        try {
-          const toolSearchResponse = await fetch('/api/search-tools', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              goal: selectedGoal,
-              role: userRole,
-              category: category,
-              subCategory: subcategory,
-              task: task,
-              userContext: { goal: selectedGoal, role: userRole, category, subcategory, task }
-            })
-          });
-          const toolData = await toolSearchResponse.json();
-          if (toolData.success && toolData.tools) {
-            matchedTools = toolData.tools.slice(0, 5);
-          }
-        } catch (e) {
-          console.log('Tool search failed, continuing with other recommendations');
+      try {
+        const toolSearchResponse = await fetch('/api/search-tools', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            goal: selectedGoal,
+            category: domain,
+            subCategory: domain,
+            task: task,
+            rcaAnswer: rcaAnswer,
+            userContext: { goal: selectedGoal, domain, task, rcaAnswer }
+          })
+        });
+        const toolData = await toolSearchResponse.json();
+        if (toolData.success && toolData.tools) {
+          matchedTools = toolData.tools.slice(0, 5);
         }
+      } catch (e) {
+        console.log('Tool search failed, continuing with other recommendations');
+      }
+
+      // Search Custom GPTs from curated CSV
+      let matchedGPTs = [];
+      try {
+        const gptResponse = await fetch('/api/search-custom-gpts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            outcome: selectedGoal,
+            domain: domain,
+            task: task,
+            rcaAnswer: rcaAnswer
+          })
+        });
+        const gptData = await gptResponse.json();
+        if (gptData.success && gptData.gpts) {
+          matchedGPTs = gptData.gpts.slice(0, 5);
+        }
+      } catch (e) {
+        console.log('Custom GPT search failed, continuing with other recommendations');
       }
 
       // Get relevant Chrome extensions and GPTs
@@ -1940,15 +1923,24 @@ const ChatBotNew = () => {
 
       solutionResponse += `---\n\n`;
 
-      // Section 2: Custom GPTs
-      solutionResponse += `## Using Custom GPTs for Task Automation & Decision Support\n\n`;
-      solutionResponse += `You can also leverage Custom GPTs to automate repetitive thinking tasks, research, analysis, and execution support.\n\n`;
-      solutionResponse += `### Custom GPTs\n\n`;
-      
-      customGPTs.slice(0, 3).forEach((gpt) => {
-        solutionResponse += `**${gpt.name}** ⭐${gpt.rating}\n`;
-        solutionResponse += `> **What this GPT does:** ${gpt.description}\n\n`;
-      });
+      // Section 2: Custom GPTs (from curated 239 GPT database)
+      solutionResponse += `## Custom GPTs for Your Task\n\n`;
+      if (matchedGPTs.length > 0) {
+        solutionResponse += `These Custom GPTs are specifically suited to help with your need:\n\n`;
+        matchedGPTs.slice(0, 5).forEach((gpt, i) => {
+          solutionResponse += `**${i + 1}. ${gpt.name}** ⭐${gpt.rating}\n`;
+          solutionResponse += `> **What it does:** ${gpt.description.slice(0, 150)}\n`;
+          solutionResponse += `> **Category:** ${gpt.category} | **Reviews:** ${gpt.reviews}\n`;
+          if (gpt.url) solutionResponse += `> **Try it:** [Open in ChatGPT](${gpt.url})\n`;
+          if (gpt.matchReason) solutionResponse += `> **Why this fits:** ${gpt.matchReason}\n`;
+          solutionResponse += `\n`;
+        });
+      } else {
+        customGPTs.slice(0, 3).forEach((gpt) => {
+          solutionResponse += `**${gpt.name}** ⭐${gpt.rating}\n`;
+          solutionResponse += `> **What this GPT does:** ${gpt.description}\n\n`;
+        });
+      }
 
       solutionResponse += `---\n\n`;
 
@@ -2144,13 +2136,6 @@ const ChatBotNew = () => {
         console.error('Error starting recognition:', error);
       }
     }
-  };
-
-  // Legacy domain/subdomain handlers - kept for backward compatibility but not used in new flow
-  const handleDomainClick = (domain) => {
-    setSelectedDomain(domain);
-    // Domain selection is no longer part of main flow, but kept for potential future use
-    saveToSheet(`Selected Domain: ${domain.name}`, '', domain.name, '');
   };
 
   const handleSubDomainClick = (subDomain) => {
@@ -3073,7 +3058,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
       {activeMainView === 'chat' && (
       <div className="chat-window">
         {/* Typeform / Flow Stages */}
-        {['goal', 'role', 'category', 'subcategory', 'task', 'rca'].includes(flowStage) ? (
+        {['goal', 'domain', 'task', 'rca-stage1', 'rca'].includes(flowStage) ? (
             <div className="empty-state">
               {flowStage === 'goal' && (
                  <>
@@ -3097,81 +3082,32 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                  </>
               )}
 
-              {flowStage === 'role' && (
+              {flowStage === 'domain' && (
                  <>
-                    {/* Icon removed */}
-                    <h1>Which best describes you?</h1>
-                    <p>This helps us tailor the solution</p>
-                    <div className="suggestions-grid">
-                      {roleOptions.filter(role => role.id !== 'other-role').map((role, index) => (
-                        <div 
-                            key={role.id} 
-                            className="suggestion-card" 
-                            onClick={() => handleRoleClick(role)}
-                        >
-                           <h3>{role.text}</h3>
-                        </div>
-                      ))}
-                    </div>
-                    <button 
-                        style={{marginTop: '2rem', background: 'transparent', border:'none', color:'#6b7280', cursor:'pointer'}}
-                        onClick={() => { setSelectedGoal(null); setFlowStage('goal'); }}
-                    >
-                        ← Back
-                    </button>
-                 </>
-              )}
-
-               {flowStage === 'category' && (
-                 <>
-                    {/* Icon removed */}
-                    <h1>In which category does your problem fall?</h1>
-                    <div className="suggestions-grid">
-                      {getCategoriesForSelection().map((category, index) => (
-                        <div 
-                            key={index} 
-                            className="suggestion-card" 
-                            onClick={() => handleCategoryClick(category)}
-                         >
-                           <h3>{category}</h3>
-                        </div>
-                      ))}
-                       <div 
-                            className="suggestion-card" 
-                            onClick={handleTypeCustomProblem}
-                       >
-                           <h3>Type my own problem...</h3>
-                       </div>
-                    </div>
-                 </>
-              )}
-
-              {flowStage === 'subcategory' && (
-                 <>
-                    <h1>Narrow it down — which area?</h1>
-                    <p>Select the subcategory that best fits your need</p>
+                    <h1>Where specifically?</h1>
+                    <p>Select the domain that best fits your need</p>
                     {taxonomyLoading ? (
                       <div className="taxonomy-loading">
                         <div className="loading-spinner"></div>
-                        <p>Loading subcategories...</p>
+                        <p>Loading domains...</p>
                       </div>
                     ) : (
                       <div className="suggestions-grid">
-                        {subcategories.map((sub, index) => (
+                        {subcategories.map((domain, index) => (
                           <div
                               key={index}
                               className="suggestion-card"
-                              onClick={() => handleSubcategoryClick(sub)}
+                              onClick={() => handleDomainClick(domain)}
                               style={{ animationDelay: `${index * 0.08}s`, animation: 'fadeIn 0.4s ease-out forwards' }}
                           >
-                             <h3>{sub}</h3>
+                             <h3>{domain}</h3>
                           </div>
                         ))}
                       </div>
                     )}
                     <button
                         style={{marginTop: '2rem', background: 'transparent', border:'none', color:'#6b7280', cursor:'pointer'}}
-                        onClick={() => { setFlowStage('category'); setSubcategories([]); }}
+                        onClick={() => { setFlowStage('goal'); setSubcategories([]); }}
                     >
                         ← Back
                     </button>
@@ -3189,21 +3125,59 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                       </div>
                     ) : (
                       <div className="suggestions-grid">
-                        {taxonomyTasks.map((task, index) => (
+                        {taxonomyTasks.map((taskItem, index) => (
                           <div
                               key={index}
                               className="suggestion-card"
-                              onClick={() => handleTaskClick(task)}
+                              onClick={() => handleTaskClick(taskItem)}
                               style={{ animationDelay: `${index * 0.06}s`, animation: 'fadeIn 0.3s ease-out forwards' }}
                           >
-                             <h3>{task}</h3>
+                             <h3>{taskItem}</h3>
                           </div>
                         ))}
                       </div>
                     )}
                     <button
                         style={{marginTop: '2rem', background: 'transparent', border:'none', color:'#6b7280', cursor:'pointer'}}
-                        onClick={() => { setFlowStage('subcategory'); setTaxonomyTasks([]); }}
+                        onClick={() => { setFlowStage('domain'); setTaxonomyTasks([]); }}
+                    >
+                        ← Back
+                    </button>
+                 </>
+              )}
+
+              {flowStage === 'rca-stage1' && (
+                 <>
+                    <h1>Which of these sounds like your situation?</h1>
+                    <p>This helps us find exactly the right tools for you</p>
+                    {taxonomyLoading ? (
+                      <div className="taxonomy-loading">
+                        <div className="loading-spinner"></div>
+                        <p>Analyzing your need...</p>
+                      </div>
+                    ) : (
+                      <div className="suggestions-grid">
+                        {rcaStage1Questions.map((rcaItem, index) => (
+                          <div
+                              key={index}
+                              className="suggestion-card rca-option-card"
+                              onClick={() => handleRcaStage1Click(rcaItem)}
+                              style={{ animationDelay: `${index * 0.08}s`, animation: 'fadeIn 0.4s ease-out forwards' }}
+                          >
+                             <h3>{rcaItem.displayText}</h3>
+                          </div>
+                        ))}
+                        <div
+                            className="suggestion-card"
+                            onClick={() => showSolutionStack(selectedSubcategory, selectedTask, null)}
+                        >
+                           <h3>Skip — just show me tools</h3>
+                        </div>
+                      </div>
+                    )}
+                    <button
+                        style={{marginTop: '2rem', background: 'transparent', border:'none', color:'#6b7280', cursor:'pointer'}}
+                        onClick={() => { setFlowStage('task'); setRcaStage1Questions([]); }}
                     >
                         ← Back
                     </button>
