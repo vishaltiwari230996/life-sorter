@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu, Edit3, Chrome, Zap, Brain, Copy, TrendingUp, FileText } from 'lucide-react';
+import { Send, Bot, User, Mic, MicOff, Package, Box, Gift, ArrowLeft, Plus, MessageSquare, ShoppingCart, Scale, Users, Sparkles, Youtube, History, X, Menu, Edit3, Chrome, Zap, Brain, Copy, TrendingUp, FileText, Lock, Shield, CreditCard, BarChart3 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import './ChatBotNewMobile.css';
 import { formatCompaniesForDisplay, analyzeMarketGaps } from '../utils/csvParser';
@@ -183,14 +183,15 @@ const getRelevantGPTs = (category, goal, role) => {
 
 // Generate immediate action prompt based on context
 const generateImmediatePrompt = (goal, role, category, requirement) => {
-  const goalText = goal === 'grow-revenue' ? 'increase revenue' : 
+  const goalText = goal === 'lead-generation' ? 'generate more leads' : 
+                   goal === 'sales-retention' ? 'improve sales and retention' :
                    goal === 'save-time' ? 'save time and automate' :
-                   goal === 'better-decisions' ? 'make better decisions' : 'improve and grow';
+                   goal === 'business-strategy' ? 'make better business decisions' : 'improve and grow';
   
   return `Act as my expert AI consultant. I need to ${goalText}.
 
 **My Context:**
-- Role: ${role || 'Business Professional'}
+- Domain: ${role || 'General'}
 - Problem Area: ${category || 'General business improvement'}
 - Specific Need: ${requirement || '[Describe your specific situation]'}
 
@@ -206,247 +207,210 @@ Keep your response actionable and practical. No fluff - just tell me exactly wha
 };
 
 // ============================================
-// Categories data structure based on CSV - Maps Goal + Role to Categories
+// Outcome → Domain → Task data structure (from CSV)
+// Q1: Outcome, Q2: Domain, Q3: Task
 // ============================================
-const CATEGORIES_DATA = {
-  'grow-revenue': {
-    'founder-owner': [
-      'Social media content (posts, ads, videos, product visuals)',
-      'Get more leads from Google & website (SEO)',
-      'Run Google and Meta ads + improve ROI',
-      'Google Business Profile visibility',
-      'Understanding why customers don\'t convert',
-      'Selling on WhatsApp/Instagram',
-      'Lead Qualification, Follow Up & Conversion',
-      'Ecommerce Listing SEO + upsell bundles'
-    ],
-    'sales-marketing': [
-      'Run Google and Meta ads + improve ROI',
-      'Social media content (posts, ads, videos, product visuals)',
-      'Get more leads from Google & website (SEO)',
-      'Qualify & route leads automatically (AI SDR)',
-      'Selling on WhatsApp/Instagram',
-      'Improve Google Business Profile leads',
-      'Write SEO Keyword, blogs and landing pages',
-      'Write product titles that rank SEO',
-      'Create ad creatives that convert',
-      'Create upsell/cross-sell messaging'
-    ],
-    'ops-admin': [
-      'Reduce missed leads with faster replies',
-      'Improve order experience to boost repeats',
-      'Call, Chat & Ticket Intelligence',
-      'Smart CCTV: revenue/footfall insights (advanced)'
-    ],
-    'finance-legal': [
-      'Spot profit leaks and improve margins',
-      'Prevent revenue leakage from contracts (renewals, pricing, penalties)',
-      'Speed up deal closure with faster contract review',
-      'Sales & revenue forecasting'
-    ],
-    'hr-recruiting': [
-      'Hire faster to support growth',
-      'Find candidates faster (multi-source)',
-      'Resume screening + shortlisting'
-    ],
-    'support-success': [
-      'Improve retention and reduce churn',
-      'Upsell/cross-sell recommendations',
-      'Improve reviews and response quality',
-      'Find why customers don\'t convert',
-      'Call, Chat & Ticket Intelligence'
-    ],
-    'individual-student': [
-      'Personal brand to get opportunities',
-      'Business Idea Generation',
-      'Trending Products'
-    ]
-  },
-  'save-time': {
-    'founder-owner': [
-      'Automate lead capture into Sheets/CRM',
-      'Draft proposals, quotes, and emails faster',
-      'Extract data from PDFs/images to Sheets',
-      'Automate procurement requests/approvals',
-      '24/7 support assistant + escalation',
-      'Automate order updates and tracking',
-      'Summarize meetings + action items',
-      'Automate HR or Finance'
-    ],
-    'sales-marketing': [
-      'Auto-capture leads from forms/ads',
-      'Mail + DM + influencer outreach automation',
-      'Repurpose long videos into shorts',
-      'Schedule posts + reuse content ideas',
-      'Bulk update product listings/catalog',
-      'Generate A+ store content at scale',
-      'Auto-create weekly content calendar',
-      'Auto-reply + follow-up sequences'
-    ],
-    'ops-admin': [
-      'Automate repetitive admin workflows',
-      'Excel and App script Automation',
-      'Extract invoice/order data from PDFs',
-      'Classify docs (invoice/contract/report)',
-      'Auto-tag and organize documents',
-      'Summarize meetings + send action items',
-      'Automate procurement approvals',
-      'Track orders + customer notifications',
-      'Support ticket routing automation',
-      'Smart CCTV: critical event alerts (advanced)'
-    ],
-    'finance-legal': [
-      'Bookkeeping assistance + auto categorization',
-      'Expense tracking + spend control automation',
-      'Extract invoices/receipts from PDFs into Sheets',
-      'Auto-generate client/vendor payment reminders',
-      'Draft finance emails, reports, and summaries faster',
-      'Extract key terms from contracts (payment, renewal, notice period)',
-      'Automate contract approvals, renewals, and deadline reminders'
-    ],
-    'hr-recruiting': [
-      'Automate interview scheduling',
-      'Automate candidate follow-ups',
-      'High-volume hiring coordination',
-      'Onboarding checklists + HR support',
-      'Draft job descriptions and outreach'
-    ],
-    'support-success': [
-      '24/7 support assistant + escalation',
-      'Auto-tag, route, and prioritize tickets',
-      'Draft replies in brand voice',
-      'Summarize calls/chats into CRM notes',
-      'Build a support knowledge base',
-      'WhatsApp/Instagram instant replies'
-    ],
-    'individual-student': [
-      'Draft emails, reports, and proposals',
-      'Summarize PDFs and long documents',
-      'Extract data from PDFs/images',
-      'Organize notes automatically'
-    ]
-  },
-  'better-decisions': {
-    'founder-owner': [
-      'Instant sales dashboard (daily/weekly)',
-      'Marketing performance dashboard (ROI)',
-      'Build a knowledge base from SOPs',
-      'Track competitors, pricing, and offers',
-      'Market & industry trend summaries',
-      'Predict demand & business outcomes',
-      'Review sentiment → improvement ideas',
-      'Churn & retention insights',
-      'Cashflow + spend control dashboard'
-    ],
-    'sales-marketing': [
-      'Campaign performance tracking dashboard',
-      'Track calls, clicks, and form fills',
-      'Call/chat/ticket insights from conversations',
-      'Review sentiment + competitor comparisons',
-      'Competitor monitoring & price alerts',
-      'Market & trend research summaries',
-      'Chat with past campaigns and assets'
-    ],
-    'ops-admin': [
-      'Ops dashboard (orders, backlog, SLA)',
-      'AI research summaries for decisions',
-      'Predict demand and stock needs',
-      'Supplier risk monitoring',
-      'Delivery/logistics performance reporting',
-      'Internal Q&A bot from SOPs/policies',
-      'Industry best practice',
-      'Customer Churn & Retention Insights'
-    ],
-    'finance-legal': [
-      'Instant finance dashboard (monthly/weekly)',
-      'Budget vs actual insights with variance alerts',
-      'Cashflow forecast (30/60/90 days)',
-      'Predict demand & business outcomes from past data',
-      'Spend control alerts and trend insights',
-      'Contract risk snapshot (high-risk clauses, obligations, renewals)',
-      'Supplier risk and exposure tracking'
-    ],
-    'hr-recruiting': [
-      'Hiring funnel dashboard',
-      'Improve hire quality insights',
-      'Interview feedback summaries',
-      'HR knowledge base from policies',
-      'Internal Q&A bot for HR queries',
-      'Organize resumes and candidate notes'
-    ],
-    'support-success': [
-      'Support SLA dashboard',
-      'Call/chat/ticket intelligence insights',
-      'Review sentiment + issue detection',
-      'Churn & retention insights',
-      'Brand monitoring & crisis alerts',
-      'Search/chat across help docs',
-      'Internal Q&A bot from SOPs'
-    ],
-    'individual-student': [
-      'Weekly goals + progress summary',
-      'Chat with your personal documents',
-      'Auto-tag and organize your files',
-      'Market & industry trend summaries'
-    ]
-  },
-  'personal-growth': {
-    'founder-owner': [
-      'Plan weekly priorities and tasks',
-      'Prep for pitches and presentations',
-      'Personal branding content plan',
-      'Create a learning plan + summaries',
-      'Contract drafting & review support',
-      'Team Spirit Action plan'
-    ],
-    'sales-marketing': [
-      'Plan weekly priorities and tasks',
-      'Prep for pitches and presentations',
-      'Personal branding content plan',
-      'Create a learning plan + summaries',
-      'Contract drafting & review support',
-      'Team Spirit Action plan'
-    ],
-    'ops-admin': [
-      'Plan weekly priorities and tasks',
-      'Prep for pitches and presentations',
-      'Personal branding content plan',
-      'Create a learning plan + summaries',
-      'Contract drafting & review support',
-      'Team Spirit Action plan'
-    ],
-    'finance-legal': [
-      'Plan weekly priorities and tasks',
-      'Prep for pitches and presentations',
-      'Personal branding content plan',
-      'Create a learning plan + summaries',
-      'Contract drafting & review support',
-      'Team Spirit Action plan'
-    ],
-    'hr-recruiting': [
-      'Plan weekly priorities and tasks',
-      'Interview prep + question practice',
-      'Personal branding content plan',
-      'Create a learning plan + summaries',
-      'Contract drafting & review support',
-      'Team Spirit Action plan'
-    ],
-    'support-success': [
-      'Plan weekly priorities and tasks',
-      'Prep for pitches and presentations',
-      'Personal branding content plan',
-      'Create a learning plan + summaries',
-      'Contract drafting & review support',
-      'Team Spirit Action plan'
-    ],
-    'individual-student': [
-      'Plan weekly priorities and tasks',
-      'Prep for pitches and presentations',
-      'Personal branding content plan',
-      'Create a learning plan + summaries',
-      'Contract drafting & review support'
-    ]
-  }
+const OUTCOME_DOMAINS = {
+  'lead-generation': [
+    'Content & Social Media',
+    'SEO & Organic Visibility',
+    'Paid Media & Ads',
+    'B2B Lead Generation'
+  ],
+  'sales-retention': [
+    'Sales Execution & Enablement',
+    'Lead Management & Conversion',
+    'Customer Success & Reputation',
+    'Repeat Sales'
+  ],
+  'business-strategy': [
+    'Business Intelligence & Analytics',
+    'Market Strategy & Innovation',
+    'Financial Health & Risk',
+    'Org Efficiency & Hiring',
+    'Improve Yourself'
+  ],
+  'save-time': [
+    'Sales & Content Automation',
+    'Finance Legal & Admin',
+    'Customer Support Ops',
+    'Recruiting & HR Ops',
+    'Personal & Team Productivity'
+  ]
+};
+
+const DOMAIN_TASKS = {
+  'Content & Social Media': [
+    'Generate social media posts captions & hooks',
+    'Create AI product photography & video ads',
+    'Build a personal brand on LinkedIn/Twitter',
+    'Repurpose content for maximum reach',
+    'Spot trending topics & viral content ideas'
+  ],
+  'SEO & Organic Visibility': [
+    'Get more leads from Google & website (SEO)',
+    'Google Business Profile visibility',
+    'Improve Google Business Profile leads',
+    'Write SEO Keyword blogs and landing pages',
+    'Write product titles that rank SEO',
+    'Ecommerce Listing SEO + upsell bundles'
+  ],
+  'Paid Media & Ads': [
+    'Generate high-converting ad copy & visuals',
+    'Auto-optimize campaigns to boost ROAS',
+    'Find winning audiences & keywords',
+    'Audit ad spend & spot wasted budget',
+    'Spy on competitor ads & offers'
+  ],
+  'B2B Lead Generation': [
+    'Find decision-maker emails & LinkedIn profiles',
+    'Generate hyper-personalized cold outreach sequences',
+    'Identify target companies by tech stack & intent',
+    'Score & prioritize leads by ICP match',
+    'Automate LinkedIn connection & engagement'
+  ],
+  'Sales Execution & Enablement': [
+    'Selling on WhatsApp/Instagram',
+    'Speed up deal closure with faster contract review',
+    'Chat with past campaigns and assets'
+  ],
+  'Lead Management & Conversion': [
+    'Qualify & route leads automatically (AI SDR)',
+    'Lead Qualification Follow Up & Conversion',
+    'Reduce missed leads with faster replies',
+    'Find why customers don\'t convert',
+    'Understanding why customers don\'t convert'
+  ],
+  'Customer Success & Reputation': [
+    'Improve reviews and response quality',
+    'Call Chat & Ticket Intelligence',
+    'Improve retention and reduce churn',
+    'Churn & retention insights',
+    'Support SLA dashboard',
+    'Call/chat/ticket intelligence insights',
+    'Review sentiment + issue detection'
+  ],
+  'Repeat Sales': [
+    'Upsell/cross-sell recommendations',
+    'Create upsell/cross-sell messaging',
+    'Improve order experience to boost repeats'
+  ],
+  'Business Intelligence & Analytics': [
+    'Instant sales dashboard (daily/weekly)',
+    'Marketing performance dashboard (ROI)',
+    'Campaign performance tracking dashboard',
+    'Track calls Clicks and form fills',
+    'Call/chat/ticket insights from conversations',
+    'Review sentiment → improvement ideas',
+    'Review sentiment + competitor comparisons',
+    'Ops dashboard (orders blacklog SLA)'
+  ],
+  'Market Strategy & Innovation': [
+    'Business Idea Generation',
+    'Trending Products',
+    'Track competitors pricing and offers',
+    'Market & industry trend summaries',
+    'Predict demand & business outcomes',
+    'Competitor monitoring & price alerts',
+    'Market & trend research summaries',
+    'AI research summaries for decisions',
+    'Sales & revenue forecasting',
+    'Predict demand and stock needs'
+  ],
+  'Financial Health & Risk': [
+    'Spot profit leaks and improve margins',
+    'Prevent revenue leakage from contracts (renewals pricing penalties)',
+    'Cashflow + spend control dashboard',
+    'Instant finance dashboard (monthly/weekly)',
+    'Budget vs actual insights with variance alerts',
+    'Cashflow forecast (30/60/90 days)',
+    'Spend control alerts and trend insights',
+    'Contract risk snapshot (high-risk clauses obligations renewals)',
+    'Supplier risk and exposure tracking',
+    'Supplier risk monitoring'
+  ],
+  'Org Efficiency & Hiring': [
+    'Hire faster to support growth',
+    'Build a knowledge base from SOPs',
+    'Internal Q&A bot from SOPs/policies',
+    'Industry best practice',
+    'Delivery/logistics performance reporting',
+    'Hiring funnel dashboard',
+    'Improve hire quality insights',
+    'Interview feedback summaries',
+    'HR knowledge base from policies',
+    'Internal Q&A bot for HR queries',
+    'Organize resumes and candidate notes',
+    'Brand monitoring & crisis alerts',
+    'Search/chat across help docs',
+    'Internal Q&A bot from SOPs',
+    'Weekly goals + progress summary',
+    'Chat with your personal documents',
+    'Auto-tag and organize your files'
+  ],
+  'Improve Yourself': [
+    'Plan weekly priorities and tasks',
+    'Prep for pitches and presentations',
+    'Personal branding content plan',
+    'Create a learning plan + summaries',
+    'Contract drafting & review support',
+    'Team Spirit Action plan'
+  ],
+  'Sales & Content Automation': [
+    'Automate lead capture into Sheets/CRM',
+    'Auto-capture leads from forms/ads',
+    'Draft proposals quotes and emails faster',
+    'Mail + DM + influencer outreach automation',
+    'Auto-reply + follow-up sequences',
+    'Summarize calls/chats into CRM notes',
+    'Repurpose long videos into shorts',
+    'Schedule posts + reuse content ideas',
+    'Bulk update product listings/catalog',
+    'Generate A+ store content at scale',
+    'Auto-create weekly content calendar'
+  ],
+  'Finance Legal & Admin': [
+    'Automate procurement requests/approvals',
+    'Automate procurement approvals',
+    'Automate HR or Finance',
+    'Extract invoice/order data from PDFs',
+    'Extract invoices/receipts from PDFs into Sheets',
+    'Classify docs (invoice/contract/report)',
+    'Bookkeeping assistance + auto categorization',
+    'Expense tracking + spend control automation',
+    'Auto-generate client/vendor payment reminders',
+    'Draft finance emails reports and summaries faster',
+    'Extract key terms from contracts (payment renewal notice period)',
+    'Automate contract approvals renewals and deadline reminders',
+    'Compliance checklist summaries and policy Q&A'
+  ],
+  'Customer Support Ops': [
+    '24/7 support assistant + escalation',
+    'Automate order updates and tracking',
+    'Auto-tag route and prioritize tickets',
+    'Draft replies in brand voice',
+    'Build a support knowledge base',
+    'WhatsApp/Instagram instant replies',
+    'Support ticket routing automation'
+  ],
+  'Recruiting & HR Ops': [
+    'Automate interview scheduling',
+    'Automate candidate follow-ups',
+    'High-volume hiring coordination',
+    'Onboarding checklists + HR support',
+    'Draft job descriptions and outreach',
+    'Find candidates faster (multi-source)',
+    'Resume screening + shortlisting'
+  ],
+  'Personal & Team Productivity': [
+    'Draft emails reports and proposals',
+    'Summarize PDFs and long documents',
+    'Extract data from PDFs/images to Sheets',
+    'Organize notes automatically',
+    'Summarize meetings + action items',
+    'Excel and App script Automation',
+    'Auto-tag and organize documents'
+  ]
 };
 
 // LocalStorage keys
@@ -545,7 +509,7 @@ const ChatBotNewMobile = () => {
       text: "Welcome to Ikshan!\n\nLet's find the perfect AI solution for you.",
       sender: 'bot',
       timestamp: new Date(),
-      showGoalOptions: true
+      showOutcomeOptions: true
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -553,11 +517,12 @@ const ChatBotNewMobile = () => {
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [selectedSubDomain, setSelectedSubDomain] = useState(null);
+  const [selectedDomainName, setSelectedDomainName] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [requirement, setRequirement] = useState(null);
   const [userName, setUserName] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
-  const [flowStage, setFlowStage] = useState('goal');
+  const [flowStage, setFlowStage] = useState('outcome');
 
   const [businessContext, setBusinessContext] = useState({
     businessType: null,
@@ -571,6 +536,13 @@ const ChatBotNewMobile = () => {
     solutionFor: null,
     salaryContext: null
   });
+
+  // Payment state
+  const [paymentVerified, setPaymentVerified] = useState(() => {
+    return localStorage.getItem('ikshan-rca-paid') === 'true';
+  });
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentOrderId, setPaymentOrderId] = useState(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
@@ -631,35 +603,29 @@ const ChatBotNewMobile = () => {
     { id: 'other', name: 'Other', emoji: '' }
   ];
 
-  const goalOptions = [
-    { id: 'grow-revenue', text: 'Grow Revenue', subtext: 'Marketing, Social, SEO, Sales, Ecom', emoji: '' },
-    { id: 'save-time', text: 'Save Time', subtext: 'Automation Workflow, Extract PDF, Bulk Task', emoji: '' },
-    { id: 'better-decisions', text: 'Make Better Decisions', subtext: 'Dashboards, Insights, Trend, Risk', emoji: '' },
-    { id: 'personal-growth', text: 'Personal Growth', subtext: 'Productivity, Career, Learning, Brand', emoji: '' }
+  const outcomeOptions = [
+    { id: 'lead-generation', text: 'Lead Generation', subtext: 'Marketing, SEO & Social', emoji: '' },
+    { id: 'sales-retention', text: 'Sales & Retention', subtext: 'Calling, Support & Expansion', emoji: '' },
+    { id: 'business-strategy', text: 'Business Strategy', subtext: 'Intelligence, Market & Org', emoji: '' },
+    { id: 'save-time', text: 'Save Time', subtext: 'Automation Workflow, Extract PDF, Bulk Task', emoji: '' }
   ];
 
-  const roleOptions = [
-    { id: 'founder-owner', text: 'Founder / Owner', emoji: '' },
-    { id: 'sales-marketing', text: 'Sales / Marketing', emoji: '' },
-    { id: 'ops-admin', text: 'Ops / Admin', emoji: '' },
-    { id: 'finance-legal', text: 'Finance / Legal', emoji: '' },
-    { id: 'hr-recruiting', text: 'HR / Recruiting', emoji: '' },
-    { id: 'support-success', text: 'Support / Success', emoji: '' },
-    { id: 'individual-student', text: 'Individual / Student', emoji: '' },
-    { id: 'other-role', text: 'Other (Please type below)', emoji: '' }
-  ];
-
-  // State for custom role input
+  // State for custom role input (kept for backward compatibility)
   const [customRole, setCustomRole] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [customCategoryInput, setCustomCategoryInput] = useState('');
 
-  // Get categories based on selected goal and role
-  const getCategoriesForSelection = useCallback(() => {
-    if (!selectedGoal || !userRole) return [];
-    const roleKey = userRole === 'other-role' ? 'individual-student' : userRole;
-    return CATEGORIES_DATA[selectedGoal]?.[roleKey] || [];
-  }, [selectedGoal, userRole]);
+  // Get domains based on selected outcome
+  const getDomainsForSelection = useCallback(() => {
+    if (!selectedGoal) return [];
+    return OUTCOME_DOMAINS[selectedGoal] || [];
+  }, [selectedGoal]);
+
+  // Get tasks based on selected domain
+  const getTasksForSelection = useCallback(() => {
+    if (!selectedDomainName) return [];
+    return DOMAIN_TASKS[selectedDomainName] || [];
+  }, [selectedDomainName]);
 
   const subDomains = {
     marketing: [
@@ -888,12 +854,92 @@ const ChatBotNewMobile = () => {
     setMessages(prev => [...prev, botMessage]);
   };
 
+  // ============================================
+  // PAYMENT HANDLERS
+  // ============================================
+
+  const handlePayForRCA = async () => {
+    setPaymentLoading(true);
+    try {
+      const response = await fetch('/api/v1/payments/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: 499,
+          customer_id: userEmail || `guest_${Date.now()}`,
+          customer_email: userEmail || '',
+          customer_phone: '',
+          return_url: `${window.location.origin}?payment_status=success`,
+          description: 'Ikshan Root Cause Analysis — Premium Deep Dive',
+          udf1: 'rca_unlock',
+          udf2: selectedGoal || ''
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.payment_links) {
+        setPaymentOrderId(data.order_id);
+        const paymentUrl = data.payment_links.web || data.payment_links.mobile || Object.values(data.payment_links)[0];
+        if (paymentUrl) {
+          window.location.href = paymentUrl;
+        } else {
+          throw new Error('No payment URL received');
+        }
+      } else {
+        throw new Error(data.error || 'Failed to create payment order');
+      }
+    } catch (error) {
+      console.error('Payment initiation failed:', error);
+      setMessages(prev => [...prev, {
+        id: getNextMessageId(),
+        text: `⚠️ **Payment Error**\n\nSomething went wrong. Please try again.\n\n_Error: ${error.message}_`,
+        sender: 'bot',
+        timestamp: new Date(),
+        showFinalActions: true
+      }]);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  // Check payment status on return
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment_status');
+    const orderId = urlParams.get('order_id');
+
+    if (paymentStatus === 'success' && orderId) {
+      const verifyPayment = async () => {
+        try {
+          const res = await fetch(`/api/v1/payments/status/${orderId}`);
+          const data = await res.json();
+          if (data.success && (data.status === 'CHARGED' || data.status === 'AUTO_REFUND')) {
+            setPaymentVerified(true);
+            localStorage.setItem('ikshan-rca-paid', 'true');
+            setMessages(prev => [...prev, {
+              id: getNextMessageId(),
+              text: `✅ **Payment Successful!**\n\nYou now have full access to Root Cause Analysis.`,
+              sender: 'bot',
+              timestamp: new Date(),
+              showFinalActions: true
+            }]);
+          }
+        } catch (err) {
+          console.error('Payment verification failed:', err);
+        }
+        window.history.replaceState({}, '', window.location.pathname);
+      };
+      verifyPayment();
+    }
+  }, []);
+
   const handleStartNewIdea = () => {
     // Save current chat to history if there are messages beyond the initial welcome
     if (messages.length > 1) {
       const userMessages = messages.filter(m => m.sender === 'user');
-      const goalLabel = goalOptions.find(g => g.id === selectedGoal)?.text || '';
-      const chatTitle = goalLabel || userMessages[0]?.text?.slice(0, 30) || 'New Chat';
+      const outcomeLabel = outcomeOptions.find(g => g.id === selectedGoal)?.text || '';
+      const chatTitle = outcomeLabel || userMessages[0]?.text?.slice(0, 30) || 'New Chat';
       const lastUserMessage = userMessages[userMessages.length - 1]?.text || '';
       
       const newHistoryItem = {
@@ -912,6 +958,7 @@ const ChatBotNewMobile = () => {
     setSelectedGoal(null);
     setSelectedDomain(null);
     setSelectedSubDomain(null);
+    setSelectedDomainName(null);
     setUserRole(null);
     setRequirement(null);
     setUserName(null);
@@ -930,7 +977,7 @@ const ChatBotNewMobile = () => {
       solutionFor: null,
       salaryContext: null
     });
-    setFlowStage('goal');
+    setFlowStage('outcome');
     setShowDashboard(false);
     setDashboardData({
       goalLabel: '',
@@ -949,106 +996,82 @@ const ChatBotNewMobile = () => {
       text: "Welcome to Ikshan!\n\nLet's find the perfect AI solution for you.",
       sender: 'bot',
       timestamp: new Date(),
-      showGoalOptions: true
+      showOutcomeOptions: true
     };
     setMessages([welcomeMessage]);
   };
 
-  // Handle goal selection (Question 1)
-  const handleGoalClick = (goal) => {
-    setSelectedGoal(goal.id);
+  // Handle outcome selection (Question 1)
+  const handleOutcomeClick = (outcome) => {
+    setSelectedGoal(outcome.id);
 
     const userMessage = {
       id: getNextMessageId(),
-      text: `${goal.text}`,
+      text: `${outcome.text}`,
       sender: 'user',
       timestamp: new Date()
     };
 
+    // Show domains based on selected outcome
+    const domains = OUTCOME_DOMAINS[outcome.id] || [];
     const botMessage = {
       id: getNextMessageId(),
-      text: `Great choice! You want to **${goal.text.toLowerCase()}**.\n\nNow, which best describes you?`,
+      text: `Great choice! You want to focus on **${outcome.text.toLowerCase()}**.\n\nNow, select the domain that best matches your need:`,
       sender: 'bot',
       timestamp: new Date(),
-      showRoleOptions: true
+      showDomainOptions: true,
+      domains: domains
     };
 
     setMessages(prev => [...prev, userMessage, botMessage]);
-    setFlowStage('role');
+    setFlowStage('domain');
 
-    saveToSheet(`Selected Goal: ${goal.text}`, '', '', '');
+    saveToSheet(`Selected Outcome: ${outcome.text}`, '', '', '');
   };
 
-  // Handle role selection (Question 2)
-  const handleRoleClick = (role) => {
-    setUserRole(role.id);
+  // Handle domain selection (Question 2)
+  const handleDomainClickNew = (domain) => {
+    setSelectedDomainName(domain);
 
     const userMessage = {
       id: getNextMessageId(),
-      text: `${role.text}`,
+      text: `${domain}`,
       sender: 'user',
       timestamp: new Date()
     };
 
-    // Show categories based on goal + role
-    setFlowStage('category');
-    const categories = CATEGORIES_DATA[selectedGoal]?.[role.id] || [];
+    // Show tasks based on selected domain
+    setFlowStage('task');
+    const tasks = DOMAIN_TASKS[domain] || [];
     const botMessage = {
       id: getNextMessageId(),
-      text: `Perfect!\n\nBased on your selection, here are the categories where your problems might fall:\n\n**Select one that best matches your need:**`,
+      text: `Perfect!\n\nHere are the tasks in **${domain}**:\n\n**Select one that best matches your need:**`,
       sender: 'bot',
       timestamp: new Date(),
-      showCategoryOptions: true,
-      categories: categories
+      showTaskOptions: true,
+      tasks: tasks
     };
     setMessages(prev => [...prev, userMessage, botMessage]);
 
-    saveToSheet(`User Role: ${role.text}`, '', '', '');
+    saveToSheet(`Selected Domain: ${domain}`, '', '', '');
   };
 
-  // Handle custom role submission
-  const handleCustomRoleSubmit = (customRoleText) => {
-    setCustomRole(customRoleText);
+  // Handle task selection (Question 3) - Go directly to solution
+  const handleTaskClick = (task) => {
+    setSelectedCategory(task);
 
     const userMessage = {
       id: getNextMessageId(),
-      text: customRoleText,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
-    // Use individual-student categories as fallback for custom roles
-    setFlowStage('category');
-    const categories = CATEGORIES_DATA[selectedGoal]?.['individual-student'] || [];
-    const botMessage = {
-      id: getNextMessageId(),
-      text: `Thanks! As a **${customRoleText}**, here are some categories that might help:\n\n**Select one that best matches your need:**`,
-      sender: 'bot',
-      timestamp: new Date(),
-      showCategoryOptions: true,
-      categories: categories
-    };
-
-    setMessages(prev => [...prev, userMessage, botMessage]);
-    saveToSheet(`Custom Role: ${customRoleText}`, '', '', '');
-  };
-
-  // Handle category selection (Question 3) - Go directly to solution
-  const handleCategoryClick = (category) => {
-    setSelectedCategory(category);
-
-    const userMessage = {
-      id: getNextMessageId(),
-      text: `${category}`,
+      text: `${task}`,
       sender: 'user',
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage]);
-    saveToSheet(`Selected Category: ${category}`, '', '', '');
+    saveToSheet(`Selected Task: ${task}`, '', '', '');
     
     // Directly show solution
-    showSolutionStack(category);
+    showSolutionStack(task);
   };
 
   // Handle "Type here" button click - skip category selection
@@ -1073,15 +1096,15 @@ const ChatBotNewMobile = () => {
     saveToSheet(`User chose to type custom problem`, '', '', '');
   };
 
-  // Show solution stack directly after category selection - CHAT VERSION (Stage 1 Format)
+  // Show solution stack directly after task selection - CHAT VERSION (Stage 1 Format)
   const showSolutionStack = async (category) => {
     setFlowStage('complete');
     setIsTyping(true);
 
     try {
-      // Get goal and role labels for display
-      const goalLabel = goalOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
-      const roleLabel = roleOptions.find(r => r.id === userRole)?.text || customRole || userRole;
+      // Get outcome and domain labels for display
+      const outcomeLabel = outcomeOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
+      const domainLabel = selectedDomainName || 'General';
       
       // Search for relevant companies from CSV
       let relevantCompanies = [];
@@ -1096,10 +1119,10 @@ const ChatBotNewMobile = () => {
             subdomain: category,
             requirement: category,
             goal: selectedGoal,
-            role: userRole,
+            role: selectedDomainName,
             userContext: {
               goal: selectedGoal,
-              role: userRole,
+              domain: selectedDomainName,
               category: category
             }
           })
@@ -1117,7 +1140,7 @@ const ChatBotNewMobile = () => {
       
       // Get relevant Chrome extensions and GPTs
       let extensions = getRelevantExtensions(category, selectedGoal);
-      let customGPTs = getRelevantGPTs(category, selectedGoal, userRole);
+      let customGPTs = getRelevantGPTs(category, selectedGoal, selectedDomainName);
       
       // Use fallbacks if empty
       if (extensions.length === 0) {
@@ -1216,14 +1239,14 @@ const ChatBotNewMobile = () => {
       setMessages(prev => [...prev, finalOutput]);
       setIsTyping(false);
 
-      saveToSheet('Solution Stack Generated', `Goal: ${goalLabel}, Role: ${roleLabel}, Category: ${category}`, category, category);
+      saveToSheet('Solution Stack Generated', `Outcome: ${outcomeLabel}, Domain: ${domainLabel}, Task: ${category}`, category, category);
     } catch (error) {
       console.error('Error generating solution stack:', error);
 
       // Fallback response with Stage 1 format
-      const goalLabel = goalOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
-      const roleLabel = roleOptions.find(r => r.id === userRole)?.text || customRole || userRole;
-      const fallbackPrompt = generateImmediatePrompt(selectedGoal, roleLabel, category, category);
+      const outcomeLabel = outcomeOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
+      const domainLabel = selectedDomainName || 'General';
+      const fallbackPrompt = generateImmediatePrompt(selectedGoal, domainLabel, category, category);
       
       let fallbackResponse = `## 🎯 Recommended Solution Pathways (Immediate Action)\n\n`;
       fallbackResponse += `I recommend the following solution pathways that you can start implementing immediately.\n\n`;
@@ -1415,7 +1438,7 @@ const ChatBotNewMobile = () => {
     };
     setMessages(prev => [...prev, loadingMessage]);
 
-    const userType = userRole?.text || 'General user';
+    const userType = selectedDomainName || 'General user';
     const businessType = businessContext.businessType || '[YOUR BUSINESS TYPE]';
     const industry = businessContext.industry || '[YOUR INDUSTRY]';
     const targetAudience = businessContext.targetAudience || '[YOUR TARGET AUDIENCE]';
@@ -1426,13 +1449,7 @@ const ChatBotNewMobile = () => {
     const subDomainName = selectedSubDomain || '[YOUR FOCUS AREA]';
     const topTool = companies[0];
 
-    const contextForPrompts = userRole?.id === 'business-owner'
-      ? `I run a ${businessType} in the ${industry} industry. My target audience is ${targetAudience} and I serve ${marketSegment}.`
-      : userRole?.id === 'professional'
-      ? `I'm a ${roleAndIndustry}. I'm looking for a solution ${solutionFor}.`
-      : userRole?.id === 'freelancer'
-      ? `I'm a freelancer doing ${businessType}. My main challenge is ${targetAudience}.`
-      : `I'm exploring solutions in ${domainName}.`;
+    const contextForPrompts = `I'm exploring solutions in ${selectedDomainName || domainName}. My outcome goal is ${outcomeOptions.find(g => g.id === selectedGoal)?.text || 'business improvement'}.`;
 
     const starterPrompts = `
 ---
@@ -1450,7 +1467,7 @@ You are my senior operations analyst. Convert my situation into a decision-ready
 
 CONTEXT (messy notes): ${contextForPrompts} My problem: ${userRequirement}
 GOAL (desired outcome): [DESCRIBE WHAT SUCCESS LOOKS LIKE]
-WHO IT AFFECTS (users/teams): ${userRole?.id === 'business-owner' ? targetAudience : userRole?.id === 'professional' ? solutionFor : '[WHO USES THIS]'}
+WHO IT AFFECTS (users/teams): [WHO USES THIS]
 CONSTRAINTS (time/budget/tools/policy): [LIST YOUR CONSTRAINTS]
 WHAT I'VE TRIED (if any): [PAST ATTEMPTS OR "None yet"]
 DEADLINE/URGENCY: [WHEN DO YOU NEED THIS SOLVED?]
@@ -1572,9 +1589,9 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
 
     setTimeout(async () => {
       try {
-        // Get goal and role labels for display
-        const goalLabel = goalOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
-        const roleLabel = roleOptions.find(r => r.id === userRole)?.text || customRole || userRole;
+        // Get outcome and domain labels for display
+        const outcomeLabel = outcomeOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
+        const domainLabel = selectedDomainName || 'General';
         
         // Search for relevant companies from CSV
         const searchResponse = await fetch('/api/search-companies', {
@@ -1587,10 +1604,10 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
             subdomain: selectedCategory,
             requirement: requirement,
             goal: selectedGoal,
-            role: userRole,
+            role: selectedDomainName,
             userContext: {
               goal: selectedGoal,
-              role: userRole,
+              domain: selectedDomainName,
               category: selectedCategory
             }
           })
@@ -1601,7 +1618,7 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
         
         // Get relevant Chrome extensions and GPTs
         let extensions = getRelevantExtensions(selectedCategory, selectedGoal);
-        let customGPTs = getRelevantGPTs(selectedCategory, selectedGoal, userRole);
+        let customGPTs = getRelevantGPTs(selectedCategory, selectedGoal, selectedDomainName);
         
         // Use fallbacks if empty
         if (extensions.length === 0) {
@@ -1701,14 +1718,14 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
         setIsTyping(false);
         setFlowStage('complete');
 
-        saveToSheet('Solution Stack Generated', `Goal: ${selectedGoal}, Role: ${userRole}, Category: ${selectedCategory}`, selectedCategory, requirement);
+        saveToSheet('Solution Stack Generated', `Outcome: ${selectedGoal}, Domain: ${selectedDomainName}, Task: ${selectedCategory}`, selectedCategory, requirement);
       } catch (error) {
         console.error('Error generating solution stack:', error);
 
         // Fallback response with Stage 1 format
-        const goalLabel = goalOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
-        const roleLabel = roleOptions.find(r => r.id === userRole)?.text || customRole || userRole;
-        const fallbackPrompt = generateImmediatePrompt(selectedGoal, roleLabel, selectedCategory, requirement);
+        const outcomeLabel = outcomeOptions.find(g => g.id === selectedGoal)?.text || selectedGoal;
+        const domainLabel = selectedDomainName || 'General';
+        const fallbackPrompt = generateImmediatePrompt(selectedGoal, domainLabel, selectedCategory, requirement);
         
         let fallbackResponse = `## Recommended Solution Pathways (Immediate Action)\n\n`;
         fallbackResponse += `I recommend the following solution pathways that you can start implementing immediately.\n\n`;
@@ -1900,14 +1917,13 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
     if (flowStage === 'other-domain') {
       setSelectedDomain({ id: 'other', name: currentInput, emoji: '✨' });
       setSelectedSubDomain(currentInput);
-      setFlowStage('role');
+      setFlowStage('requirement');
 
       const botMessage = {
         id: getNextMessageId(),
-        text: `Got it! **${currentInput}** - that's interesting! 🎯\n\nNow tell me a bit about yourself:`,
+        text: `Got it! **${currentInput}** - that's interesting! 🎯\n\n**Please describe what you're trying to achieve or the problem you want to solve:**\n\n_(Tell me in 2-3 lines so I can find the best solutions for you)_`,
         sender: 'bot',
-        timestamp: new Date(),
-        showRoleOptions: true
+        timestamp: new Date()
       };
 
       setMessages(prev => [...prev, botMessage]);
@@ -2023,23 +2039,23 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
       {/* Main Content */}
       <div className="chat-window">
         {/* Typeform / Flow Stages */}
-        {['goal', 'role', 'category'].includes(flowStage) ? (
+        {['outcome', 'domain', 'task'].includes(flowStage) ? (
             <div className="empty-state">
-              {flowStage === 'goal' && (
+              {flowStage === 'outcome' && (
                  <>
                     {/* Icon removed */}
                     <h1>Professional expertise, on-demand—without the salary or recruiting.</h1>
                     <p>Select what matters most to you right now</p>
                     <div className="suggestions-grid">
-                      {goalOptions.map((goal, index) => (
+                      {outcomeOptions.map((outcome, index) => (
                         <div 
-                            key={goal.id} 
+                            key={outcome.id} 
                             className="suggestion-card" 
-                            onClick={() => handleGoalClick(goal)}
+                            onClick={() => handleOutcomeClick(outcome)}
                             style={{ animationDelay: `${index * 0.1}s`, animation: 'fadeIn 0.5s ease-out forwards' }}
                         >
-                           <h3>{goal.text}</h3>
-                           {goal.subtext && <p className="goal-subtext">{goal.subtext}</p>}
+                           <h3>{outcome.text}</h3>
+                           {outcome.subtext && <p className="goal-subtext">{outcome.subtext}</p>}
                         </div>
                       ))}
                     </div>
@@ -2047,43 +2063,45 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                  </>
               )}
 
-              {flowStage === 'role' && (
+              {flowStage === 'domain' && (
                  <>
                     {/* Icon removed */}
-                    <h1>Which best describes you?</h1>
-                    <p>This helps us tailor the solution</p>
+                    <h1>Which domain best matches your need?</h1>
+                    <p>Select a domain to see relevant tasks</p>
                     <div className="suggestions-grid">
-                      {roleOptions.filter(role => role.id !== 'other-role').map((role, index) => (
+                      {getDomainsForSelection().map((domain, index) => (
                         <div 
-                            key={role.id} 
+                            key={index} 
                             className="suggestion-card" 
-                            onClick={() => handleRoleClick(role)}
+                            onClick={() => handleDomainClickNew(domain)}
+                            style={{ animationDelay: `${index * 0.1}s`, animation: 'fadeIn 0.5s ease-out forwards' }}
                         >
-                           <h3>{role.text}</h3>
+                           <h3>{domain}</h3>
                         </div>
                       ))}
                     </div>
                     <button 
                         style={{marginTop: '2rem', background: 'transparent', border:'none', color:'#6b7280', cursor:'pointer'}}
-                        onClick={() => { setSelectedGoal(null); setFlowStage('goal'); }}
+                        onClick={() => { setSelectedGoal(null); setSelectedDomainName(null); setFlowStage('outcome'); }}
                     >
                         ← Back
                     </button>
                  </>
               )}
 
-              {flowStage === 'category' && (
+              {flowStage === 'task' && (
                  <>
                     {/* Icon removed */}
-                    <h1>In which category does your problem fall?</h1>
+                    <h1>What task would you like help with?</h1>
                     <div className="suggestions-grid">
-                      {getCategoriesForSelection().map((category, index) => (
+                      {getTasksForSelection().map((task, index) => (
                         <div 
                             key={index} 
                             className="suggestion-card" 
-                            onClick={() => handleCategoryClick(category)}
+                            onClick={() => handleTaskClick(task)}
+                            style={{ animationDelay: `${index * 0.05}s`, animation: 'fadeIn 0.3s ease-out forwards' }}
                          >
-                           <h3>{category}</h3>
+                           <h3>{task}</h3>
                         </div>
                       ))}
                        <div 
@@ -2093,6 +2111,12 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                            <h3>Type my own problem...</h3>
                        </div>
                     </div>
+                    <button 
+                        style={{marginTop: '2rem', background: 'transparent', border:'none', color:'#6b7280', cursor:'pointer'}}
+                        onClick={() => { setSelectedDomainName(null); setFlowStage('domain'); }}
+                    >
+                        ← Back
+                    </button>
                  </>
               )}
             </div>
@@ -2120,20 +2144,69 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
                         
                         {/* Actions */}
                         {message.showFinalActions && (
-                            <div style={{marginTop: '1.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap'}}>
-                                <button 
-                                    onClick={handleStartNewIdea}
-                                    className="action-btn primary"
-                                >
-                                    <Sparkles size={16}/> Check Another Idea
-                                </button>
-                                {message.companies && message.companies.length > 0 && (
-                                   <button
-                                     onClick={() => handleLearnImplementation(message.companies, message.userRequirement)}
-                                     className="action-btn secondary"
-                                   >
-                                     Learn Implementation
-                                   </button>
+                            <div style={{marginTop: '1.5rem'}}>
+                                {/* Action Buttons Row */}
+                                <div style={{display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem'}}>
+                                    <button 
+                                        onClick={handleStartNewIdea}
+                                        className="action-btn primary"
+                                    >
+                                        <Sparkles size={16}/> Check Another Idea
+                                    </button>
+                                    {message.companies && message.companies.length > 0 && (
+                                       <button
+                                         onClick={() => handleLearnImplementation(message.companies, message.userRequirement)}
+                                         className="action-btn secondary"
+                                       >
+                                         Learn Implementation
+                                       </button>
+                                    )}
+                                </div>
+
+                                {/* Payment Card — Unlock RCA */}
+                                {selectedCategory && !paymentVerified && (
+                                    <div className="payment-card">
+                                        <div className="payment-card-badge">
+                                            <Lock size={12}/> Premium
+                                        </div>
+                                        <div className="payment-card-content">
+                                            <div className="payment-card-left">
+                                                <h3 className="payment-card-title">
+                                                    <Brain size={20}/> Unlock Root Cause Analysis
+                                                </h3>
+                                                <p className="payment-card-desc">
+                                                    Get a deep, structured diagnosis with AI-powered root cause analysis and corrective action plan.
+                                                </p>
+                                                <ul className="payment-card-features">
+                                                    <li><Shield size={14}/> Problem Definition</li>
+                                                    <li><BarChart3 size={14}/> Data Collection</li>
+                                                    <li><Brain size={14}/> Root Cause Summary</li>
+                                                    <li><TrendingUp size={14}/> Action Plan</li>
+                                                </ul>
+                                            </div>
+                                            <div className="payment-card-right">
+                                                <div className="payment-card-price">
+                                                    <span className="payment-price-currency">₹</span>
+                                                    <span className="payment-price-amount">499</span>
+                                                    <span className="payment-price-period">one-time</span>
+                                                </div>
+                                                <button
+                                                    onClick={handlePayForRCA}
+                                                    disabled={paymentLoading}
+                                                    className="payment-card-btn"
+                                                >
+                                                    {paymentLoading ? (
+                                                        <>Processing...</>
+                                                    ) : (
+                                                        <><CreditCard size={16}/> Pay ₹499 &amp; Unlock</>
+                                                    )}
+                                                </button>
+                                                <p className="payment-card-secure">
+                                                    <Shield size={12}/> Secured by JusPay
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -2160,37 +2233,29 @@ This solution helps at the **${subDomainName}** stage of your ${domainName} oper
       </div>
 
       {/* Input Area */}
-      {!['goal', 'category'].includes(flowStage) && (
+      {!['outcome', 'domain', 'task', 'rca'].includes(flowStage) && (
           <div className="input-area">
             {speechError && <div style={{position:'absolute', top:'-40px', background:'#fee2e2', color:'#b91c1c', padding:'0.5rem 1rem', borderRadius:'8px', fontSize:'0.9rem'}}>{speechError}</div>}
             <div className="input-container">
                <textarea 
-                  value={flowStage === 'role' ? customRole : inputValue}
-                  onChange={(e) => flowStage === 'role' ? setCustomRole(e.target.value) : setInputValue(e.target.value)}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      if (flowStage === 'role' && customRole.trim()) {
-                        handleCustomRoleSubmit(customRole.trim());
-                      } else {
-                        handleSend();
-                      }
+                      handleSend();
                     }
                   }}
-                  placeholder={flowStage === 'role' ? "Other? Type your role here..." : (isRecording ? "Listening..." : "Message Ikshan...")}
+                  placeholder={isRecording ? "Listening..." : "Message Ikshan..."}
                   rows={1}
                />
                <button 
                   onClick={() => {
-                    if (flowStage === 'role' && customRole.trim()) {
-                      handleCustomRoleSubmit(customRole.trim());
-                    } else if (flowStage !== 'role') {
-                      voiceSupported ? toggleVoiceRecording() : handleSend();
-                    }
+                    voiceSupported ? toggleVoiceRecording() : handleSend();
                   }} 
-                  title={flowStage === 'role' ? "Submit" : (isRecording ? "Stop" : "Send")}
+                  title={isRecording ? "Stop" : "Send"}
                >
-                  {flowStage === 'role' ? <Send size={20}/> : (isRecording ? <MicOff size={20} /> : (inputValue.trim() ? <Send size={20}/> : <Mic size={20}/>))}
+                  {isRecording ? <MicOff size={20} /> : (inputValue.trim() ? <Send size={20}/> : <Mic size={20}/>)}
                </button>
             </div>
           </div>

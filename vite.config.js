@@ -7,6 +7,12 @@ export default defineConfig({
   
   server: {
     proxy: {
+      // FastAPI backend (Python) — payments, v1 routes
+      '/api/v1': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Express server (Node.js) — legacy routes
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
