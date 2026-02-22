@@ -8,7 +8,7 @@ GET   /api/v1/leads              — list leads with filters
 POST  /api/v1/leads/{id}/conversations — save conversation
 """
 
-from __future__ import annotations
+
 
 import structlog
 from fastapi import APIRouter, HTTPException, Query, Request

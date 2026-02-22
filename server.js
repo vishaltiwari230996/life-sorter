@@ -1,30 +1,34 @@
-// Simple local dev server for API routes
+// server.js - Fully Corrected
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { createRequire } from 'module';
-import path from 'path';
+import path from 'url';
 import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
+// 1. Load env variables immediately
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3001;
+// 2. FIX: Set port to 8000 to match your Vite Proxy settings
+const PORT = process.env.PORT || 8000;
 
-// Import API handlers
+// 3. Import ALL API handlers
 import chatHandler from './api/chat.js';
 import searchCompaniesHandler from './api/search-companies.js';
 import companiesHandler from './api/companies.js';
 import speakHandler from './api/speak.js';
 import marketIntelligenceHandler from './api/market-intelligence.js';
+import saveIdeaHandler from './api/save-idea.js';
+import createOrderHandler from './api/v1/payments/create-order.js';
 
-// API routes
+// 4. API routes mapping
 app.post('/api/chat', async (req, res) => {
   await chatHandler(req, res);
 });
@@ -45,31 +49,36 @@ app.post('/api/market-intelligence', async (req, res) => {
   await marketIntelligenceHandler(req, res);
 });
 
-// Serve static files from public folder
-app.use(express.static(path.join(__dirname, 'public')));
+// FIX: Added missing routes that were causing 404s
+app.post('/api/save-idea', async (req, res) => {
+  try {
+    await saveIdeaHandler(req, res);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
-// In production, serve the built frontend
+app.post('/api/v1/payments/create-order', async (req, res) => {
+  try {
+    await createOrderHandler(req, res);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Serve static files
+app.use(express.static(join(__dirname, 'public')));
+
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'dist')));
-  
-  // Handle SPA routing - serve index.html for all non-API routes
+  app.use(express.static(join(__dirname, 'dist')));
   app.get('*', (req, res) => {
     if (!req.path.startsWith('/api')) {
-      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+      res.sendFile(join(__dirname, 'dist', 'index.html'));
     }
   });
 }
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 API Server running on http://localhost:${PORT}`);
-  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`   API routes:`);
-  console.log(`   - POST /api/chat`);
-  console.log(`   - POST /api/search-companies`);
-  console.log(`   - GET /api/companies`);
-  console.log(`   - POST /api/speak (TTS)`);
-  console.log(`   - POST /api/market-intelligence`);
-  if (process.env.NODE_ENV === 'production') {
-    console.log(`   Frontend: Serving built files from /dist`);
-  }
+  console.log(`   Vite Proxy should now connect successfully.`);
 });

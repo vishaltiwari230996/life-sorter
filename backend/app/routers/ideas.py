@@ -5,7 +5,6 @@ IDEAS ROUTER — Idea Capture to Google Sheets
 POST /api/v1/ideas — Save user ideas via Google Sheets webhook
 """
 
-from __future__ import annotations
 
 import structlog
 import httpx

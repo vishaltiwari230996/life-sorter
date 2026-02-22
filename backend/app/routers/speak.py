@@ -5,10 +5,10 @@ TEXT-TO-SPEECH ROUTER — OpenAI TTS with Hindi Translation
 POST /api/v1/speak — Convert text to speech (English or Hindi)
 """
 
-from __future__ import annotations
+# ❌ REMOVED: from __future__ import annotations
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Body # ✅ Added Body here
 from fastapi.responses import Response
 
 from app.config import get_settings
@@ -20,10 +20,12 @@ logger = structlog.get_logger()
 
 router = APIRouter()
 
-
 @router.post("/speak")
 @limiter.limit(lambda: get_settings().RATE_LIMIT_SPEAK)
-async def text_to_speech(request: Request, body: SpeakRequest):
+async def text_to_speech(
+    request: Request,
+    body: SpeakRequest = Body(...) # ✅ Added = Body(...) here
+):
     """
     Convert text to speech using OpenAI TTS.
 

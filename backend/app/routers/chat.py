@@ -2,16 +2,11 @@
 ═══════════════════════════════════════════════════════════════
 CHAT ROUTER — 2-Stage AI Chat with JusPay Payment Gating
 ═══════════════════════════════════════════════════════════════
-POST /api/v1/chat
-
-Stage 1 (Free): Open access, all personas, conversation history
-Stage 2 (Paid): Requires valid payment_order_id verified via JusPay
 """
 
-from __future__ import annotations
-
+# REMOVED: from __future__ import annotations
 import structlog
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Body
 
 from app.config import get_settings
 from app.middleware.rate_limit import limiter
@@ -19,18 +14,13 @@ from app.models.chat import ChatRequest, ChatResponse
 from app.services import openai_service, juspay_service
 
 logger = structlog.get_logger()
-
 router = APIRouter()
-
 
 @router.post("/chat", response_model=ChatResponse)
 @limiter.limit(lambda: get_settings().RATE_LIMIT_CHAT)
-async def chat(request: Request, body: ChatRequest):
+async def chat(request: Request, body: ChatRequest = Body(...)):
     """
     AI-powered chat endpoint with persona support and 2-stage gating.
-
-    - **Stage 1** (default): Free access for all users.
-    - **Stage 2**: Requires `payment_order_id` with a verified CHARGED status.
     """
     settings = get_settings()
 
@@ -52,7 +42,6 @@ async def chat(request: Request, body: ChatRequest):
                 },
             )
 
-        # Verify payment via JusPay
         verification = await juspay_service.verify_payment_for_stage2(
             body.payment_order_id,
         )
@@ -66,19 +55,9 @@ async def chat(request: Request, body: ChatRequest):
                 },
             )
 
-        logger.info(
-            "Stage 2 access granted",
-            order_id=body.payment_order_id,
-            txn_id=verification.get("txn_id"),
-        )
-
-    # ── Build context dict ─────────────────────────────────────
+    # ── Build context and history ──────────────────────────────
     context = body.context.model_dump() if body.context else None
-
-    # Convert conversation history to list of dicts
-    history = None
-    if body.conversationHistory:
-        history = [msg.model_dump() for msg in body.conversationHistory]
+    history = [msg.model_dump() for msg in body.conversationHistory] if body.conversationHistory else None
 
     # ── Call OpenAI ────────────────────────────────────────────
     try:

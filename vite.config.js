@@ -1,52 +1,19 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  
+
   server: {
     proxy: {
-      // FastAPI backend (Python) — payments, v1 routes
-      '/api/v1': {
-        target: 'http://localhost:8000',
+      // Send *all* API calls to FastAPI
+      '/api': {
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
-      // Express server (Node.js) — legacy routes
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      }
     },
-    // Reduce file watching overhead
     watch: {
       ignored: ['**/node_modules/**', '**/.venv/**', '**/dist/**', '**/logs/**', '**/media/**']
     }
   },
-  
-  // Performance optimizations
-  build: {
-    // Increase chunk size warning limit
-    chunkSizeWarningLimit: 1000,
-    
-    // Optimize dependencies
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Separate vendor chunks for better caching
-          'react-vendor': ['react', 'react-dom'],
-          'markdown': ['react-markdown']
-        }
-      }
-    },
-    
-    // Faster builds in development
-    sourcemap: false
-  },
-  
-  // Optimize dependency pre-bundling
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'lucide-react'],
-    exclude: []
-  }
 })

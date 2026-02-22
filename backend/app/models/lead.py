@@ -2,7 +2,7 @@
 Lead models — schemas for lead management and scoring.
 """
 
-from __future__ import annotations
+
 
 from typing import Any, Optional
 
