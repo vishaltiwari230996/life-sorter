@@ -8,7 +8,7 @@ GET /api/v1/recommendations/rca         — RCA questionnaire
 GET /api/v1/recommendations/categories  — Available categories
 """
 
-from __future__ import annotations
+
 
 from fastapi import APIRouter, Query, Request
 

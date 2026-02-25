@@ -2,9 +2,7 @@
 Company models — schemas for company search and listing.
 """
 
-from __future__ import annotations
-
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, Field
 
@@ -51,8 +49,8 @@ class CompanySearchRequest(BaseModel):
 class CompanySearchResponse(BaseModel):
     """Response from the company search endpoint."""
     success: bool
-    companies: list[Company] = Field(default_factory=list)
-    alternatives: Optional[list[Company]] = None
+    companies: List[Company] = Field(default_factory=list)
+    alternatives: Optional[List[Company]] = None
     totalCount: Optional[int] = None
     searchMethod: Optional[str] = None
     helpfulResponse: Optional[str] = None
@@ -65,5 +63,12 @@ class CompanyListResponse(BaseModel):
     """Response from the company listing endpoint."""
     success: bool
     count: int = 0
-    companies: list[Company] = Field(default_factory=list)
+    companies: List[Company] = Field(default_factory=list)
     error: Optional[str] = None
+
+# Force Pydantic to resolve types immediately for Python 3.13
+Company.model_rebuild()
+UserContext.model_rebuild()
+CompanySearchRequest.model_rebuild()
+CompanySearchResponse.model_rebuild()
+CompanyListResponse.model_rebuild()

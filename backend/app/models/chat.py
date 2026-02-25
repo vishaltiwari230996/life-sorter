@@ -1,51 +1,38 @@
-"""
-Chat models — request/response schemas for the chat endpoint.
-"""
-
-from __future__ import annotations
-
 from enum import Enum
-from typing import Optional
-
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 
+# 1. No "from __future__ import annotations" at the top!
 
 class Persona(str, Enum):
-    """Available chat personas."""
     PRODUCT = "product"
     CONTRIBUTOR = "contributor"
     ASSISTANT = "assistant"
     DEFAULT = "default"
 
-
 class ConversationMessage(BaseModel):
-    """A single message in the conversation history."""
     role: str = Field(..., description="Message role: 'user', 'assistant', or 'system'")
     content: str = Field(..., description="Message text content")
 
-
 class ChatContext(BaseModel):
-    """Optional context for chat requests."""
     generateBrief: bool = False
     isRedirecting: bool = False
     domain: Optional[str] = None
     subDomain: Optional[str] = None
 
-
 class ChatRequest(BaseModel):
-    """Request body for the chat endpoint."""
-    message: str = Field(..., min_length=1, description="The user's message")
+    message: str = Field(..., min_length=1)
     persona: Persona = Persona.DEFAULT
     context: Optional[ChatContext] = None
-    conversationHistory: Optional[list[ConversationMessage]] = None
-    stage: int = Field(default=1, ge=1, le=2, description="Chat stage: 1 (free) or 2 (paid)")
-    payment_order_id: Optional[str] = Field(
-        default=None,
-        description="JusPay order ID — required for stage 2",
-    )
-
+    # We use List[ConversationMessage] directly so the generator sees the class
+    conversationHistory: Optional[List[ConversationMessage]] = None
+    stage: int = Field(default=1, ge=1, le=2)
+    payment_order_id: Optional[str] = None
 
 class ChatResponse(BaseModel):
-    """Response from the chat endpoint."""
     message: str
-    usage: Optional[dict] = None
+    usage: Optional[Dict[str, Any]] = None
+
+# 2. Force the rebuild so the doc generator doesn't see "ForwardRef"
+ChatRequest.model_rebuild()
+ChatResponse.model_rebuild()

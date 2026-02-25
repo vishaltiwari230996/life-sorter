@@ -6,10 +6,8 @@ GET  /api/v1/companies          — list companies by domain
 POST /api/v1/companies/search   — AI-powered priority search
 """
 
-from __future__ import annotations
-
 import structlog
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Body
 
 from app.config import get_settings
 from app.middleware.rate_limit import limiter
@@ -55,7 +53,7 @@ async def list_companies(
 @limiter.limit(lambda: get_settings().RATE_LIMIT_COMPANIES)
 async def search_companies(
     request: Request,
-    body: CompanySearchRequest,
+    body: CompanySearchRequest = Body(...),
 ):
     """
     AI-powered priority search across the company database.

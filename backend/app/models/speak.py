@@ -2,7 +2,7 @@
 Text-to-Speech models.
 """
 
-from __future__ import annotations
+
 
 from pydantic import BaseModel, Field
 
@@ -14,3 +14,4 @@ class SpeakRequest(BaseModel):
         default="english",
         description="Target language: 'english' or 'hindi'",
     )
+SpeakRequest.model_rebuild()

@@ -31,6 +31,26 @@ logger = structlog.get_logger()
 router = APIRouter()
 
 
+@router.post("/payments/callback")
+async def payment_callback(request: Request):
+    """
+    Handle JusPay/HDFC POST redirect after payment.
+    JusPay POSTs to return_url — we convert it to a GET redirect to the frontend.
+    Passes the actual payment status (not hardcoded success).
+    """
+    settings = get_settings()
+    form_data = await request.form()
+    order_id = form_data.get("order_id") or request.query_params.get("order_id", "")
+    status = form_data.get("status") or request.query_params.get("status", "")
+
+    logger.info("Payment callback received", order_id=order_id, status=status)
+
+    # Pass actual status from JusPay — do NOT hardcode "success"
+    safe_status = status.lower() if status else "unknown"
+    frontend_url = f"{settings.FRONTEND_URL}?payment_status={safe_status}&order_id={order_id}"
+    return RedirectResponse(url=frontend_url, status_code=303)
+
+
 @router.post("/payments/create-order", response_model=CreateOrderResponse)
 @limiter.limit("10/minute")
 async def create_order(request: Request, body: CreateOrderRequest = Body(...)):
