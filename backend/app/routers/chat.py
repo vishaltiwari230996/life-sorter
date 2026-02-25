@@ -11,7 +11,7 @@ Stage 2 (Paid): Requires valid payment_order_id verified via JusPay
 from __future__ import annotations
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Body, HTTPException, Request
 
 from app.config import get_settings
 from app.middleware.rate_limit import limiter
@@ -25,7 +25,7 @@ router = APIRouter()
 
 @router.post("/chat", response_model=ChatResponse)
 @limiter.limit(lambda: get_settings().RATE_LIMIT_CHAT)
-async def chat(request: Request, body: ChatRequest):
+async def chat(request: Request, body: ChatRequest = Body(...)):
     """
     AI-powered chat endpoint with persona support and 2-stage gating.
 

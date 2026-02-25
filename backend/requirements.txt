@@ -28,3 +28,6 @@ structlog==25.1.0
 
 # Performance
 orjson==3.10.18
+
+# Document parsing
+python-docx==1.1.2

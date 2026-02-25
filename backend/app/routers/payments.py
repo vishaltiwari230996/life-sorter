@@ -11,7 +11,7 @@ POST /api/v1/payments/refund         — initiate refund
 # Note: Do NOT use `from __future__ import annotations` here — it breaks
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Body, HTTPException, Request
 
 from app.config import get_settings
 from app.middleware.rate_limit import limiter
@@ -33,7 +33,7 @@ router = APIRouter()
 
 @router.post("/payments/create-order", response_model=CreateOrderResponse)
 @limiter.limit("10/minute")
-async def create_order(request: Request, body: CreateOrderRequest):
+async def create_order(request: Request, body: CreateOrderRequest = Body(...)):
     """
     Create a JusPay payment order.
 
@@ -69,7 +69,7 @@ async def create_order(request: Request, body: CreateOrderRequest):
 
 
 @router.post("/payments/webhook")
-async def payment_webhook(request: Request, body: WebhookPayload):
+async def payment_webhook(request: Request, body: WebhookPayload = Body(...)):
     """
     Receive and verify JusPay webhook callbacks.
 
@@ -158,7 +158,7 @@ async def check_order_status(request: Request, order_id: str):
 
 @router.post("/payments/verify-stage2", response_model=PaymentVerification)
 @limiter.limit("10/minute")
-async def verify_stage2_payment(request: Request, body: dict):
+async def verify_stage2_payment(request: Request, body: dict = Body(...)):
     """
     Verify payment for Stage 2 chat access.
 
@@ -173,7 +173,7 @@ async def verify_stage2_payment(request: Request, body: dict):
 
 @router.post("/payments/refund")
 @limiter.limit("5/minute")
-async def initiate_refund(request: Request, body: RefundRequest):
+async def initiate_refund(request: Request, body: RefundRequest = Body(...)):
     """
     Initiate a refund for a JusPay order.
 

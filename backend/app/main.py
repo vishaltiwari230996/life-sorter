@@ -63,6 +63,10 @@ async def lifespan(app: FastAPI):
     if not settings.JUSPAY_API_KEY:
         logger.warning("⚠️  No JusPay API key configured — payment endpoints will fail")
 
+    # Pre-load all persona documents so task lookups are instant
+    from app.services.persona_doc_service import preload_all_docs
+    preload_all_docs()
+
     yield
 
     logger.info("🛑 Ikshan Backend shutting down")
@@ -110,6 +114,7 @@ def create_app() -> FastAPI:
         recommendations,
         ideas,
         legacy,
+        agent,
     )
 
     app.include_router(chat.router, prefix="/api/v1", tags=["Chat"])
@@ -121,6 +126,7 @@ def create_app() -> FastAPI:
         recommendations.router, prefix="/api/v1", tags=["Recommendations"]
     )
     app.include_router(ideas.router, prefix="/api/v1", tags=["Ideas"])
+    app.include_router(agent.router, prefix="/api/v1", tags=["Agent"])
 
     # Legacy routes for frontend compatibility (/api/chat, /api/companies, etc.)
     app.include_router(legacy.router, prefix="/api", tags=["Legacy"])

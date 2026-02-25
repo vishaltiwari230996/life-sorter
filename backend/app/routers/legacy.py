@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import structlog
 import httpx
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Body, HTTPException, Query, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
 from typing import Optional
@@ -38,7 +38,7 @@ class LegacyChatRequest(BaseModel):
 
 
 @router.post("/chat")
-async def legacy_chat(request: Request, body: LegacyChatRequest):
+async def legacy_chat(request: Request, body: LegacyChatRequest = Body(...)):
     """Legacy chat endpoint matching old Vercel /api/chat."""
     settings = get_settings()
 
@@ -82,7 +82,7 @@ class LegacySearchRequest(BaseModel):
 
 
 @router.post("/search-companies")
-async def legacy_search_companies(request: Request, body: LegacySearchRequest):
+async def legacy_search_companies(request: Request, body: LegacySearchRequest = Body(...)):
     """Legacy search endpoint matching old Vercel /api/search-companies."""
     result = await sheets_service.search_companies(
         domain=body.domain,
@@ -108,7 +108,7 @@ class LegacySaveIdeaRequest(BaseModel):
 
 
 @router.post("/save-idea")
-async def legacy_save_idea(request: Request, body: LegacySaveIdeaRequest):
+async def legacy_save_idea(request: Request, body: LegacySaveIdeaRequest = Body(...)):
     """Legacy save-idea endpoint matching old Vercel /api/save-idea."""
     settings = get_settings()
 

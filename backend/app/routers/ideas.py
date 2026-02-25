@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import structlog
 import httpx
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Body, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -36,7 +36,7 @@ class IdeaRequest(BaseModel):
 
 @router.post("/ideas")
 @limiter.limit("10/minute")
-async def save_idea(request: Request, body: IdeaRequest):
+async def save_idea(request: Request, body: IdeaRequest = Body(...)):
     """
     Save a user's idea/product request to Google Sheets via webhook.
 

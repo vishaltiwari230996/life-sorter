@@ -11,7 +11,7 @@ POST  /api/v1/leads/{id}/conversations — save conversation
 from __future__ import annotations
 
 import structlog
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Body, HTTPException, Query, Request
 
 from app.config import get_settings
 from app.middleware.rate_limit import limiter
@@ -31,7 +31,7 @@ router = APIRouter()
 
 @router.post("/leads", response_model=LeadResponse)
 @limiter.limit("20/minute")
-async def create_lead(request: Request, body: LeadCreate):
+async def create_lead(request: Request, body: LeadCreate = Body(...)):
     """
     Create a new lead with server-side scoring.
 
@@ -51,7 +51,7 @@ async def create_lead(request: Request, body: LeadCreate):
 
 @router.patch("/leads/{lead_id}", response_model=LeadResponse)
 @limiter.limit("20/minute")
-async def update_lead(request: Request, lead_id: str, body: LeadUpdate):
+async def update_lead(request: Request, lead_id: str, body: LeadUpdate = Body(...)):
     """
     Partially update an existing lead.
 
